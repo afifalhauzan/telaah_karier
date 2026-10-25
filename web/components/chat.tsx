@@ -604,6 +604,11 @@ export function Chat() {
 
     if (isLoading) return;
 
+    if (choice.kind === "bio-link") {
+      sendMessage({ text: `Link di bio${choice.handle ? ` @${choice.handle}` : ""}: ${choice.url}` }, { same_posting: true });
+      return;
+    }
+
     if (choice.kind === "self-analyze") {
       regenerateWith(choice.messageId, { skip_similar: true });
     } else if (choice.kind === "same-posting") {
