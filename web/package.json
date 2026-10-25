@@ -22,7 +22,7 @@
     "test:web-checks": "jiti eval/web-checks.test.ts",
     "test:context": "jiti eval/conversation-context.test.ts",
     "test:export": "jiti eval/analysis-export.test.ts",
-    "test:unit": "vitest run eval/identifiers.test.ts eval/redaction.test.ts eval/session-title.test.ts eval/auth-schemas.test.ts eval/chat-composer.test.ts eval/quota.test.ts",
+    "test:unit": "vitest run eval/identifiers.test.ts eval/redaction.test.ts eval/session-title.test.ts eval/auth-schemas.test.ts eval/chat-composer.test.ts eval/quota.test.ts eval/telaah-alur.test.ts",
     "test:e2e": "playwright test",
     "test:all": "pnpm test:unit && pnpm test:e2e && php ../api/artisan test"
   },
