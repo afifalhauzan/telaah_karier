@@ -34,7 +34,7 @@ import {
   strongestFloor,
   type DetectedSignal,
 } from "./signals";
-import { buildChecks, certClusterSignals, knowledgeSignals, newDomainSignals } from "./checks";
+import { buildChecks, certClusterSignals, knowledgeSignals, newDomainSignals, trailSignals } from "./checks";
 import {
   describeKnowledgeForProgress,
   knowledgeSources,
@@ -44,7 +44,8 @@ import {
 } from "./tools/knowledge";
 import { describeCertClustersForProgress, lookupCertClusters, type CertCluster } from "./tools/ct-cluster";
 import { describeDomainAgesForProgress, lookupDomainAges, type DomainAge } from "./tools/domain-age";
-import { checkLinks, describeLinksForProgress, pageBlock, shortlinkLines, type LinkChecks } from "./tools/link-checks";
+import { checkLinks, describeLinksForProgress, pageBlock, shortlinkLines, trailBlock, type LinkChecks, type TraceOutcome } from "./tools/link-checks";
+import { decodeQrLinks } from "./tools/qr";
 import {
   GUIDANCE_REFERENCES,
   buildVerificationQuery,
@@ -105,7 +106,7 @@ export interface AnalysisRunMeta {
   signals: Array<Pick<DetectedSignal, "id" | "severity">>;
   search: { status: WebSearchStatus | "disabled"; retrievedCount: number; sourceCount: number };
   // Unset when the web checks are disabled. pageRead is null when there was no page to read.
-  links?: { shortlinks: number; resolved: number; pageRead: boolean | null };
+  links?: { shortlinks: number; resolved: number; pageRead: boolean | null; qr: number; trail: TraceOutcome[] };
   domainAges?: Array<{ domain: string; registeredAt: string | null }>;
   certClusters?: Array<{ domain: string; status: CertCluster["status"]; recruitmentHosts: number; imitatedBrands: number }>;
   // Unset when the web checks are disabled. similar holds the cases' similarity scores.
@@ -615,9 +616,12 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
   let ownText = materialText;
   if (useSearch) {
     const linksStartedAt = Date.now();
-    links = await checkLinks(materialText);
-    ownText = [materialText, shortlinkLines(links)].filter(Boolean).join("\n\n");
-    linkEvidence = [shortlinkLines(links), pageBlock(links)].filter(Boolean).join("\n\n");
+    // A QR code on a poster is the posting's own link, as if it were written out
+    const qrLinks = await decodeQrLinks(attachments);
+    const qrBlock = qrLinks.length ? ["[Isi QR code di lampiran]", ...qrLinks].join("\n") : "";
+    links = await checkLinks(materialText, qrLinks);
+    ownText = [materialText, qrBlock, shortlinkLines(links)].filter(Boolean).join("\n\n");
+    linkEvidence = [qrBlock, shortlinkLines(links), trailBlock(links), pageBlock(links)].filter(Boolean).join("\n\n");
     if (linkEvidence) {
       materialText = `${materialText}\n\n${linkEvidence}`;
     }
@@ -626,6 +630,8 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       shortlinks: links.shortlinks.length,
       resolved: links.shortlinks.filter((item) => item.destination).length,
       pageRead: links.page ? !!links.page.text : null,
+      qr: qrLinks.length,
+      trail: links.trail.map((step) => step.outcome),
     };
     const linkStep = describeLinksForProgress(links);
     if (linkStep) {
@@ -633,7 +639,7 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
     }
   }
 
-  const signals = useRules ? detectSignals(materialText) : [];
+  const signals = useRules ? [...detectSignals(materialText), ...(links ? trailSignals(links) : [])] : [];
   if (useRules) {
     addStep(describeSignalsForProgress(signals));
   }

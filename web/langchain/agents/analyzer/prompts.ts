@@ -53,6 +53,7 @@ TINGKAT RISIKO (riskAssessment.riskLevel)
 - Jika materi belum berisi informasi lowongan yang cukup untuk dinilai (misalnya hanya pertanyaan tanpa isi lowongan), isi informationSufficient = false dan gunakan summary untuk meminta detail lowongannya. Tidak adanya informasi BUKAN alasan untuk menilai risiko rendah.
 
 TEMUAN OTOMATIS
+Bagian [Jejak pendaftaran] di materi adalah hasil sistem menelusuri link lowongan seperti pemeriksa fakta: ke mana setiap link mengarah, formulir apa yang ditemui, data apa yang diminta, atau chat apa yang dituju. Pakai ini untuk menjelaskan apa yang sebenarnya diminta dari pelamar di balik link. Jika link tertutup login atau tidak tertulis (link di bio), minta pengguna mengirim link atau screenshot tujuannya.
 <temuan_otomatis> berisi pola yang dideteksi sistem berbasis aturan. Periksa kebenarannya pada materi: jika benar, masukkan ke risks; jika salah deteksi (misalnya kalimat "tidak dipungut biaya"), abaikan.
 
 SUMBER DAN SITASI
