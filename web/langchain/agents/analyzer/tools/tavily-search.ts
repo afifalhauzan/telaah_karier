@@ -81,6 +81,12 @@ const EMPLOYER_TLD = /\.(?:id|com|net|org|co|io|group|biz|info|asia|my|sg|tech|a
 
 // Names stay on one line: transcribed letters put the address ("Jl. ...") on the next line.
 const COMPANY_PATTERN = /\b(PT|CV)\.?[ \t]+((?:[A-Z0-9][\w&'.-]*[ \t]?){1,6})(?:\(([A-Z]{2,8})\))?/;
+// Companies abroad put the legal form after the name ("BLOOMTECH, Inc.", "Maju Jaya Sdn Bhd"):
+// remote jobs and the TPPO routes (Malaysia, Singapore) both name them so.
+const FOREIGN_COMPANY_PATTERN =
+  /((?:\b[A-Z][\w&'-]*[ \t]){0,2}\b[A-Z][\w&'-]*),?[ \t]+(Inc|Ltd|LLC|Corp|Corporation|GmbH|Co\.,?[ \t]*Ltd|Sdn\.?[ \t]*Bhd|Pte\.?[ \t]*Ltd)\b/;
+// The words of those legal forms, as normalizeForMatch leaves them
+const FOREIGN_FORM_WORDS = new Set(["inc", "ltd", "llc", "corp", "corporation", "gmbh", "co", "sdn", "bhd", "pte"]);
 const COMPANY_STOPWORDS = new Set([
   "membuka", "lowongan", "loker", "kerja", "dibutuhkan", "butuh", "mencari", "segera", "hiring",
   "rekrutmen", "recruitment", "karyawan", "posisi", "untuk", "bagian", "job", "vacancy", "sedang",
@@ -107,7 +113,7 @@ function normalizeForMatch(value: string): string {
 function extractCompany(text: string): SearchEntity | null {
   const match = text.match(COMPANY_PATTERN);
   if (!match) {
-    return null;
+    return extractForeignCompany(text);
   }
 
   const words: string[] = [];
@@ -128,6 +134,19 @@ function extractCompany(text: string): SearchEntity | null {
   }
 
   return { kind: "company", name: `${match[1].toUpperCase()} ${words.join(" ")}`, acronym: match[3] };
+}
+
+function extractForeignCompany(text: string): SearchEntity | null {
+  const match = text.match(FOREIGN_COMPANY_PATTERN);
+  if (!match) {
+    return null;
+  }
+  // "We are hiring at Acme Inc": the capitalised words before the name are not part of it
+  const words = match[1].split(/\s+/);
+  while (words.length > 1 && COMPANY_STOPWORDS.has(words[0].toLowerCase())) {
+    words.shift();
+  }
+  return { kind: "company", name: `${words.join(" ")} ${match[2].replace(/\s+/g, " ")}` };
 }
 
 /**
@@ -193,7 +212,13 @@ export function mentionsEntity(source: SearchSource, entity: SearchEntity): bool
     return host === domain || host.endsWith(`.${domain}`) || `${source.title} ${source.snippet}`.toLowerCase().includes(domain);
   }
 
-  const [legalForm, ...nameTokens] = normalizeForMatch(entity.name).trim().split(" ");
+  const tokens = normalizeForMatch(entity.name).trim().split(" ");
+  // "PT Sukses Makmur" leads with its legal form; "Bloomtech Inc" and "Maju Sdn Bhd" end with it
+  const foreignForm: string[] = [];
+  while (tokens.length > 1 && FOREIGN_FORM_WORDS.has(tokens[tokens.length - 1])) {
+    foreignForm.unshift(tokens.pop()!);
+  }
+  const [legalForm, ...nameTokens] = foreignForm.length ? [foreignForm.join(" "), ...tokens] : tokens;
   while (nameTokens.length && LEGAL_SUFFIXES.has(nameTokens[nameTokens.length - 1])) {
     nameTokens.pop();
   }
@@ -208,8 +233,8 @@ export function mentionsEntity(source: SearchSource, entity: SearchEntity): bool
   const hostLabels = host.split(".").map((label) => label.replace(/[^a-z0-9]/g, ""));
 
   return (
-    // "... PT Sukses Makmur Sentosa ..." with the legal form right before the name.
-    titleAndUrl.includes(` ${legalForm} ${phrase} `) ||
+    // "... PT Sukses Makmur Sentosa ..." / "... Bloomtech Inc ..." with the legal form next to the name.
+    titleAndUrl.includes(foreignForm.length ? ` ${phrase} ${legalForm} ` : ` ${legalForm} ${phrase} `) ||
     // Company sites often title pages without the legal form: "Sukses Makmur Sentosa | Karir".
     title.startsWith(` ${phrase} `) ||
     hostLabels.some((label) => label === compactName || label === `${legalForm}${compactName}`) ||

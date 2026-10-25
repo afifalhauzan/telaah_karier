@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { preprocessJobInput } from "../langchain/agents/analyzer/preprocessor";
-import { buildVerificationQuery, stripSourceIds } from "../langchain/agents/analyzer/tools/tavily-search";
+import { buildVerificationQuery, mentionsEntity, stripSourceIds } from "../langchain/agents/analyzer/tools/tavily-search";
 
 const queryFor = (text: string) => buildVerificationQuery(preprocessJobInput(text))?.query ?? null;
 
@@ -42,4 +42,19 @@ test("source IDs written into the text are removed, a degree in parentheses is n
 
 test("job boards are not taken for the employer's site", () => {
   assert.equal(queryFor("Lowongan Data Analyst https://www.jobstreet.co.id/id/job/123 dan glints.com/id/opportunities/jobs/x"), null);
+});
+
+test("a company abroad names its legal form after the name, and its own site matches it", () => {
+  // From a LinkedIn post by a BLOOMTECH recruiter (25 Oct 2026); the name sits on its own line
+  const target = buildVerificationQuery(
+    preprocessJobInput("Mari Shimizu\nBLOOMTECH, Inc. | IT Engineer Career Advisor\nJob Opportunity【Fully Remote / Data Scientist】")
+  );
+  assert.equal(target?.query, '"BLOOMTECH Inc" lowongan kerja');
+  assert.equal(queryFor("Hiring now at Maju Jaya Sdn Bhd, Kuala Lumpur"), '"Maju Jaya Sdn Bhd" lowongan kerja');
+
+  const entity = target!.entity;
+  const source = (url: string, title: string) => ({ id: "S1", url, title, snippet: "" });
+  assert.ok(mentionsEntity(source("https://www.linkedin.com/company/bloomtech-inc", "BloomTech Inc"), entity));
+  assert.ok(mentionsEntity(source("https://bloomtech.co.jp", "株式会社ブルームテック"), entity));
+  assert.ok(!mentionsEntity(source("https://example.com/jobs", "Remote Data Scientist jobs in Japan"), entity));
 });

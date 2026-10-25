@@ -72,7 +72,7 @@ function searchCheck(search: WebSearchResult): Check {
     case "empty":
       return { label, status: "info", detail: `Pencarian ${name} tidak menemukan sumber yang membahasnya.` };
     case "skipped_no_query":
-      return { label, status: "skipped", detail: "Materi tidak menyebut nama perusahaan (PT/CV) atau situs yang bisa dicari." };
+      return { label, status: "skipped", detail: "Materi tidak menyebut nama perusahaan berbadan hukum (PT, CV, Inc, Ltd, dan sejenisnya) atau situs yang bisa dicari." };
     case "skipped_no_key":
     case "error":
       return { label, status: "skipped", detail: "Pencarian web sedang tidak tersedia." };
