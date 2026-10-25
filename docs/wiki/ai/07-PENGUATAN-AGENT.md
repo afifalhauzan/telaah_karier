@@ -41,7 +41,7 @@ Ditambah hitungan per entitas ("PT X dicatut N kali") yang dihitung saat pencari
 
 `POST /api/knowledge/search` (internal) dipanggil paralel dengan pencarian web:
 
-- **Cocok identitas** → sinyal aturan `known_scam_identity` dengan **floor "tinggi"**. Identitas hanya diambil dari materi pengguna sendiri, bukan dari halaman link (yang memuat "lowongan serupa" milik perusahaan lain).
+- **Cocok identitas** → sinyal aturan `known_scam_identity` dengan **floor "sedang"**, ditambah kartu merah di chat yang berisi daftar kasusnya agar pengguna mencocokkan sendiri. Ini bukan keputusan: nomor bisa berpindah tangan atau dicatut, dan tidak ada pasal yang menjadikan kontak yang sama sebagai penipuan (lihat 2.4). Identitas hanya diambil dari materi pengguna sendiri, bukan dari halaman link (yang memuat "lowongan serupa" milik perusahaan lain).
 - **Kasus serupa** (kemiripan ≥ 0,6, maksimal 3) → **konteks saja**, tidak menaikkan risiko. Lowongan asli Magang Bakti BCA paling mirip dengan kasus penipuan "BCA", jadi kemiripan mencerminkan perusahaan dan topik, bukan penipuan atau tidaknya.
 - Kedua jenis kasus masuk ke prompt sebagai sumber (`S…`) berjudul "Kasus penipuan terverifikasi …", sehingga sitasi, pengaman sumber, dan daftar rujukan yang sudah ada langsung berlaku.
 - Baris baru di daftar pemeriksaan: **"Basis kasus terverifikasi"**.
@@ -66,7 +66,7 @@ Kasus dari dataset evaluasi dikeluarkan dari basis pengetahuan selama evaluasi: 
 Setiap sertifikat HTTPS dicatat publik beserta nama host-nya. Satu operasi penipuan sering menjalankan banyak situs rekrutmen palsu di satu domain (`recruitment-buma.aply.my.id`, `pt-timah-tbk.open-rekrutmen.aply.my.id`) atau memutar subdomain acak (`h7.daftar-segera.site`). Log menunjukkannya **sebelum ada artikel cek fakta**.
 
 - Sumber Cert Spotter (crt.sh terlalu lambat). Berjalan paralel dengan pencarian web.
-- Sinyal `cert_cluster`: menyamar sebagai ≥2 merek → kuat (floor tinggi); ≥3 situs rekrutmen atau ≥4 subdomain bergiliran → sedang.
+- Sinyal `cert_cluster`: menyamar sebagai ≥2 merek, ≥3 situs rekrutmen, atau ≥4 subdomain bergiliran → floor sedang (tanpa dasar hukum, lihat 2.4).
 - Kode: `web/langchain/agents/analyzer/tools/ct-cluster.ts`.
 
 ### 2.2 Jejak pendaftaran (cara pemeriksa fakta menelusuri link)
@@ -86,6 +86,30 @@ Agent menelusuri jalur yang sama (`web/langchain/agents/analyzer/tools/link-chec
 - Halaman link dibaca dalam format markdown, sehingga alamat yang tertulis di halaman (misalnya link pendaftaran di komentar LinkedIn) ikut terbaca.
 - `lnkd.in` dibuka tujuannya, termasuk shortlink di halaman yang dibaca.
 - Nama perusahaan dengan bentuk hukum di belakang (Inc, Ltd, LLC, Corp, GmbH, Co., Ltd., Sdn Bhd, Pte Ltd) ikut dicari di web.
+
+### 2.4 Kriteria "tinggi" berbasis hukum
+
+"Tinggi" hanya boleh bersandar pada peraturan yang berlaku, bukan pada pola dari dataset. Setiap sinyal dengan floor tinggi membawa `legalBasis`, yang tampil di daftar pemeriksaan sebagai baris **"Dasar hukum: …"** dan ikut masuk ke prompt. Tes `eval/signals.test.ts` memastikan tidak ada floor tinggi tanpa dasar hukum.
+
+| Tanda (sinyal) | Dasar hukum |
+|---|---|
+| Biaya dari pelamar (`fee_request`) | UU 13/2003 Pasal 38; UU 18/2017 Pasal 30; KUHP Pasal 492 |
+| OTP, kata sandi, selfie KTP di materi atau formulir (`sensitive_data_request`, `form_secret`) | KUHP Pasal 332 (pengganti UU ITE Pasal 30, dicabut KUHP Pasal 622); UU PDP Pasal 65 |
+| Mengaku instansi/BUMN/perusahaan besar dengan kontak pribadi (`institution_impersonation`) | KUHP Pasal 492 (nama atau kedudukan palsu); UU ITE Pasal 35 |
+| Program dengan satu portal resmi didaftarkan di tempat lain: Magang Nasional (maganghub.kemnaker.go.id), CPNS/PPPK (sscasn.bkn.go.id), Rekrutmen Bersama BUMN (fhcibumn.id) (`official_portal`) | sama dengan baris di atas |
+| Pernyataan resmi perusahaan membantah biaya atau kanal yang dipakai (`official_denial`) | sama dengan baris di atas |
+| Domain meniru merek (`lookalike_domain`) | UU ITE Pasal 23 ayat (2); UU Merek Pasal 100 |
+| Visa turis/kunjungan untuk bekerja (`visa_non_work`) | UU 18/2017 Pasal 13, 69, 81; KUHP Pasal 455 (TPPO) |
+| Penempatan ke Kamboja, Myanmar, Thailand (`non_placement_country`) | bukan negara penempatan (KP2MI); UU 18/2017 Pasal 69, 81; KUHP Pasal 455 |
+| Operator situs judi online (`gambling_job`) | KUHP Pasal 426 |
+| Pelamar di bawah 18 tahun untuk luar negeri atau hiburan malam (`minor_recruitment`) | UU 18/2017 Pasal 5 huruf a; UU 13/2003 Pasal 74; UU 35/2014 Pasal 76I |
+| Menyerahkan atau menyewakan rekening, ATM, kartu SIM (`money_mule`) | UU 8/2010 TPPU Pasal 5 |
+
+Paling tinggi **sedang**, karena tidak ada pasal yang menjadikannya penipuan dengan sendirinya: domain gratisan (`unofficial_domain`), tugas like/follow berbayar tanpa deposit (`paid_task`; begitu deposit diminta, `fee_request` yang berlaku), klaster sertifikat (`cert_cluster`), kontak sama dengan kasus lama (`known_scam_identity`), ijazah/paspor ditahan (`document_holding`; dasarnya SE Menaker M/5/HK.04.00/V/2025, bukan undang-undang), domain baru, link di bio, formulir Telegram, dan subdomain buatan. Gabungan beberapa tanda lemah juga tetap sedang.
+
+**Pernyataan resmi perusahaan** (`tools/official-statement.ts`): hanya dicari bila postingan memakai biaya atau kanal yang bisa dibantah (WA, email gratis, domain lain). Merek yang terdaftar dicari di domain resminya; perusahaan lain dicari di mana saja, tetapi hasilnya hanya dipakai bila host-nya bernama perusahaan itu (`komatsu.co.id` untuk PT Komatsu Indonesia). Kalimat bantahannya dikutip sebagai sumber yang bisa dirujuk model. Diuji ke Tavily sungguhan: Pertamina dan PLN ditemukan, sedangkan Komatsu tidak punya halaman bantahan yang terindeks.
+
+Status pasal diperiksa Okt 2026: UU 13/2003 Pasal 38 tidak diubah UU 6/2023; UU 18/2017 Pasal 30/69/72 tidak diubah (RUU revisinya masih di DPR); UU ITE Pasal 30 dan UU TPPO Pasal 2 diganti KUHP Pasal 332 dan 455; KUHP berlaku 2 Jan 2026. Bunyi pasal sebaiknya dicocokkan lagi ke teks konsolidasi di peraturan.bpk.go.id sebelum dikutip di laporan.
 
 ## 3. Tindak Lanjut: TelaahAlur di dalam TelaahLoker
 
