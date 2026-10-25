@@ -35,7 +35,7 @@ import {
   strongestFloor,
   type DetectedSignal,
 } from "./signals";
-import { buildChecks, certClusterSignals, knowledgeSignals, newDomainSignals, trailSignals } from "./checks";
+import { bioLinkRequest, buildChecks, certClusterSignals, knowledgeSignals, newDomainSignals, trailSignals } from "./checks";
 import {
   describeKnowledgeForProgress,
   formatCaseDate,
@@ -793,6 +793,10 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       certClusters,
       knowledge,
     });
+    const bioLink = bioLinkRequest(ownText, signals, links);
+    if (bioLink) {
+      result.bioLink = bioLink;
+    }
     const known = knowledge?.identity.filter((item) => item.shared.length) ?? [];
     if (known.length) {
       result.knownCases = known.map((item) => ({

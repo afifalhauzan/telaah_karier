@@ -6,6 +6,7 @@
 import type { UIMessage } from 'ai';
 import type {
   AnalysisResult,
+  BioLink,
   Check,
   Citation,
   Claim,
@@ -97,6 +98,7 @@ export type MetabotUIMessagePart =
   | { type: 'data-summary'; data: string | SummaryPartData }
   | { type: 'data-claims'; data: Claim[] }
   | { type: 'data-known-scam'; data: KnownCase[] }
+  | { type: 'data-bio-link'; data: BioLink }
   | { type: 'data-salary-benefit'; data: SalaryBenefitAssessment }
   | { type: 'data-risks'; data: Risk[] }
   | { type: 'data-checks'; data: Check[] }

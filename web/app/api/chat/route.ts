@@ -415,6 +415,10 @@ export async function POST(req: NextRequest) {
             writer.write({ type: "data-known-scam", data: analysis.knownCases });
             await sleep(SECTION_STEP_DELAY_MS);
           }
+          if (analysis.bioLink) {
+            writer.write({ type: "data-bio-link", data: analysis.bioLink });
+            await sleep(SECTION_STEP_DELAY_MS);
+          }
         } else {
           await streamTextBlock({
             writer,

@@ -1,4 +1,4 @@
-import type { Check } from "./schema";
+import type { BioLink, Check } from "./schema";
 import { isOfficialHost } from "./lookalike";
 import {
   certClusterSignal,
@@ -102,6 +102,31 @@ function linkChecks(links: LinkChecks, signals: DetectedSignal[] | null): Check[
     });
   }
   return checks;
+}
+
+// The platforms whose profiles hide the bio link behind a login (probed Oct 2026: neither Tavily nor
+// the search index nor TikTok oEmbed returns it), so only the applicant can copy it
+const SOCIAL_PLATFORMS = [
+  { platform: "instagram", word: /\b(?:ig|instagram|insta)\b/i, profile: /instagram\.com\/(?!p\/|reel\/|reels\/|stories\/|explore\/)([A-Za-z0-9_.]{2,30})/i },
+  { platform: "tiktok", word: /\btik\s?tok\b/i, profile: /tiktok\.com\/@([A-Za-z0-9_.]{2,30})/i },
+  { platform: "facebook", word: /\b(?:fb|facebook)\b/i, profile: /facebook\.com\/(?!share|groups|story\.php|permalink\.php|profile\.php|photo|watch)([A-Za-z0-9.]{2,50})/i },
+] as const;
+// "@loker.bumn", not the "@" of an email address
+const MENTION = /(?:^|[\s(:])@([A-Za-z0-9_.]{3,30})/;
+
+/**
+ * The applicant must copy the registration link themselves: the material sends them to a bio or a
+ * login-walled profile, and the trail reached no page, form, or chat. Null when nothing is hidden.
+ */
+export function bioLinkRequest(text: string, signals: DetectedSignal[], links: LinkChecks | null): BioLink | null {
+  const trail = links?.trail ?? [];
+  if (trail.some((step) => step.outcome === "form" || step.outcome === "page" || step.outcome === "chat")) return null;
+  const walledProfile = trail.some((step) => step.outcome === "login" && SOCIAL_PLATFORMS.some((item) => item.profile.test(step.url)));
+  if (!walledProfile && !signals.some((signal) => signal.id === "link_in_bio")) return null;
+
+  const named = SOCIAL_PLATFORMS.find((item) => item.profile.test(text)) ?? SOCIAL_PLATFORMS.find((item) => item.word.test(text));
+  const handle = (named?.profile.exec(text)?.[1] ?? MENTION.exec(text)?.[1])?.replace(/\.+$/, "");
+  return { ...(named ? { platform: named.platform } : {}), ...(handle ? { handle } : {}) };
 }
 
 /** Rule signals from the registration trail: what the form asks, and the shape of its address. */
