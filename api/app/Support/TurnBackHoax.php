@@ -184,7 +184,8 @@ class TurnBackHoax
         // Not the "Artikel terbaru" sidebar, which shows other articles' headers
         foreach ($xpath->query(".//section//img[not(ancestor::section[contains(@class,'sidebar')])]/@src", $article) as $src) {
             $url = trim($src->nodeValue);
-            if (! str_starts_with($url, 'http') || preg_match('/logo|icon|avatar/i', $url)) {
+            // Partner media's articles carry a dummyimage.com placeholder instead of the poster
+            if (! str_starts_with($url, 'http') || preg_match('/logo|icon|avatar|dummyimage\.com/i', $url)) {
                 continue;
             }
             $images[] = ['url' => $url, 'stamped' => str_contains($url, 'turnbackhoax.id')];

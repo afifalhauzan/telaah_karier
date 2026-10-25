@@ -43,6 +43,17 @@ class TurnBackHoaxTest extends TestCase
         ], $article['image_urls']);
     }
 
+    public function test_a_partner_article_placeholder_is_no_image(): void
+    {
+        $html = str_replace(
+            '<figure><img src="https://yudistira.turnbackhoax.id/uploads/1_HEADER_-_Light_Background_(17).png" alt="header"></figure>',
+            '<figure><img src="https://dummyimage.com/877x678/d9d9d9/404040.png&amp;text=Dummy+Image" alt="Dummy Image"></figure>',
+            turnbackhoax_article()
+        );
+
+        $this->assertSame(['https://yudistira.turnbackhoax.id/uploads/2_SALAH_lowongan.png'], array_column(TurnBackHoax::parseArticle($html)['image_urls'], 'url'));
+    }
+
     public function test_platforms_are_read_from_the_original_link(): void
     {
         $this->assertSame('facebook', TurnBackHoax::platform('https://m.facebook.com/groups/1/posts/2'));
