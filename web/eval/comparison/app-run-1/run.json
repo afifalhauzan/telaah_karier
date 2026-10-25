@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-10-24T17:37:03.048Z",
+  "commit": "421bb05",
+  "uncommittedChanges": true,
+  "dataset": {
+    "path": "eval/dataset/dataset.csv",
+    "sha256": "99256bd16d8f4e1269daf22a911dc6b67dea9369ae7ba8aba77e341f7d55bfcc"
+  },
+  "splits": [
+    "dev",
+    "injeksi"
+  ],
+  "variants": [
+    "lengkap"
+  ],
+  "models": {
+    "extraction": "gemini-2.5-flash",
+    "analysis": "gemini-2.5-flash"
+  },
+  "envOverrides": [],
+  "caseCount": 4
+}
