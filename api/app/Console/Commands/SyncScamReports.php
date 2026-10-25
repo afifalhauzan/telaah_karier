@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
-#[Signature('scam-reports:sync {--all : Walk the whole category instead of stopping at known articles} {--pages=40 : Most listing pages to read}')]
+#[Signature('scam-reports:sync {--all : Walk the whole category instead of stopping at known articles} {--pages=40 : Most listing pages to read} {--refresh : Read the stored articles again, e.g. after a parser fix}')]
 #[Description('Collect new job-scam fact-checks from TurnBackHoax into scam_reports')]
 class SyncScamReports extends Command
 {
@@ -24,6 +24,16 @@ class SyncScamReports extends Command
 
     public function handle(): int
     {
+        if ($this->option('refresh')) {
+            $updated = 0;
+            foreach (ScamReport::where('source', self::SOURCE)->pluck('url', 'external_id') as $id => $url) {
+                $updated += $this->store($id, $url) ? 1 : 0;
+            }
+            $this->info("Refreshed {$updated} reports.");
+
+            return self::SUCCESS;
+        }
+
         $known = ScamReport::where('source', self::SOURCE)->pluck('external_id')->all();
         $added = 0;
 
@@ -64,9 +74,8 @@ class SyncScamReports extends Command
 
                 return false;
             }
-            ScamReport::create([
-                'source' => self::SOURCE,
-                'external_id' => $id,
+            // A refresh keeps the review status: only what the article says is replaced
+            ScamReport::updateOrCreate(['source' => self::SOURCE, 'external_id' => $id], [
                 'url' => $url,
                 ...collect($article)->except('image_urls')->all(),
                 'images' => $this->downloadImages($id, $article['image_urls']),

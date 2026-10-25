@@ -69,6 +69,20 @@ class ScamReportsTest extends TestCase
         $this->artisan('scam-reports:sync --all')->expectsOutput('Added 1 new reports.');
     }
 
+    public function test_a_refresh_reads_stored_articles_again_and_keeps_their_review_status(): void
+    {
+        ScamReport::create([
+            'source' => 'turnbackhoax', 'external_id' => 102, 'url' => 'https://turnbackhoax.id/articles/102-x', 'title' => 't',
+            'posting_text' => 'p', 'narrative' => 'n', 'source_links' => [], 'archive_links' => [], 'reference_links' => [],
+            'images' => [], 'status' => 'reviewed',
+        ]);
+        $this->fakeSite([]);
+
+        $this->artisan('scam-reports:sync --refresh')->expectsOutput('Refreshed 1 reports.')->assertSuccessful();
+        $report = ScamReport::sole();
+        $this->assertSame(['reviewed', 2], [$report->status, count($report->images)]);
+    }
+
     public function test_genuine_postings_are_collected_from_karirhub_up_to_three_per_usable_scam(): void
     {
         $this->fakeSite([102]);
