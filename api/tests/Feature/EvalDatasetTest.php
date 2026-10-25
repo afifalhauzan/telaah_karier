@@ -36,11 +36,18 @@ class EvalDatasetTest extends TestCase
             ->expectsOutput('Run with --kb-before 2026-07-01')
             ->assertSuccessful();
 
-        $lines = array_map('str_getcsv', explode("\n", trim(Storage::disk('local')->get('eval/dataset.csv'))));
+        // Read as CSV, not by line: the genuine posting's text spans several lines
+        $csv = fopen('php://memory', 'r+');
+        fwrite($csv, Storage::disk('local')->get('eval/dataset.csv'));
+        rewind($csv);
+        $lines = [];
+        while (($line = fgetcsv($csv, escape: '\\')) !== false) {
+            $lines[] = $line;
+        }
         $this->assertSame(['T001', 'G001', 'A001'], array_column(array_slice($lines, 1), 0));
         $this->assertSame(['test', 'penipuan', 'data_sensitif', '', 'teks', 'baru', '', 'tiktok'], array_slice($lines[1], 1, 8));
         $this->assertSame(['gambar', '', 'G001.png'], array_slice($lines[2], 5, 3));
-        $this->assertSame(['asli', 'teks', 'asli'], [$lines[3][2], $lines[3][5], $lines[3][6]]);
+        $this->assertSame(['asli', 'teks', "Admin\n\nasli\n\nLamar melalui: https://karirhub.kemnaker.go.id/x"], [$lines[3][2], $lines[3][5], $lines[3][6]]);
         $this->assertSame('png-bytes', Storage::disk('local')->get('eval/images/G001.png'));
     }
 }

@@ -58,7 +58,7 @@ class ExportEvalDataset extends Command
         foreach ($legit->values() as $index => $posting) {
             $rows[] = [
                 'id' => sprintf('A%03d', $index + 1), 'split' => 'test', 'label' => 'asli', 'modus' => '', 'kasus_sulit' => '',
-                'input_type' => 'teks', 'text' => $posting->posting_text, 'image_file' => '', 'platform' => 'portal_kerja',
+                'input_type' => 'teks', 'text' => $this->legitText($posting), 'image_file' => '', 'platform' => 'portal_kerja',
                 'sumber_label' => $posting->url, 'sumber_asli' => $posting->platform_link ?? '', 'tanggal_kasus' => $posting->published_at?->format('Y-m') ?? '',
                 'pasangan_id' => '', 'dikumpulkan_oleh' => 'legit-postings:sync', 'diverifikasi_oleh' => $posting->platform ?: 'KarirHub', 'catatan' => '',
             ];
@@ -77,6 +77,20 @@ class ExportEvalDataset extends Command
         $this->info("Run with --kb-before {$cutoff}");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * A genuine posting as a user would paste it: its title, employer, description, and where to
+     * apply. The stored text is the description alone, which names neither employer nor channel.
+     */
+    private function legitText(LegitPosting $posting): string
+    {
+        return implode("\n\n", array_filter([
+            $posting->title,
+            $posting->company,
+            $posting->posting_text,
+            'Lamar melalui: '.($posting->platform_link ?: $posting->url),
+        ]));
     }
 
     private function scamRow(ScamReport $report, string $id, string $inputType, string $text, string $image): array
