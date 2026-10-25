@@ -50,6 +50,7 @@ import { conflictText, describeStatementForProgress, lookupOfficialStatement, ty
 import { describeDomainAgesForProgress, lookupDomainAges, type DomainAge } from "./tools/domain-age";
 import { checkLinks, describeLinksForProgress, pageBlock, shortlinkLines, trailBlock, type LinkChecks, type TraceOutcome } from "./tools/link-checks";
 import { decodeQrLinks } from "./tools/qr";
+import { findContacts, findLinks } from "../telaah-bersama/identifiers";
 import {
   GUIDANCE_REFERENCES,
   buildVerificationQuery,
@@ -488,11 +489,30 @@ function buildAttachmentNoticeResult(message: string): AnalysisResult {
   };
 }
 
+/**
+ * The contacts and names the material shows: what the attachment reading found, plus the user's own
+ * text (which no model reads for entities) and the company the web search looked up.
+ */
+function materialEntities(userText: string, material: ExtractedMaterial | undefined, company: string | undefined) {
+  const { contacts } = findContacts(userText);
+  const read = material?.entities;
+  const merge = (a: string[] = [], b: string[]) => [...new Set([...a, ...b])];
+  return {
+    companyNames: merge(read?.companyNames, company ? [company] : []),
+    salaries: read?.salaries ?? [],
+    locations: read?.locations ?? [],
+    phones: merge(read?.phones, contacts.filter((item) => item.kind === "phone").map((item) => item.value)),
+    emails: merge(read?.emails, contacts.filter((item) => item.kind === "email").map((item) => item.value)),
+    urls: merge(read?.urls, findLinks(userText)),
+  };
+}
+
 function describeMaterialRead(
   userText: string,
   attachmentCount: number,
   material: ExtractedMaterial | undefined,
-  linkEvidence: string
+  linkEvidence: string,
+  company: string | undefined
 ): AnalysisResult["material"] {
   let source: "text" | "attachment" | "text_and_attachment" = "text";
   if (attachmentCount > 0) {
@@ -505,7 +525,7 @@ function describeMaterialRead(
     legibility: material?.legibility,
     attachments: material?.attachments ?? [],
     visualCues: material?.visualCues ?? [],
-    entities: material?.entities,
+    entities: materialEntities(userText, material, company),
     linkEvidence: linkEvidence || undefined,
   };
 }
@@ -550,11 +570,13 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
 
   let material: ExtractedMaterial | undefined;
   let linkEvidence = "";
+  // The company the web search looked up, shown with the material's entities
+  let company: string | undefined;
   // Kept to the start of the earlier material: the first poster names the company and channels.
   const earlierMaterial = options.earlierMaterial?.trim().slice(0, MAX_EARLIER_MATERIAL_CHARS) ?? "";
   const finish =(result: AnalysisResult): AnalysisRun => {
     result.reasoning = [{ intent: PROGRESS_INTENT, steps: [...steps] }];
-    result.material = describeMaterialRead(userText, attachments.length, material, linkEvidence);
+    result.material = describeMaterialRead(userText, attachments.length, material, linkEvidence, company);
     if (earlierMaterial) {
       result.material!.earlierMaterial = earlierMaterial;
     }
@@ -665,6 +687,7 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       buildVerificationQuery(ownInput) ??
       (links?.page?.text ? buildVerificationQuery(preprocessJobInput(links.page.text.slice(0, PAGE_QUERY_CHARS))) : null);
     const domains = employerDomains(ownInput);
+    company = target?.entity.kind === "company" ? target.entity.name : undefined;
     // The certificate logs and the knowledge base run beside the web search, adding no waiting of their own
     let statement: OfficialStatement | null;
     [search, domainAges, certClusters, knowledge, statement] = await Promise.all([
