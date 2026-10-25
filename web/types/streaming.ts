@@ -10,6 +10,7 @@ import type {
   Citation,
   Claim,
   ExplanationItem,
+  KnownCase,
   Reference,
   Reasoning,
   SalaryBenefitAssessment,
@@ -95,6 +96,7 @@ export type MetabotUIMessagePart =
   | { type: 'data-chart'; data: string | ChartEmbedData }
   | { type: 'data-summary'; data: string | SummaryPartData }
   | { type: 'data-claims'; data: Claim[] }
+  | { type: 'data-known-scam'; data: KnownCase[] }
   | { type: 'data-salary-benefit'; data: SalaryBenefitAssessment }
   | { type: 'data-risks'; data: Risk[] }
   | { type: 'data-checks'; data: Check[] }

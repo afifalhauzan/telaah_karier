@@ -37,6 +37,8 @@ import {
 import { buildChecks, certClusterSignals, knowledgeSignals, newDomainSignals, trailSignals } from "./checks";
 import {
   describeKnowledgeForProgress,
+  formatCaseDate,
+  identifierLabel,
   knowledgeSources,
   lookupKnowledge,
   type KnowledgeOptions,
@@ -763,6 +765,15 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       certClusters,
       knowledge,
     });
+    const known = knowledge?.identity.filter((item) => item.shared.length) ?? [];
+    if (known.length) {
+      result.knownCases = known.map((item) => ({
+        title: item.title,
+        url: item.url,
+        date: formatCaseDate(item.published_at),
+        shared: item.shared.map(identifierLabel),
+      }));
+    }
   }
 
   return finish(result);

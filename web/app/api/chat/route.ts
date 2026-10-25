@@ -411,6 +411,10 @@ export async function POST(req: NextRequest) {
           // Claim text is rendered by ClaimCard below; avoid streaming it twice as a plain text bubble.
           writer.write({ type: "data-claims", data: analysis.claims });
           await sleep(SECTION_STEP_DELAY_MS);
+          if (analysis.knownCases?.length) {
+            writer.write({ type: "data-known-scam", data: analysis.knownCases });
+            await sleep(SECTION_STEP_DELAY_MS);
+          }
         } else {
           await streamTextBlock({
             writer,
