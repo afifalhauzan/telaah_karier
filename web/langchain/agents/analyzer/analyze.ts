@@ -754,7 +754,6 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
   let result: AnalysisResult | null = null;
 
   if (useLLM) {
-    addStep("Menelaah materi dengan model AI");
     const llmStartedAt = Date.now();
     try {
       const { output, usage } = await invokeAnalyzer(

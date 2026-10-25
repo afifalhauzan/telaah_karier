@@ -511,15 +511,11 @@ export async function POST(req: NextRequest) {
           }
         }
 
-        const closingText = hasRiskVerdict
-          ? "Kalau kamu mau, kita bisa lanjutkan dengan investigasi spesifik lewat tombol aksi di bawah."
-          : "Kalau ada bagian yang ingin didalami, beri tahu saya.";
-        await streamTextBlock({
-          writer,
-          text: closingText,
-          id: closingTextId,
-        });
-        await sleep(SECTION_STEP_DELAY_MS);
+        // Under a verdict the action buttons already offer the next steps
+        if (!hasRiskVerdict) {
+          await streamTextBlock({ writer, text: "Kalau ada bagian yang ingin didalami, beri tahu saya.", id: closingTextId });
+          await sleep(SECTION_STEP_DELAY_MS);
+        }
 
         if (analysis.suggestedQuestions?.length) {
           writer.write({ type: "data-suggested-questions", data: analysis.suggestedQuestions });
