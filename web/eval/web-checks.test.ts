@@ -132,3 +132,26 @@ test("rotating throwaway subdomains on a recruitment domain are flagged; a job b
   ]);
   assert.deepEqual(certClusterSignals([board]), []);
 });
+
+test("the classifier adds one line under the verdict, warning only on a high score", () => {
+  const trainedOn = { penipuan: 312, asli: 180 };
+  const [, high] = buildChecks({
+    signals: [],
+    links: null,
+    search: null,
+    domainAges: [],
+    classifier: { probability: 0.91, modelVersion: "v1", trainedOn, topTerms: ["biaya pendaftaran", "transfer", "wa"] },
+  });
+  assert.equal(high.status, "warning");
+  assert.match(high.detail, /91% .*312 kasus penipuan terverifikasi .*"biaya pendaftaran"/);
+
+  const [, low] = buildChecks({
+    signals: [],
+    links: null,
+    search: null,
+    domainAges: [],
+    classifier: { probability: 0.12, modelVersion: "v1", trainedOn, topTerms: [] },
+  });
+  assert.equal(low.status, "info");
+  assert.equal(buildChecks({ signals: [], links: null, search: null, domainAges: [], classifier: null }).length, 1);
+});
