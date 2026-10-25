@@ -22,6 +22,8 @@ import { ProtectedTopNavbar } from "@/components/protected-top-navbar";
 import { Button } from "@/components/ui/button";
 import { ConfirmModal } from "@/components/ui/modal";
 import { RiskCard } from "@/components/cards/RiskCard";
+import { ReportCard } from "@/components/cards/ReportCard";
+import { buildReportDraft } from "@/lib/report-draft";
 import { ModusBadge, RiskLevelBadge, SeedBadge } from "@/components/telaah-bersama/badges";
 import { ReactionButton } from "@/components/telaah-bersama/reaction-button";
 import { Discussion } from "@/components/telaah-bersama/discussion";
@@ -320,6 +322,18 @@ export default function TelaahDetailPage() {
                 </p>
               </Section>
             )}
+
+            <ReportCard
+              draft={buildReportDraft({
+                level: post.riskLevel,
+                company: post.company,
+                findings: post.evidence.map((item) => item.description),
+                phones: post.contacts.filter((contact) => contact.kind === "phone").map((contact) => contact.value),
+                emails: post.contacts.filter((contact) => contact.kind === "email").map((contact) => contact.value),
+                links: post.links,
+                posting: post.materialLines.join("\n"),
+              })}
+            />
 
             <div className="border-t border-border pt-6">
               <Discussion
