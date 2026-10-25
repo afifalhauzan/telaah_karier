@@ -101,4 +101,18 @@ class ScamReportsTest extends TestCase
         $this->assertSame(['turnbackhoax:102', 'penipuan', []], [$rows[0]['id'], $rows[0]['label'], $rows[0]['images']]);
         $this->assertSame('asli', $rows[1]['label']);
     }
+
+    public function test_retraining_exports_the_pool_and_asks_the_ml_service(): void
+    {
+        // storage/ is the developer's real export in the dev container
+        $this->app->useStoragePath(sys_get_temp_dir().'/telaah-test-storage');
+        $this->fakeSite([102]);
+        Http::fake(['ml:8100/train' => Http::response(['status' => 'started'], 202)]);
+        $this->artisan('scam-reports:sync')->assertSuccessful();
+
+        $this->artisan('classifier:retrain')->expectsOutput('Training: started')->assertSuccessful();
+        $this->assertStringContainsString('turnbackhoax:102', file_get_contents(storage_path('app/ml/training-pool.jsonl')));
+        Http::assertSent(fn ($request) => $request->url() === 'http://ml:8100/train'
+            && $request->header('X-Internal-Key') === [(string) config('services.telaah.internal_key')]);
+    }
 }
