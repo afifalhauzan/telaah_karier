@@ -6,10 +6,11 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildChecks, certClusterSignals, newDomainSignals } from "../langchain/agents/analyzer/checks";
+import { buildChecks, certClusterSignals, knowledgeSignals, newDomainSignals } from "../langchain/agents/analyzer/checks";
 import { summarizeCertEntries } from "../langchain/agents/analyzer/tools/ct-cluster";
 import { linkedinExternalLink, pageText } from "../langchain/agents/analyzer/tools/link-checks";
 import { caseIdentifiers } from "../langchain/agents/knowledge/case-card";
+import { knowledgeSources, type KnowledgeResult } from "../langchain/agents/analyzer/tools/knowledge";
 import { detectSignals } from "../langchain/agents/analyzer/signals";
 import { registrableDomain } from "../langchain/agents/analyzer/tools/domain-age";
 import type { WebSearchResult } from "../langchain/agents/analyzer/tools/tavily-search";
@@ -170,4 +171,36 @@ test("a case is tied to the scam's own contacts and spreading accounts, not to w
     { kind: "domain", value: "rekrutmen-kpc.online" },
     { kind: "social", value: "infoloker378" },
   ]);
+});
+
+test("a posting sharing an account with debunked cases gets a floor; similar cases are only context", () => {
+  const card = { modus: ["impersonasi" as const], entitas: "PT Komatsu Indonesia", kanal: ["TikTok"], ciri: [], kutipan: "OPEN RECRUITMENT NEDP" };
+  const debunked = { id: 37273, url: "https://turnbackhoax.id/articles/37273", title: "[PENIPUAN] Tautan Lowongan Kerja Komatsu Indonesia", published_at: "2026-10-22", card, identifiers: [] };
+  const knowledge: KnowledgeResult = {
+    status: "ok",
+    identity: [
+      { ...debunked, shared: [{ kind: "social", value: "infoloker378" }] },
+      { ...debunked, id: 37236, card: { ...card, entitas: "PT Kaltim Prima Coal" }, published_at: "2026-10-17", shared: [] },
+    ],
+    similar: [{ ...debunked, id: 1, title: "[PENIPUAN] Lowongan Kerja PT Vale", score: 0.74 }],
+    entities: [{ entity: "pt komatsu indonesia", count: 5, latest: "2026-10-22" }],
+  };
+
+  const [signal] = knowledgeSignals(knowledge);
+  assert.equal(signal.floor, "tinggi");
+  assert.match(signal.description, /akun “infoloker378” .*2 kasus .*Komatsu Indonesia, PT Kaltim Prima Coal/i);
+
+  const sources = knowledgeSources(knowledge, 2);
+  assert.deepEqual(sources.map((source) => source.id), ["S3", "S4"]);
+  assert.match(sources[0].title, /identitas SAMA/);
+  assert.match(sources[0].snippet, /Terhubung lewat identitas yang sama dengan 1 kasus lain \(PT Kaltim Prima Coal\)\..*dicatut 5 kali/);
+  assert.match(sources[1].title, /mirip/);
+
+  const [, check] = buildChecks({ signals: [], links: null, search: null, domainAges: [], knowledge });
+  assert.equal(check.status, "warning");
+  assert.match(check.detail, /akun “infoloker378” tercatat di 2 kasus .*terakhir 22 Okt 2026/);
+
+  const onlySimilar = buildChecks({ signals: [], links: null, search: null, domainAges: [], knowledge: { ...knowledge, identity: [] } })[1];
+  assert.equal(onlySimilar.status, "info");
+  assert.deepEqual(knowledgeSignals({ ...knowledge, identity: [] }), []);
 });

@@ -1,7 +1,8 @@
 import type { Check } from "./schema";
-import { certClusterSignal, labelInSentence, newDomainSignal, type DetectedSignal } from "./signals";
+import { certClusterSignal, knownScamSignal, labelInSentence, newDomainSignal, type DetectedSignal } from "./signals";
 import { clusterExamples, isSuspiciousCluster, type CertCluster } from "./tools/ct-cluster";
 import { domainAgeDays, NEW_DOMAIN_DAYS, type DomainAge } from "./tools/domain-age";
+import { formatCaseDate, identifierLabel, type KnowledgeResult } from "./tools/knowledge";
 import type { LinkChecks } from "./tools/link-checks";
 import type { WebSearchResult } from "./tools/tavily-search";
 
@@ -23,8 +24,8 @@ function hostOf(url: string): string {
 }
 
 function patternCheck(signals: DetectedSignal[]): Check {
-  // The domain age and the certificate logs have their own lines
-  const found = signals.filter((signal) => signal.id !== "new_domain" && signal.id !== "cert_cluster");
+  // The domain age, the certificate logs, and the knowledge base have their own lines
+  const found = signals.filter((signal) => !["new_domain", "cert_cluster", "known_scam_identity"].includes(signal.id));
   return found.length
     ? { label: "Pola penipuan umum", status: "warning", detail: `Ditemukan ${found.map(labelInSentence).join(", ")}.` }
     : {
@@ -114,12 +115,43 @@ function certClusterCheck(cluster: CertCluster): Check {
   return { label, status: "ok", detail: "Log sertifikat tidak memuat deretan situs rekrutmen lain di domain ini." };
 }
 
+const caseEntities = (cases: KnowledgeResult["identity"]) => [...new Set(cases.flatMap((item) => item.card?.entitas ?? []))];
+
+function knowledgeCheck(knowledge: KnowledgeResult): Check {
+  const label = "Basis kasus terverifikasi";
+  if (knowledge.status === "error") {
+    return { label, status: "skipped", detail: "Basis kasus dari pemeriksa fakta tidak dapat diperiksa saat ini." };
+  }
+  const direct = knowledge.identity.find((item) => item.shared.length);
+  if (direct) {
+    const entities = caseEntities(knowledge.identity);
+    const latest = knowledge.identity.map((item) => item.published_at ?? "").sort().at(-1) || null;
+    return {
+      label,
+      status: "warning",
+      detail: `${identifierLabel(direct.shared[0])} tercatat di ${knowledge.identity.length} kasus penipuan yang sudah diverifikasi${
+        entities.length ? ` (${entities.slice(0, 4).join(", ")})` : ""
+      }, terakhir ${formatCaseDate(latest)}.`,
+    };
+  }
+  if (knowledge.similar.length) {
+    const [first] = knowledge.similar;
+    return {
+      label,
+      status: "info",
+      detail: `Mirip dengan ${knowledge.similar.length} kasus penipuan terverifikasi, misalnya "${first.title}" (${formatCaseDate(first.published_at)}). Kemiripan bukan bukti; dipakai sebagai konteks.`,
+    };
+  }
+  return { label, status: "ok", detail: "Tidak ada kasus terverifikasi yang mirip atau memakai kontak dan akun yang sama." };
+}
+
 export function buildChecks({
   signals,
   links,
   search,
   domainAges,
   certClusters = [],
+  knowledge = null,
   now = new Date(),
 }: {
   // null when the rules did not run (evaluation ablation); the same for the web checks below.
@@ -128,6 +160,7 @@ export function buildChecks({
   search: WebSearchResult | null;
   domainAges: DomainAge[];
   certClusters?: CertCluster[];
+  knowledge?: KnowledgeResult | null;
   now?: Date;
 }): Check[] {
   return [
@@ -136,7 +169,16 @@ export function buildChecks({
     ...(search ? [searchCheck(search)] : []),
     ...domainAges.map((age) => domainAgeCheck(age, now)),
     ...certClusters.map(certClusterCheck),
+    ...(knowledge ? [knowledgeCheck(knowledge)] : []),
   ];
+}
+
+/** The rule signal when the posting shares an identifier with a debunked case. */
+export function knowledgeSignals(knowledge: KnowledgeResult): DetectedSignal[] {
+  const direct = knowledge.identity.find((item) => item.shared.length);
+  return direct
+    ? [knownScamSignal({ identifier: identifierLabel(direct.shared[0]), caseCount: knowledge.identity.length, entities: caseEntities(knowledge.identity) })]
+    : [];
 }
 
 /** Signals for domains registered too recently to have a track record. */

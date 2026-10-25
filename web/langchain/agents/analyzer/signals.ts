@@ -26,7 +26,8 @@ export type SignalId =
   | "moderate_combination"
   | "new_domain"
   | "lookalike_domain"
-  | "cert_cluster";
+  | "cert_cluster"
+  | "known_scam_identity";
 
 export type SignalSeverity = "strong" | "moderate";
 
@@ -562,6 +563,24 @@ export function certClusterSignal(cluster: {
         ? `Log sertifikat publik menunjukkan domain ${domain} memakai ${rotationHosts.length} subdomain acak seperti ${rotationHosts.slice(0, 3).join(", ")}. Halaman yang sama dipindah-pindah ke alamat baru adalah cara menghindari pemblokiran link.`
         : `Log sertifikat publik menunjukkan domain ${domain} memuat ${recruitmentHosts.length} situs bernama rekrutmen atau pendaftaran. Situs penipuan lowongan sering dibuat berderet di satu domain.`,
     evidence: (rotates ? rotationHosts : recruitmentHosts).slice(0, MAX_EVIDENCE_PER_SIGNAL),
+  };
+}
+
+/**
+ * From the knowledge base rather than the text: a phone, account, domain, or spreading account in
+ * the posting already appears in a job scam a fact-checker debunked. The same operation again.
+ */
+export function knownScamSignal({ identifier, caseCount, entities }: { identifier: string; caseCount: number; entities: string[] }): DetectedSignal {
+  const impersonated = entities.length ? `, atas nama ${entities.slice(0, 4).join(", ")}` : "";
+  return {
+    id: "known_scam_identity",
+    label: "Identitas yang sama sudah dinyatakan penipuan oleh pemeriksa fakta",
+    severity: "strong",
+    riskType: "suspicious_contact",
+    floor: "tinggi",
+    floorReason: "Kontak atau akun di materi ini sudah dipakai dalam lowongan palsu yang dibongkar pemeriksa fakta.",
+    description: `${identifier[0].toUpperCase()}${identifier.slice(1)} di materi ini tercatat di ${caseCount} kasus penipuan lowongan yang sudah diverifikasi pemeriksa fakta${impersonated}. Penipu memakai ulang kontak dan akun yang sama untuk lowongan palsu berikutnya.`,
+    evidence: [identifier],
   };
 }
 
