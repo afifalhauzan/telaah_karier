@@ -69,7 +69,19 @@ Setiap sertifikat HTTPS dicatat publik beserta nama host-nya. Satu operasi penip
 - Sinyal `cert_cluster`: menyamar sebagai ≥2 merek → kuat (floor tinggi); ≥3 situs rekrutmen atau ≥4 subdomain bergiliran → sedang.
 - Kode: `web/langchain/agents/analyzer/tools/ct-cluster.ts`.
 
-### 2.2 Link dan perusahaan luar negeri
+### 2.2 Jejak pendaftaran (cara pemeriksa fakta menelusuri link)
+
+Dari 457 artikel cek fakta di basis pengetahuan: di 2026, 52% lowongan palsu menyembunyikan alamatnya di **link bio** (2024: 6%), 92% link berujung di **formulir data pribadi**, dan 86% formulir itu meminta **nomor Telegram** (lalu kode verifikasinya, untuk mengambil alih akun). Hanya sekitar 1 dari 13 lowongan menuliskan alamatnya, dan alamat yang tertulis berupa subdomain panjang di domain acak (`rekrutmenbersamaskkmigasdankkks.piillly.com`). QR code tidak pernah tercatat sebagai jalur, tapi tetap didekode.
+
+Agent menelusuri jalur yang sama (`web/langchain/agents/analyzer/tools/link-checks.ts`):
+
+- Titik awal: link di materi dan link dari **QR code** di gambar (`tools/qr.ts`, didekode `jsqr`, bukan oleh model yang bisa mengarang alamat). Maksimal 3 titik awal, 2 lompatan, 6 langkah.
+- Shortlink dibuka tujuannya (termasuk halaman peringatan `lnkd.in`), lalu halaman dibaca lewat Tavily dan **tombol "Daftar"** di halaman itu diikuti.
+- **Google Form** dibaca langsung dari `docs.google.com` (pertanyaannya ada di data halaman); formulir yang dibatasi login akun Google tercatat sebagai tertutup login.
+- Setiap langkah berakhir dengan status: formulir (dengan data yang diminta), halaman, chat WhatsApp/Telegram, tertutup login, atau tidak dapat dibaca. Profil Instagram/Facebook/TikTok tertutup login, jadi untuk "link di bio" pengguna diminta menyalin link-nya.
+- Sinyal: formulir meminta kode verifikasi, kata sandi, atau foto KTP → floor tinggi; meminta nomor Telegram → floor sedang; subdomain rekrutmen panjang di domain tak dikenal → floor sedang.
+
+### 2.3 Link dan perusahaan luar negeri
 
 - Halaman link dibaca dalam format markdown, sehingga alamat yang tertulis di halaman (misalnya link pendaftaran di komentar LinkedIn) ikut terbaca.
 - `lnkd.in` dibuka tujuannya, termasuk shortlink di halaman yang dibaca.
