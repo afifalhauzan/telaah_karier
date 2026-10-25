@@ -62,6 +62,8 @@ interface AssistantMessageProps {
   onSuggestionClick: (suggestion: string) => void;
   onActionClick: (action: AnalysisAction, sourceMessageId?: string) => void;
   pendingActionId?: UIActionId | null;
+  // Actions already asked in this session, left out of the chips
+  usedActionIds?: Set<UIActionId>;
   isActionLoading?: boolean;
   onTelaahChoice?: (choice: TelaahChoice) => void;
   // Set for saved (signed-in) sessions: answers there can be rated for evaluation.
@@ -201,6 +203,7 @@ export function AssistantMessage({
   onSuggestionClick,
   onActionClick,
   pendingActionId = null,
+  usedActionIds,
   isActionLoading = false,
   onTelaahChoice,
   feedbackConversationId = null,
@@ -620,7 +623,7 @@ export function AssistantMessage({
         <motion.div key={item.key} {...fadeUp}>
           <AnalysisActions
             messageId={message.id}
-            actions={item.actions}
+            actions={usedActionIds ? item.actions.filter((action) => !usedActionIds.has(action.id)) : item.actions}
             onActionClick={onActionClick}
             isLoading={isActionLoading}
             pendingActionId={pendingActionId}

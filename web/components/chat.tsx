@@ -36,7 +36,7 @@ import { HistoryPanel, SidePanel } from "@/components/sidebar/sidebar";
 import { type SidebarSourceItem } from "@/components/sidebar/SourceItem";
 import { AnalysisSchema } from "@/langchain/agents/analyzer/schema";
 import type { FileUIPart } from "ai";
-import type { AnalysisAction, UIActionId, UIActionPayload } from "@/types/ui-actions";
+import { DEFAULT_ANALYSIS_ACTIONS, type AnalysisAction, type UIActionId, type UIActionPayload } from "@/types/ui-actions";
 
 function mapReferencesToSidebarSources(
   references: Array<{ title?: string; url?: string; citations?: Array<{ id?: string }> }>
@@ -406,6 +406,12 @@ export function Chat() {
     return null;
   })();
 
+  // An action is sent as a message with its label, so the ones asked in this session drop out of the chips
+  const usedActionIds = React.useMemo(() => {
+    const asked = new Set(messages.filter((message) => message.role === "user").map((message) => textOf(message)));
+    return new Set(DEFAULT_ANALYSIS_ACTIONS.filter((action) => asked.has(action.label)).map((action) => action.id));
+  }, [messages]);
+
   const completedStepSelections = React.useMemo(() => {
     const completed = new Map<string, string>();
 
@@ -690,6 +696,7 @@ export function Chat() {
         onSuggestionClick={handleSuggestionClick}
         onActionClick={handleActionClick}
         pendingActionId={pendingActionId}
+        usedActionIds={usedActionIds}
         isActionLoading={isLoading}
         onTelaahChoice={handleTelaahChoice}
         feedbackConversationId={user ? conversationId : null}
