@@ -128,9 +128,8 @@ Status pasal diperiksa Okt 2026: UU 13/2003 Pasal 38 tidak diubah UU 6/2023; UU 
   - `docker compose exec -u www-data api php artisan scam-reports:sync --all`
   - `docker compose exec -u www-data api php artisan scam-reports:cards`
   - `docker compose exec -u www-data api php artisan scam-reports:posters --all`
-  - `docker compose exec -u www-data api php artisan legit-postings:sync`
 - Image api perlu di-build ulang: ekstensi GD ditambahkan untuk memotong poster dari header artikel cek fakta.
-- Migrasi baru lainnya: `legit_postings`.
+- Migrasi baru lainnya: `legit_postings`. Tabel ini hanya untuk evaluasi (`eval:export`); produksi tidak mengisinya dan `legit-postings:sync` tidak terjadwal, cukup dijalankan manual di dev sebelum evaluasi.
 
 ## 5. Pekerjaan Lanjutan
 
