@@ -307,3 +307,118 @@ describe("lookalike_domain: nama perusahaan atau instansi dengan tambahan kata, 
     assert.match(government?.description ?? "", /\.go\.id/);
   });
 });
+
+describe("visa_non_work: kerja ke luar negeri dengan visa turis", () => {
+  fires("visa_non_work", [
+    "Berangkat ke Malaysia pakai visa turis, gaji RM 3.500.",
+    "Proses cepat, visa kunjungan dulu, visa kerja diurus di sana.",
+    "Visa kerja diproses setelah tiba di negara tujuan.",
+  ]);
+  silent("visa_non_work", [
+    "Jangan berangkat kerja dengan visa turis, selalu gunakan visa kerja.",
+    "Visa kerja dan paspor diurus P3MI sebelum keberangkatan.",
+  ]);
+});
+
+describe("non_placement_country: Kamboja, Myanmar, Thailand bukan negara penempatan", () => {
+  fires("non_placement_country", [
+    "Dibutuhkan CS online, lokasi kerja Kamboja, gaji 1000 USD.",
+    "Lowongan admin di Phnom Penh, tiket ditanggung.",
+    "Penempatan Thailand, gaji 15 juta, tanpa pengalaman.",
+  ]);
+  silent("non_placement_country", [
+    "Waspada, jangan bekerja di Kamboja lewat agen tidak resmi.",
+    "Menu masakan Thailand dan Jepang tersedia di restoran kami.",
+  ]);
+});
+
+describe("gambling_job: kerja untuk situs judi online", () => {
+  fires("gambling_job", [
+    "Dicari operator judi online, gaji dolar.",
+    "Lowongan CS slot online shift malam.",
+    "Admin situs togel, bisa kerja dari mess.",
+  ]);
+  silent("gambling_job", ["Slot terbatas, segera daftar.", "Lowongan dealer kasino kapal pesiar lewat P3MI berizin."]);
+});
+
+describe("money_mule: menyerahkan atau menyewakan rekening", () => {
+  fires("money_mule", [
+    "Kerja sampingan sewa rekening, dibayar 500 ribu per bulan.",
+    "Serahkan kartu ATM dan buku tabungan ke koordinator.",
+    "Buka rekening baru di bank mana saja, fee Rp 300.000 per rekening.",
+  ]);
+  silent("money_mule", [
+    "Kirim nomor rekening untuk pembayaran gaji.",
+    "Jangan pernah menyerahkan kartu ATM kepada siapa pun.",
+  ]);
+});
+
+describe("document_holding: dokumen asli sebagai jaminan", () => {
+  fires("document_holding", [
+    "Ijazah asli ditahan selama masa kontrak.",
+    "Wajib menyerahkan ijazah asli sebagai jaminan.",
+    "Paspor dipegang agen sebagai jaminan.",
+  ]);
+  silent("document_holding", ["Ijazah asli tidak ditahan perusahaan.", "Bawa ijazah asli saat interview untuk diperlihatkan."]);
+
+  test("hanya sedang, karena dasarnya surat edaran", () => {
+    const signal = detectSignals("Ijazah asli ditahan selama kontrak.").find((item) => item.id === "document_holding");
+    assert.equal(signal?.floor, "sedang");
+  });
+});
+
+describe("minor_recruitment: di bawah 18 tahun untuk luar negeri atau hiburan malam", () => {
+  fires("minor_recruitment", [
+    "Dibutuhkan pemandu lagu, usia 16-25 tahun, gaji harian.",
+    "Kerja ke Malaysia, usia minimal 17 tahun, tanpa ijazah.",
+  ]);
+  silent("minor_recruitment", ["Kasir minimarket, usia 18-25 tahun.", "Kerja ke Jepang, usia 19-30 tahun.", "Pramuniaga, usia 17 tahun ke atas."]);
+});
+
+describe("official_portal: program pemerintah atau BUMN di luar portal resminya", () => {
+  fires("official_portal", [
+    "Pendaftaran Program Magang Nasional 2026: daftar di https://magang-nasional.vercel.app/form",
+    "Seleksi CPNS 2026 dibuka, formulir pendaftaran: forms-cpns.com/daftar",
+    "Rekrutmen Bersama BUMN 2026, link pendaftaran rbb-bumn.site/daftar",
+  ]);
+  silent("official_portal", [
+    "Program Magang Nasional, daftar di https://maganghub.kemnaker.go.id",
+    "Pengumuman CPNS: daftar di sscasn.bkn.go.id. Berita: detik.com/berita-cpns",
+    "Rekrutmen Bersama BUMN, daftar di rekrutmenbersama2026.fhcibumn.id",
+    "Magang Nasional, info lengkap ikuti instagram.com/kemnaker",
+  ]);
+
+  test("form yang dicapai jejak pendaftaran juga dinilai", () => {
+    const signals = detectSignals("Program Magang Nasional, klik link di bio", { signUpUrls: ["https://docs.google.com/forms/d/e/abc/viewform"] });
+    assert.deepEqual(signals.find((item) => item.id === "official_portal")?.evidence, ["docs.google.com"]);
+  });
+});
+
+// Every "tinggi" floor names its law (docs/wiki/ai/07, kriteria tinggi); the patterns without one stop at "sedang".
+describe("dasar hukum floor tinggi", () => {
+  const scams = [
+    "Biaya pendaftaran Rp 100.000 transfer ke rekening panitia.",
+    "Kirimkan kode OTP yang masuk ke nomor Anda.",
+    "Lowongan PT Pertamina (Persero), kirim CV ke hrd.pertamina@gmail.com",
+    "Daftar di rekrutmen-pertamina.com",
+    "Berangkat pakai visa turis ke Malaysia.",
+    "Lokasi kerja Kamboja, gaji 1000 USD.",
+    "Dicari operator judi online.",
+    "Sewa rekening dibayar 500 ribu.",
+    "Pemandu lagu usia 16 tahun.",
+    "Program Magang Nasional, daftar di magang-nasional.vercel.app/form",
+  ];
+  for (const text of scams) {
+    test(`tinggi dengan dasar hukum: ${text.slice(0, 50)}`, () => {
+      const tinggi = detectSignals(text).filter((signal) => signal.floor === "tinggi");
+      assert.ok(tinggi.length, "tidak ada floor tinggi");
+      assert.ok(tinggi.every((signal) => signal.legalBasis), "floor tinggi tanpa dasar hukum");
+    });
+  }
+
+  test("domain gratisan dan tugas like/follow tanpa deposit hanya sedang", () => {
+    assert.equal(ruleBasedRiskLevel(detectSignals("Formulir di lowongan-kerja.vercel.app")), "sedang");
+    assert.equal(ruleBasedRiskLevel(detectSignals("Kerja like dan follow akun, dibayar Rp 10.000 per tugas.")), "sedang");
+    assert.equal(ruleBasedRiskLevel(detectSignals("Tugas like dibayar Rp 10.000, wajib deposit Rp 100.000 untuk tugas premium.")), "tinggi");
+  });
+});

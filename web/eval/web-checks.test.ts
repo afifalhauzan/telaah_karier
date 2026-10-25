@@ -116,12 +116,12 @@ test("a domain hosting a row of recruitment sites in other names is flagged from
   assert.match(check.detail, /7 situs di domain ini sejak 17 Sep 2024, atas nama JobStreet, termasuk/);
 });
 
-test("posing as two employers under one domain is a strong signal; one company's own sites are not flagged", () => {
+test("posing as two employers under one domain lifts to sedang, as no law backs more; one company's own sites are not flagged", () => {
   const twoBrands = summarizeCertEntries("loker-resmi.id", [
     { dns_names: ["rekrutmen-pertamina.loker-resmi.id"], not_before: "2026-09-01" },
     { dns_names: ["karir-pln.loker-resmi.id"], not_before: "2026-09-02" },
   ]);
-  assert.deepEqual(certClusterSignals([twoBrands]).map((signal) => [signal.severity, signal.floor]), [["strong", "tinggi"]]);
+  assert.deepEqual(certClusterSignals([twoBrands]).map((signal) => [signal.severity, signal.floor]), [["moderate", "sedang"]]);
 
   const company = summarizeCertEntries("idstar.co.id", [
     { dns_names: ["idstar.co.id", "www.idstar.co.id"], not_before: "2020-01-01" },

@@ -641,7 +641,9 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
     }
   }
 
-  const signals = useRules ? [...detectSignals(materialText), ...(links ? trailSignals(links) : [])] : [];
+  // The forms the trail reached, which a program's official portal must host
+  const signUpUrls = links?.trail.filter((step) => step.outcome === "form").map((step) => step.url) ?? [];
+  const signals = useRules ? [...detectSignals(materialText, { signUpUrls }), ...(links ? trailSignals(links) : [])] : [];
   if (useRules) {
     addStep(describeSignalsForProgress(signals));
   }
