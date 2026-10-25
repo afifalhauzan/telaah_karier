@@ -185,7 +185,7 @@ test("a case is tied to the scam's own contacts and spreading accounts, not to w
   ]);
 });
 
-test("a posting sharing an account with debunked cases gets a floor; similar cases are only context", () => {
+test("a posting sharing an account with debunked cases is lifted to sedang at most; similar cases are only context", () => {
   const card = { modus: ["impersonasi" as const], entitas: "PT Komatsu Indonesia", kanal: ["TikTok"], ciri: [], kutipan: "OPEN RECRUITMENT NEDP" };
   const debunked = { id: 37273, url: "https://turnbackhoax.id/articles/37273", title: "[PENIPUAN] Tautan Lowongan Kerja Komatsu Indonesia", published_at: "2026-10-22", card, identifiers: [] };
   const knowledge: KnowledgeResult = {
@@ -199,7 +199,7 @@ test("a posting sharing an account with debunked cases gets a floor; similar cas
   };
 
   const [signal] = knowledgeSignals(knowledge);
-  assert.equal(signal.floor, "tinggi");
+  assert.deepEqual([signal.severity, signal.floor], ["moderate", "sedang"]);
   assert.match(signal.description, /akun “infoloker378” .*2 kasus .*Komatsu Indonesia, PT Kaltim Prima Coal/i);
 
   const sources = knowledgeSources(knowledge, 2);

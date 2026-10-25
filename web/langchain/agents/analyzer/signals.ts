@@ -544,17 +544,19 @@ export function certClusterSignal(cluster: {
 
 /**
  * From the knowledge base rather than the text: a phone, account, domain, or spreading account in
- * the posting already appears in a job scam a fact-checker debunked. The same operation again.
+ * the posting already appears in a job scam a fact-checker debunked. Likely the same operation again,
+ * but a number can be recycled or reused by someone else, and no law makes a shared contact a scam by
+ * itself, so it is shown to the user to verify and lifts the verdict to "sedang" at most.
  */
 export function knownScamSignal({ identifier, caseCount, entities }: { identifier: string; caseCount: number; entities: string[] }): DetectedSignal {
   const impersonated = entities.length ? `, atas nama ${entities.slice(0, 4).join(", ")}` : "";
   return {
     id: "known_scam_identity",
     label: "Identitas yang sama sudah dinyatakan penipuan oleh pemeriksa fakta",
-    severity: "strong",
+    severity: "moderate",
     riskType: "suspicious_contact",
-    floor: "tinggi",
-    floorReason: "Kontak atau akun di materi ini sudah dipakai dalam lowongan palsu yang dibongkar pemeriksa fakta.",
+    floor: "sedang",
+    floorReason: "Kontak atau akun di materi ini tercatat dalam lowongan palsu yang dibongkar pemeriksa fakta; cocokkan sendiri kasusnya.",
     description: `${identifier[0].toUpperCase()}${identifier.slice(1)} di materi ini tercatat di ${caseCount} kasus penipuan lowongan yang sudah diverifikasi pemeriksa fakta${impersonated}. Penipu memakai ulang kontak dan akun yang sama untuk lowongan palsu berikutnya.`,
     evidence: [identifier],
   };
