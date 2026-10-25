@@ -12,9 +12,9 @@ function turnbackhoax_listing(array $ids): string
     return "<html><body><main>{$cards}</main><a href=\"/articles?category=lowongan&page=2\">2</a></body></html>";
 }
 
-function turnbackhoax_article(): string
+function turnbackhoax_article(string $title = '[PENIPUAN] Lowongan Kerja PT Contoh Tambang', string $verdict = 'Salah'): string
 {
-    return <<<'HTML'
+    return str_replace(['[PENIPUAN] Lowongan Kerja PT Contoh Tambang', '<strong>Salah</strong>'], [$title, "<strong>{$verdict}</strong>"], <<<'HTML'
 <html><head><title>x</title></head><body>
 <article>
   <div>
@@ -54,5 +54,5 @@ function turnbackhoax_article(): string
   <section class="article--sidebar"><img src="https://example.org/other-article.png"></section>
 </article>
 </body></html>
-HTML;
+HTML);
 }

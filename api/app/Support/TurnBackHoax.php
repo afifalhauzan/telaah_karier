@@ -19,6 +19,24 @@ class TurnBackHoax
 
     public const LISTING_PATH = '/articles?category=lowongan&page=';
 
+    // Older job fact-checks sit outside the "Lowongan" category; the site search finds them
+    public const SEARCH_PATH = '/search?query=lowongan&page=';
+
+    // Every category, newest first: its first page gives the latest article id
+    public const ALL_PATH = '/articles?page=';
+
+    // Partner media's fact-checks (shown on cekfakta.com) are in no listing, but served here by id
+    public const ARTICLE_PATH = '/articles/';
+
+    // A title about a job offer, for articles that do not come from the "Lowongan" category
+    private const JOB_TITLE = '/lowongan|loker|rekrutmen|recruitment|perekrutan|magang|cpns|pppk|calon (karyawan|pegawai)|seleksi (pegawai|karyawan)|tenaga kerja|pendaftaran kerja|kerja (di|ke) luar negeri/i';
+
+    /** Whether a fact-check's title is about a job offer. */
+    public static function isAboutJobs(string $title): bool
+    {
+        return (bool) preg_match(self::JOB_TITLE, $title);
+    }
+
     private const ARCHIVE_HOSTS = ['archive.ph', 'archive.today', 'archive.is', 'archive.li', 'archive.org', 'ghostarchive.org', 'perma.cc'];
 
     private const PLATFORMS = [

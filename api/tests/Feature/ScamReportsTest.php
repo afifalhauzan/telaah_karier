@@ -19,6 +19,8 @@ class ScamReportsTest extends TestCase
         parent::setUp();
         config(['services.scam_reports.request_delay_ms' => 0]);
         Storage::fake('local');
+        // An unfaked URL would reach the real site
+        Http::preventStrayRequests();
     }
 
     private function fakeSite(array $page1, array $page2 = []): void
@@ -29,6 +31,7 @@ class ScamReportsTest extends TestCase
             'turnbackhoax.id/articles?category=lowongan&page=*' => Http::response(turnbackhoax_listing([])),
             'turnbackhoax.id/articles/*' => Http::response(turnbackhoax_article()),
             'yudistira.turnbackhoax.id/*' => Http::response('png-bytes', 200, ['Content-Type' => 'image/png']),
+            '*' => Http::response(''),
         ]);
     }
 
@@ -61,6 +64,41 @@ class ScamReportsTest extends TestCase
 
         $this->artisan('scam-reports:sync')->expectsOutput('Added 0 new reports.');
         $this->artisan('scam-reports:sync --all')->expectsOutput('Added 1 new reports.');
+    }
+
+    public function test_the_search_adds_job_fact_checks_outside_the_category_but_not_genuine_or_other_hoaxes(): void
+    {
+        Http::fake([
+            'turnbackhoax.id/search?query=lowongan&page=1' => Http::response(turnbackhoax_listing([201, 202, 203])),
+            'turnbackhoax.id/articles/201-*' => Http::response(turnbackhoax_article('[SALAH] Lowongan Kerja Puskesmas Contoh')),
+            'turnbackhoax.id/articles/202-*' => Http::response(turnbackhoax_article('[KLARIFIKASI] Lowongan Kerja PT Pupuk Contoh', 'Klarifikasi')),
+            'turnbackhoax.id/articles/203-*' => Http::response(turnbackhoax_article('[SALAH] Pertalite Bubuk, Tinggal Campur Air')),
+            '*' => Http::response(''),
+        ]);
+
+        $this->artisan('scam-reports:sync')->expectsOutput('Added 1 new reports.')->assertSuccessful();
+        $this->assertSame([201], ScamReport::pluck('external_id')->all());
+    }
+
+    public function test_partner_fact_checks_are_read_by_id_after_the_last_one_seen(): void
+    {
+        ScamReport::create([
+            'source' => 'turnbackhoax', 'external_id' => 300, 'url' => 'u', 'title' => 't', 'posting_text' => 'p',
+            'narrative' => 'n', 'source_links' => [], 'archive_links' => [], 'reference_links' => [], 'images' => [],
+        ]);
+        Http::fake([
+            'turnbackhoax.id/articles?page=1' => Http::response(turnbackhoax_listing([303, 302])),
+            'turnbackhoax.id/articles/301' => Http::response(turnbackhoax_article('Cek Fakta: Tidak Benar Link Pendaftaran Lowongan Kerja Ombudsman')),
+            'turnbackhoax.id/articles/302' => Http::response(turnbackhoax_article('Cek Fakta: Hoaks Video Menkeu Umumkan Bantuan Dana')),
+            'turnbackhoax.id/articles/303' => Http::response('', 404),
+            '*' => Http::response(''),
+        ]);
+
+        $this->artisan('scam-reports:sync')->expectsOutput('Added 1 new reports.');
+        $this->assertSame('https://turnbackhoax.id/articles/301', ScamReport::where('external_id', 301)->value('url'));
+        // The next run starts after the latest id instead of reading them again
+        $this->artisan('scam-reports:sync')->expectsOutput('Added 0 new reports.');
+        $this->assertCount(3, Http::recorded(fn ($request) => preg_match('~/articles/\d+$~', $request->url())));
     }
 
     public function test_a_refresh_reads_stored_articles_again_and_keeps_their_review_status(): void

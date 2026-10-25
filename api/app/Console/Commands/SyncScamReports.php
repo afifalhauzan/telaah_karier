@@ -8,12 +8,13 @@ use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 #[Signature('scam-reports:sync {--all : Walk the whole category instead of stopping at known articles} {--pages=40 : Most listing pages to read} {--refresh : Read the stored articles again, e.g. after a parser fix}')]
-#[Description('Collect new job-scam fact-checks from TurnBackHoax into scam_reports')]
+#[Description('Collect new job-scam fact-checks (Mafindo and partner media) from TurnBackHoax into scam_reports')]
 class SyncScamReports extends Command
 {
     private const SOURCE = 'turnbackhoax';
@@ -21,6 +22,11 @@ class SyncScamReports extends Command
     private const USER_AGENT = 'TelaahKarier/1.0 (+https://telaahkarier.com; dataset riset pencegahan penipuan kerja)';
 
     private const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+
+    // Where scanNewIds stopped; fact-checks get a few dozen new ids a day
+    private const SCAN_CURSOR = 'scam-reports:scanned-id';
+
+    private const MAX_SCAN = 200;
 
     public function handle(): int
     {
@@ -37,30 +43,59 @@ class SyncScamReports extends Command
         $known = ScamReport::where('source', self::SOURCE)->pluck('external_id')->all();
         $added = 0;
 
-        for ($page = 1; $page <= (int) $this->option('pages'); $page++) {
-            $listing = $this->get(TurnBackHoax::BASE_URL.TurnBackHoax::LISTING_PATH.$page);
-            $articles = $listing ? TurnBackHoax::listingArticles($listing) : [];
-            if (! $articles) {
-                break;
-            }
+        // The category is all about jobs; the search also finds "lowongan" in other hoaxes
+        foreach ([TurnBackHoax::LISTING_PATH => false, TurnBackHoax::SEARCH_PATH => true] as $path => $checkTitle) {
+            for ($page = 1; $page <= (int) $this->option('pages'); $page++) {
+                $listing = $this->get(TurnBackHoax::BASE_URL.$path.$page);
+                $articles = $listing ? TurnBackHoax::listingArticles($listing) : [];
+                if (! $articles) {
+                    break;
+                }
 
-            $new = array_diff_key($articles, array_flip($known));
-            foreach ($new as $id => $url) {
-                $added += $this->store($id, $url) ? 1 : 0;
-                $known[] = $id;
-            }
-            // Daily runs stop at the first page with nothing new; the listing is newest first
-            if (! $new && ! $this->option('all')) {
-                break;
+                $new = array_diff_key($articles, array_flip($known));
+                foreach ($new as $id => $url) {
+                    $added += $this->store($id, $url, $checkTitle) ? 1 : 0;
+                    $known[] = $id;
+                }
+                // Daily runs stop at the first page with nothing new; listings are newest first
+                if (! $new && ! $this->option('all')) {
+                    break;
+                }
             }
         }
+        $added += $this->scanNewIds($known);
 
         $this->info("Added {$added} new reports.");
 
         return self::SUCCESS;
     }
 
-    private function store(int $id, string $url): bool
+    /**
+     * Partner media's fact-checks (CekFakta) share TurnBackHoax's ids but appear in no listing, so
+     * every id after the last one read is opened once and kept when it is about a job.
+     * shortcut: only ids published from the first run on; older partner fact-checks need the
+     * Yudistira API (or cekfakta.com's search, when it answers).
+     *
+     * @param  list<int>  $known
+     */
+    private function scanNewIds(array $known): int
+    {
+        $latest = max(array_keys(TurnBackHoax::listingArticles($this->get(TurnBackHoax::BASE_URL.TurnBackHoax::ALL_PATH.'1') ?? '')) ?: [0]);
+        $from = (int) Cache::get(self::SCAN_CURSOR, max($known ?: [0]));
+        $to = min($latest, $from + self::MAX_SCAN);
+
+        $added = 0;
+        for ($id = $from + 1; $id <= $to; $id++) {
+            if (! in_array($id, $known, true)) {
+                $added += $this->store($id, TurnBackHoax::BASE_URL.TurnBackHoax::ARTICLE_PATH.$id, true) ? 1 : 0;
+            }
+        }
+        Cache::forever(self::SCAN_CURSOR, max($from, $to));
+
+        return $added;
+    }
+
+    private function store(int $id, string $url, bool $checkTitle = false): bool
     {
         $html = $this->get($url);
         if (! $html) {
@@ -69,6 +104,15 @@ class SyncScamReports extends Command
 
         try {
             $article = TurnBackHoax::parseArticle($html);
+            if ($checkTitle && ! TurnBackHoax::isAboutJobs($article['title'])) {
+                return false;
+            }
+            // Only debunked offers: "Klarifikasi" marks a genuine posting that was doubted
+            if ($article['verdict'] !== 'Salah') {
+                $this->line("Skipped {$url}: verdict {$article['verdict']}");
+
+                return false;
+            }
             if ($article['posting_text'] === '') {
                 $this->warn("Skipped {$url}: no narrative");
 
@@ -122,7 +166,8 @@ class SyncScamReports extends Command
         // One request at a time with a pause: a polite reader of a volunteer-run site
         usleep((int) config('services.scam_reports.request_delay_ms') * 1000);
         try {
-            $response = Http::withUserAgent(self::USER_AGENT)->timeout(20)->get($url);
+            // The site sometimes takes 20 s or more for one page
+            $response = Http::withUserAgent(self::USER_AGENT)->timeout(45)->get($url);
 
             return $response->successful() ? $response : null;
         } catch (Throwable $error) {
