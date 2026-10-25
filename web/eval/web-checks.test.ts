@@ -9,6 +9,7 @@ import { test } from "node:test";
 import { buildChecks, certClusterSignals, newDomainSignals } from "../langchain/agents/analyzer/checks";
 import { summarizeCertEntries } from "../langchain/agents/analyzer/tools/ct-cluster";
 import { linkedinExternalLink, pageText } from "../langchain/agents/analyzer/tools/link-checks";
+import { caseIdentifiers } from "../langchain/agents/knowledge/case-card";
 import { detectSignals } from "../langchain/agents/analyzer/signals";
 import { registrableDomain } from "../langchain/agents/analyzer/tools/domain-age";
 import type { WebSearchResult } from "../langchain/agents/analyzer/tools/tavily-search";
@@ -156,4 +157,17 @@ test("lnkd.in's warning page gives the outside address it stands for", () => {
     <a class="artdeco-button artdeco-button--tertiary" data-tracking-control-name="external_url_click" data-tracking-will-navigate href="https://forms.gle/e9AvwcP9MdMNwvXd6?a=1&amp;b=2">`;
   assert.equal(linkedinExternalLink(html), "https://forms.gle/e9AvwcP9MdMNwvXd6?a=1&b=2");
   assert.equal(linkedinExternalLink("<html>LinkedIn post</html>"), null);
+});
+
+test("a case is tied to the scam's own contacts and spreading accounts, not to where it is archived", () => {
+  const identifiers = caseIdentifiers({
+    postingText: "Daftar di rekrutmen-kpc.online atau WA 0812-3456-7890. Arsip: https://archive.ph/AbCdE",
+    narrative: "Akun TikTok “infoloker378” pada Rabu (30/9/2026) mengunggah foto lowongan.",
+    sourceLinks: ["https://www.tiktok.com/@infoloker378/photo/7691159662946782472", "https://www.facebook.com/photo/?fbid=1"],
+  });
+  assert.deepEqual(identifiers, [
+    { kind: "phone", value: "6281234567890" },
+    { kind: "domain", value: "rekrutmen-kpc.online" },
+    { kind: "social", value: "infoloker378" },
+  ]);
 });
