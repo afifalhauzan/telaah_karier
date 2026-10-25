@@ -2,6 +2,36 @@
 
 // Synthetic pages in TurnBackHoax's markup (as of Oct 2026), for the parser and sync tests
 
+/**
+ * A KarirHub listing page: links to the postings, and their data streamed as escaped JSON inside a
+ * script (as of Oct 2026). The first posting is KarirHub's own, the rest come from a partner portal.
+ */
+function karirhub_listing(array $ids): string
+{
+    $links = implode('', array_map(fn ($id) => "<a href=\"/lowongan-dalam-negeri/lowongan/admin-gudang-{$id}\">Admin</a>", $ids));
+    $objects = implode(',', array_map(fn ($id, $i) => json_encode([
+        'id' => $id, 'title' => 'Admin Gudang', 'companyName' => 'PT Contoh Logistik Nusantara', 'publishedAt' => 1792883739,
+        'platformId' => $i ? 'p-1' : null, 'platformLink' => $i ? "https://www.kitalulus.com/lowongan/detail/admin-{$i}?utm_source=pasker" : null,
+        'platformName' => $i ? 'Kitalulus' : null, 'platformType' => $i ? 'external' : 'internal',
+    ], JSON_UNESCAPED_SLASHES), $ids, array_keys($ids)));
+
+    return "<html><body>{$links}<script>self.__next_f.push([1,\"".addslashes("[{$objects}]").'"])</script></body></html>';
+}
+
+/** A KarirHub posting page; partner portals put the employer's text under "Deskripsi Pekerjaan". */
+function karirhub_posting(string $description = 'Mencatat barang masuk dan keluar gudang setiap hari, menyusun laporan stok mingguan, dan berkoordinasi dengan tim pengiriman.'): string
+{
+    return <<<HTML
+<html><head><title>Karirhub - Admin Gudang | Karirhub Kemnaker</title><script>var x = "Deskripsi Pekerjaan palsu";</script></head><body>
+<nav>Lowongan Pekerjaan Pemberi Kerja Jobfair</nav>
+<main><h1>Admin Gudang</h1><p>Kota Malang, Jawa Timur</p>
+<h2>Deskripsi Pekerjaan</h2><p>{$description}</p><h3>Persyaratan Khusus</h3><p>Cek deskripsi untuk kualifikasi dan benefit.</p>
+<h2>Persyaratan Umum</h2><p>Minimal pendidikan SMA atau sederajat</p><p>Kondisi fisik Disabilitas &amp; Non disabilitas</p>
+<p>PT Contoh Logistik Nusantara</p><a href="/perusahaan/1">Lihat Profil Perusahaan</a></main>
+<footer>Kementerian Ketenagakerjaan RI</footer></body></html>
+HTML;
+}
+
 /** cekfakta.com's search page, which embeds its results as JSON (as of Oct 2026) */
 function cekfakta_search(array $ids): string
 {
