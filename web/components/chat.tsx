@@ -604,12 +604,11 @@ export function Chat() {
 
     if (isLoading) return;
 
-    if (choice.kind === "bio-link") {
-      sendMessage({ text: `Link di bio${choice.handle ? ` @${choice.handle}` : ""}: ${choice.url}` }, { same_posting: true });
-      return;
-    }
-
-    if (choice.kind === "self-analyze") {
+    if (choice.kind === "link-given") {
+      regenerateWith(choice.messageId, { given_links: [choice.url] });
+    } else if (choice.kind === "skip-link") {
+      regenerateWith(choice.messageId, { skip_link_request: true });
+    } else if (choice.kind === "self-analyze") {
       regenerateWith(choice.messageId, { skip_similar: true });
     } else if (choice.kind === "same-posting") {
       regenerateWith(choice.messageId, { same_posting: true });

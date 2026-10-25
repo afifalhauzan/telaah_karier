@@ -15,8 +15,6 @@ import type { UIActionPayload } from "@/types/ui-actions";
 interface SendMessageOptions {
   action_type?: "UI_ACTION";
   action_payload?: UIActionPayload;
-  // More material of the session posting: the server skips its new-posting check
-  same_posting?: boolean;
 }
 
 interface StreamingContextType {
@@ -179,8 +177,6 @@ export function StreamingProvider({ children, chatId }: StreamingProviderProps) 
         action_type: options.action_type,
         action_payload: options.action_payload,
       };
-    } else if (options?.same_posting) {
-      requestOptions.body = { same_posting: true };
     }
 
     originalSendMessage(messageObject, requestOptions);

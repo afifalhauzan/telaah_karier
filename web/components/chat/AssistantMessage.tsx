@@ -7,7 +7,6 @@ import { useInteractionStore } from "@/lib/interaction-store";
 import {
   AnalysisSchema,
   type AnalysisResult,
-  type BioLink,
   type Check as AnalysisCheck,
   type Citation,
   type Claim,
@@ -30,7 +29,7 @@ import { AnalysisActions } from "@/components/cards/AnalysisActions";
 import { ActionInsightCard } from "@/components/cards/ActionInsightCard";
 import { SalaryBenefitCard } from "@/components/cards/SalaryBenefitCard";
 import { KnownScamCard } from "@/components/cards/KnownScamCard";
-import { BioLinkCard } from "@/components/cards/BioLinkCard";
+import { LinkRequestCard } from "@/components/cards/LinkRequestCard";
 import type { AnalysisAction, UIActionId } from "@/types/ui-actions";
 import { BuatPostPrompt, SessionMoveCard, SimilarTelaahCard } from "@/components/telaah-bersama/chat-cards";
 import { MessageFeedback } from "@/components/chat/message-feedback";
@@ -49,8 +48,9 @@ export type TelaahChoice =
   | { kind: "same-posting"; messageId: string }
   // The session is full: carry its latest analysis into a new one (lib/compact-session.ts)
   | { kind: "continue-session"; messageId: string }
-  // The link copied from the account bio, traced as more material of the same posting
-  | { kind: "bio-link"; messageId: string; url: string; handle?: string };
+  // The answer to the link request asked before the analysis: the link, or go on without one
+  | { kind: "link-given"; messageId: string; url: string }
+  | { kind: "skip-link"; messageId: string };
 
 interface AssistantMessageProps {
   message: MetabotUIMessage;
@@ -97,7 +97,7 @@ type RenderItem =
   | { kind: "summary"; key: string; summary: string; citations: Citation[] }
   | { kind: "claims"; key: string; claims: Claim[] }
   | { kind: "known-scam"; key: string; cases: KnownCase[] }
-  | { kind: "bio-link"; key: string; bioLink: BioLink }
+  | { kind: "link-request"; key: string }
   | { kind: "salary-benefit"; key: string; assessment: SalaryBenefitAssessment }
   | { kind: "risks"; key: string; risks: Risk[] }
   | { kind: "checks"; key: string; checks: AnalysisCheck[] }
@@ -173,7 +173,7 @@ function hasInterleavableDataPart(part: MetabotUIMessagePart): boolean {
     part.type === "data-summary" ||
     part.type === "data-claims" ||
     part.type === "data-known-scam" ||
-    part.type === "data-bio-link" ||
+    part.type === "data-link-request" ||
     part.type === "data-salary-benefit" ||
     part.type === "data-risks" ||
     part.type === "data-checks" ||
@@ -305,8 +305,8 @@ export function AssistantMessage({
           return;
         }
 
-        if (part.type === "data-bio-link") {
-          items.push({ kind: "bio-link", key, bioLink: part.data });
+        if (part.type === "data-link-request") {
+          items.push({ kind: "link-request", key });
           return;
         }
 
@@ -407,10 +407,6 @@ export function AssistantMessage({
 
     if (analysisData.knownCases?.length) {
       items.push({ kind: "known-scam", key: `${message.id}-analysis-known-scam`, cases: analysisData.knownCases });
-    }
-
-    if (analysisData.bioLink) {
-      items.push({ kind: "bio-link", key: `${message.id}-analysis-bio-link`, bioLink: analysisData.bioLink });
     }
 
     if (analysisData.salaryBenefit) {
@@ -552,13 +548,14 @@ export function AssistantMessage({
       );
     }
 
-    if (item.kind === "bio-link") {
-      const canSend = isLastMessage && !isStreaming && onTelaahChoice;
+    if (item.kind === "link-request") {
+      // Answered by regenerating this message, so only the latest one still asks
+      if (!isLastMessage || isStreaming || !onTelaahChoice) return null;
       return (
         <motion.div key={item.key} {...fadeUp}>
-          <BioLinkCard
-            bioLink={item.bioLink}
-            onSubmit={canSend ? (url) => onTelaahChoice({ kind: "bio-link", messageId: message.id, url, handle: item.bioLink.handle }) : undefined}
+          <LinkRequestCard
+            onSubmit={(url) => onTelaahChoice({ kind: "link-given", messageId: message.id, url })}
+            onSkip={() => onTelaahChoice({ kind: "skip-link", messageId: message.id })}
           />
         </motion.div>
       );
