@@ -32,6 +32,8 @@ import { SalaryBenefitCard } from "@/components/cards/SalaryBenefitCard";
 import { KnownScamCard } from "@/components/cards/KnownScamCard";
 import { SimilarCasesCard } from "@/components/cards/SimilarCasesCard";
 import { LinkRequestCard } from "@/components/cards/LinkRequestCard";
+import { ReportCard } from "@/components/cards/ReportCard";
+import { buildReportDraft, reportSourceFromAnalysis } from "@/lib/report-draft";
 import type { AnalysisAction, UIActionId } from "@/types/ui-actions";
 import { BuatPostPrompt, SessionMoveCard, SimilarTelaahCard } from "@/components/telaah-bersama/chat-cards";
 import { MessageFeedback } from "@/components/chat/message-feedback";
@@ -665,6 +667,12 @@ export function AssistantMessage({
       return (
         <motion.div key={item.key} {...fadeUp}>
           <BuatPostPrompt share={item.share} onCreate={() => onTelaahChoice?.({ kind: "share", messageId: message.id, share: item.share })} />
+          {/* The share part comes only under a sedang or tinggi verdict, which is when reporting helps */}
+          {analysisData && (
+            <div className="mt-3">
+              <ReportCard draft={buildReportDraft(reportSourceFromAnalysis(analysisData, sourceText ?? ""))} />
+            </div>
+          )}
         </motion.div>
       );
     }
