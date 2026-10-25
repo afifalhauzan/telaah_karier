@@ -36,8 +36,11 @@ class TurnBackHoaxTest extends TestCase
         $this->assertSame('tiktok', $article['platform']);
         $this->assertSame(['https://www.tiktok.com/@lokercontoh/photo/123'], $article['source_links']);
         $this->assertSame(['https://archive.ph/AbCdE', 'https://web.archive.org/web/2026/https://contoh.example'], $article['archive_links']);
-        // The header and the sidebar are not the scam; Mafindo's own image is marked as stamped
-        $this->assertSame([['url' => 'https://yudistira.turnbackhoax.id/uploads/2_SALAH_lowongan.png', 'stamped' => true]], $article['image_urls']);
+        // The header is often the poster in Mafindo's frame, so it is kept, stamped; the sidebar shows other articles
+        $this->assertSame([
+            ['url' => 'https://yudistira.turnbackhoax.id/uploads/1_HEADER_-_Light_Background_(17).png', 'stamped' => true],
+            ['url' => 'https://yudistira.turnbackhoax.id/uploads/2_SALAH_lowongan.png', 'stamped' => true],
+        ], $article['image_urls']);
     }
 
     public function test_platforms_are_read_from_the_original_link(): void

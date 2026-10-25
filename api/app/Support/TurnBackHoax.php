@@ -154,8 +154,9 @@ class TurnBackHoax
     }
 
     /**
-     * Images in the article body. The first figure is a generic Mafindo header, not the scam; images
-     * the fact-checker made usually carry its verdict stamp, so they are marked.
+     * Images in the article body, the header included: in newer articles the header is the scam poster
+     * itself in Mafindo's frame, and often the only image. Images the fact-checker made carry its
+     * verdict stamp or frame, so they are marked.
      *
      * @return list<array{url: string, stamped: bool}>
      */
@@ -165,7 +166,7 @@ class TurnBackHoax
         // Not the "Artikel terbaru" sidebar, which shows other articles' headers
         foreach ($xpath->query(".//section//img[not(ancestor::section[contains(@class,'sidebar')])]/@src", $article) as $src) {
             $url = trim($src->nodeValue);
-            if (! str_starts_with($url, 'http') || preg_match('/HEADER_|logo|icon|avatar/i', $url)) {
+            if (! str_starts_with($url, 'http') || preg_match('/logo|icon|avatar/i', $url)) {
                 continue;
             }
             $images[] = ['url' => $url, 'stamped' => str_contains($url, 'turnbackhoax.id')];
