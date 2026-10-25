@@ -34,6 +34,7 @@ import { getAccessToken } from "@/lib/server-auth";
 import { loadStoredAttachments } from "@/lib/stored-attachments";
 import { chargeSession, GUEST_COOKIE, guestCookieOptions, openSession, type QuotaBlock } from "@/lib/quota";
 import type { TokenUsage } from "@/langchain/agents/analyzer/llm";
+import { detectAlurIntent } from "@/lib/telaah-alur/trigger";
 
 const STREAM_CHUNK_DELAY_MS = 28;
 const SECTION_STEP_DELAY_MS = 220;
@@ -196,6 +197,12 @@ function toSimilarPart(match: SimilarMatch, ownSignals: string[]): SimilarTelaah
   };
 }
 
+/** Offers the TelaahAlur check under an answer when the user says they are in a recruitment process. */
+function offerAlurCheck(writer: any, text: string) {
+  const intent = detectAlurIntent(text);
+  if (intent) writer.write({ type: "data-alur-check", data: { readFacts: intent.readFacts } });
+}
+
 /** Names the session for the history list. Sent last so it never delays the answer itself. */
 async function writeSessionTitle(writer: any, question: string, answer: string) {
   const title = await generateSessionTitle({ question, answer });
@@ -297,6 +304,7 @@ export async function POST(req: NextRequest) {
             await sleep(SECTION_STEP_DELAY_MS);
             writer.write({ type: "data-suggested-questions", data: result.suggestedQuestions });
           }
+          offerAlurCheck(writer, input);
           if (shouldTitleSession) {
             await writeSessionTitle(writer, input, result.answer);
           }
@@ -351,6 +359,7 @@ export async function POST(req: NextRequest) {
             recordMatchShown(match.post.id, viewerKey(req));
             await streamTextBlock({ writer, text: SIMILAR_FOUND_MESSAGE, id: `similar-${Date.now()}` });
             writer.write({ type: "data-similar-telaah", data: toSimilarPart(match, ownSignalLabels(materialText)) });
+            offerAlurCheck(writer, input);
             if (shouldTitleSession) {
               await writeSessionTitle(writer, input || materialText, `${match.post.title}\n${match.post.summary}`);
             }
@@ -469,6 +478,7 @@ export async function POST(req: NextRequest) {
 
         // Keep compatibility for existing consumers and historical parsing paths.
         writer.write({ type: "data-analysis", data: analysis });
+        offerAlurCheck(writer, input);
 
         if (shouldTitleSession) {
           await writeSessionTitle(

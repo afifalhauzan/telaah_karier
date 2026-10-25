@@ -34,7 +34,8 @@ import { QuotaNotice } from "@/components/chat/quota-notice";
 import type { QuotaBlock } from "@/lib/quota";
 import { MessageActions } from "@/components/chat/MessageActions";
 import type { SourceFile } from "@/lib/analysis-export/build";
-import type { SimilarTelaahPartData, TelaahSharePartData } from "@/types/streaming";
+import type { AlurCheckPartData, SimilarTelaahPartData, TelaahSharePartData } from "@/types/streaming";
+import { AlurChatCard } from "@/components/telaah-alur/alur-chat-card";
 
 /** What the user picked on a TelaahBareng card in the chat; handled by components/chat.tsx. */
 export type TelaahChoice =
@@ -108,7 +109,8 @@ type RenderItem =
   | { kind: "telaah-share"; key: string; share: TelaahSharePartData }
   | { kind: "similar-telaah"; key: string; data: SimilarTelaahPartData }
   | { kind: "session-move"; key: string; previousTitle: string }
-  | { kind: "quota"; key: string; reason: QuotaBlock };
+  | { kind: "quota"; key: string; reason: QuotaBlock }
+  | { kind: "alur-check"; key: string; data: AlurCheckPartData };
 
 function extractAnalysisFromParts(parts: MetabotUIMessagePart[]): AnalysisResult | null {
   const analysisPart = parts.find((part) => part.type === "data-analysis");
@@ -174,7 +176,8 @@ function hasInterleavableDataPart(part: MetabotUIMessagePart): boolean {
     part.type === "data-telaah-share" ||
     part.type === "data-similar-telaah" ||
     part.type === "data-session-move" ||
-    part.type === "data-quota"
+    part.type === "data-quota" ||
+    part.type === "data-alur-check"
   );
 }
 
@@ -343,6 +346,10 @@ export function AssistantMessage({
 
         if (part.type === "data-quota") {
           items.push({ kind: "quota", key, reason: part.data.reason });
+        }
+
+        if (part.type === "data-alur-check") {
+          items.push({ kind: "alur-check", key, data: part.data });
         }
       });
 
@@ -616,6 +623,14 @@ export function AssistantMessage({
             disabled={!canChoose}
             onContinue={() => onTelaahChoice?.({ kind: "continue-session", messageId: message.id })}
           />
+        </motion.div>
+      );
+    }
+
+    if (item.kind === "alur-check") {
+      return (
+        <motion.div key={item.key} {...fadeUp}>
+          <AlurChatCard messageId={message.id} readFacts={item.data.readFacts} />
         </motion.div>
       );
     }
