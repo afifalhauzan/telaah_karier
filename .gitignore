@@ -89,7 +89,9 @@ docs/frontend-architecture.md
 
 # Evaluation outputs (per-case predictions); only official runs are tracked
 web/eval/results/*
-!web/eval/results/2026-10-15T09-11-08/
-!web/eval/results/2026-10-15T09-11-08/*.md
-!web/eval/results/2026-10-15T16-50-01/
-!web/eval/results/2026-10-15T16-50-01/*.md
+!web/eval/results/arsip-iterasi1/
+web/eval/results/arsip-iterasi1/*
+!web/eval/results/arsip-iterasi1/2026-10-15T09-11-08/
+!web/eval/results/arsip-iterasi1/2026-10-15T09-11-08/*.md
+!web/eval/results/arsip-iterasi1/2026-10-15T16-50-01/
+!web/eval/results/arsip-iterasi1/2026-10-15T16-50-01/*.md
