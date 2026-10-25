@@ -34,7 +34,14 @@ import {
   strongestFloor,
   type DetectedSignal,
 } from "./signals";
-import { buildChecks, certClusterSignals, newDomainSignals } from "./checks";
+import { buildChecks, certClusterSignals, knowledgeSignals, newDomainSignals } from "./checks";
+import {
+  describeKnowledgeForProgress,
+  knowledgeSources,
+  lookupKnowledge,
+  type KnowledgeOptions,
+  type KnowledgeResult,
+} from "./tools/knowledge";
 import { describeCertClustersForProgress, lookupCertClusters, type CertCluster } from "./tools/ct-cluster";
 import { describeDomainAgesForProgress, lookupDomainAges, type DomainAge } from "./tools/domain-age";
 import { checkLinks, describeLinksForProgress, pageBlock, shortlinkLines, type LinkChecks } from "./tools/link-checks";
@@ -79,6 +86,8 @@ export interface AnalyzeOptions {
   // Material the session already sent about the same posting (an earlier poster, the first chat
   // with the recruiter). The new message is a later stage of it, so both are judged together.
   earlierMaterial?: string;
+  // The evaluation leaves each row's own fact-check out of the knowledge base
+  knowledge?: KnowledgeOptions;
 }
 
 export interface AnalysisRunMeta {
@@ -99,6 +108,8 @@ export interface AnalysisRunMeta {
   links?: { shortlinks: number; resolved: number; pageRead: boolean | null };
   domainAges?: Array<{ domain: string; registeredAt: string | null }>;
   certClusters?: Array<{ domain: string; status: CertCluster["status"]; recruitmentHosts: number; imitatedBrands: number }>;
+  // Unset when the web checks are disabled. similar holds the cases' similarity scores.
+  knowledge?: { status: KnowledgeResult["status"]; identity: number; shared: number; similar: number[] };
   riskFloorApplied: boolean;
   // A "tinggi" verdict resting only on a manipulation attempt was lowered to "sedang".
   manipulationCapApplied: boolean;
@@ -630,6 +641,9 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
   let search: WebSearchResult = { status: "skipped_no_query", retrievedCount: 0, sources: [] };
   let domainAges: DomainAge[] = [];
   let certClusters: CertCluster[] = [];
+  let knowledge: KnowledgeResult | null = null;
+  // The web sources plus the knowledge base's cases, as the model sees and cites them
+  let evidence = search;
   if (useSearch) {
     const searchStartedAt = Date.now();
     const ownInput = preprocessJobInput(ownText);
@@ -638,10 +652,22 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       buildVerificationQuery(ownInput) ??
       (links?.page?.text ? buildVerificationQuery(preprocessJobInput(links.page.text.slice(0, PAGE_QUERY_CHARS))) : null);
     const domains = employerDomains(ownInput);
-    // The certificate logs run beside the web search, so they add no waiting of their own
-    [search, domainAges, certClusters] = await Promise.all([searchWeb(target), lookupDomainAges(domains), lookupCertClusters(domains)]);
+    // The certificate logs and the knowledge base run beside the web search, adding no waiting of their own
+    [search, domainAges, certClusters, knowledge] = await Promise.all([
+      searchWeb(target),
+      lookupDomainAges(domains),
+      lookupCertClusters(domains),
+      lookupKnowledge({ ownText, materialText }, options.knowledge),
+    ]);
+    evidence = { ...search, sources: [...search.sources, ...knowledgeSources(knowledge, search.sources.length)] };
     meta.timingsMs.search = Date.now() - searchStartedAt;
     meta.search = { status: search.status, retrievedCount: search.retrievedCount, sourceCount: search.sources.length };
+    meta.knowledge = {
+      status: knowledge.status,
+      identity: knowledge.identity.length,
+      shared: knowledge.identity.filter((item) => item.shared.length).length,
+      similar: knowledge.similar.map((item) => item.score),
+    };
     meta.domainAges = domainAges.map(({ domain, registeredAt }) => ({ domain, registeredAt }));
     meta.certClusters = certClusters.map(({ domain, status, recruitmentHosts, imitatedBrands }) => ({
       domain,
@@ -659,8 +685,9 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
     if (clusterStep) {
       addStep(clusterStep);
     }
+    addStep(describeKnowledgeForProgress(knowledge));
     if (useRules) {
-      signals.push(...newDomainSignals(domainAges), ...certClusterSignals(certClusters));
+      signals.push(...newDomainSignals(domainAges), ...certClusterSignals(certClusters), ...knowledgeSignals(knowledge));
     }
   }
   meta.signals = signals.map(({ id, severity }) => ({ id, severity }));
@@ -676,13 +703,13 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
         analysisAttachments,
         material?.visualCues ?? [],
         useRules ? signals : null,
-        search
+        evidence
       );
       meta.tokenUsage = usage;
       result = mapModelOutput(output, {
         text: materialText,
         hasImages: analysisAttachments.length > 0,
-        search,
+        search: evidence,
         meta,
       });
       steps.push(
@@ -704,7 +731,7 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
 
   if (!result) {
     meta.mode = "rule_fallback";
-    result = buildRuleBasedResult(materialText, signals, search);
+    result = buildRuleBasedResult(materialText, signals, evidence);
   }
 
   if (useRules) {
@@ -728,6 +755,7 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       search: useSearch ? search : null,
       domainAges,
       certClusters,
+      knowledge,
     });
   }
 

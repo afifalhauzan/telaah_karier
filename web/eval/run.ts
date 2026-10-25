@@ -18,6 +18,8 @@ import type { EvalRecord, Prediction } from "./lib/metrics";
 import { ABLATION_VARIANTS, VARIANTS } from "./lib/variants";
 
 const STAGES = ["extraction", "analysis"] as const;
+// A knowledge base case this similar to a dataset row is the same posting (calibrated on dev)
+const KNOWLEDGE_EXCLUDE_ABOVE = 0.9;
 
 interface RunConfig {
   startedAt: string;
@@ -210,7 +212,9 @@ async function main() {
       try {
         const { result, meta } = await runAnalysis(
           { input: row.text, images: loadAttachments(row, imagesDir) },
-          VARIANTS[variant].options
+          // The row's own fact-check stays out of the knowledge base: by its URL, and by near-identical
+          // text for a copy filed under another article
+          { ...VARIANTS[variant].options, knowledge: { excludeUrls: row.labelSource ? [row.labelSource] : [], excludeAbove: KNOWLEDGE_EXCLUDE_ABOVE } }
         );
         record = {
           ...base,
