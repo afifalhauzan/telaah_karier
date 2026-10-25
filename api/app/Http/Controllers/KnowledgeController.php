@@ -38,10 +38,15 @@ class KnowledgeController extends Controller
             'exclude_urls.*' => ['string', 'max:2000'],
             // Evaluation only: a case this close to the posting is the posting's own fact-check
             'exclude_above' => ['sometimes', 'nullable', 'numeric', 'between:0,1'],
+            // Evaluation only: the knowledge base as it stood before the test cases were published
+            'before' => ['sometimes', 'nullable', 'date'],
         ]);
+        $before = $data['before'] ?? null;
 
         $scores = $data['embedding'] ? $this->similarities($data['embedding']) : [];
-        $excluded = ScamReport::whereIn('url', $data['exclude_urls'] ?? [])->pluck('id')->all();
+        $excluded = ScamReport::whereIn('url', $data['exclude_urls'] ?? [])
+            ->when($before, fn ($query) => $query->orWhere('published_at', '>=', $before)->orWhereNull('published_at'))
+            ->pluck('id')->all();
         if (isset($data['exclude_above'])) {
             $excluded = [...$excluded, ...array_keys(array_filter($scores, fn ($score) => $score >= $data['exclude_above']))];
         }
@@ -71,7 +76,7 @@ class KnowledgeController extends Controller
                 ...$this->present($reports[$id]),
                 'score' => round($score, 3),
             ])->values(),
-            'entities' => $this->entityCounts($reports->pluck('entity')->filter()->unique()->values()->all()),
+            'entities' => $this->entityCounts($reports->pluck('entity')->filter()->unique()->values()->all(), $before),
         ]]);
     }
 
@@ -151,10 +156,11 @@ class KnowledgeController extends Controller
     }
 
     /** @return list<array{entity: string, count: int, latest: ?string}> */
-    private function entityCounts(array $entities): array
+    private function entityCounts(array $entities, ?string $before): array
     {
         return ScamReport::whereIn('entity', $entities)
             ->where('status', '!=', 'rejected')
+            ->when($before, fn ($query) => $query->where('published_at', '<', $before))
             ->groupBy('entity')
             ->get(['entity', DB::raw('count(*) as count'), DB::raw('max(published_at) as latest')])
             ->map(fn ($row) => ['entity' => $row->entity, 'count' => (int) $row->count, 'latest' => $row->latest ? substr((string) $row->latest, 0, 10) : null])

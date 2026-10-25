@@ -104,6 +104,25 @@ class KnowledgeTest extends TestCase
         $this->assertSame([31], $response->json('data.similar.*.id'));
     }
 
+    public function test_an_evaluation_sees_only_the_cases_published_before_its_cutoff(): void
+    {
+        $this->report(40, [['kind' => 'phone', 'value' => '6281111111111']], $this->vector(0), ['published_at' => '2026-05-01']);
+        $this->report(41, [['kind' => 'phone', 'value' => '6281111111111']], $this->vector(0), ['published_at' => '2026-07-01']);
+        $this->report(42, [], $this->vector(0, 0.1), ['published_at' => '2026-06-12']);
+        $this->report(43, [], $this->vector(0, 0.2));
+
+        $response = $this->search([
+            'identifiers' => [['kind' => 'phone', 'value' => '6281111111111']],
+            'embedding' => $this->vector(0),
+            'before' => '2026-06-12',
+        ])->assertOk();
+
+        // On or after the cutoff, or undated, the case is not known yet
+        $this->assertSame([40], $response->json('data.identity.*.id'));
+        $this->assertSame([], $response->json('data.similar.*.id'));
+        $this->assertSame(1, $response->json('data.entities.0.count'));
+    }
+
     public function test_the_search_is_for_the_web_server_only(): void
     {
         $this->postJson('/api/knowledge/search', ['identifiers' => []])->assertForbidden();

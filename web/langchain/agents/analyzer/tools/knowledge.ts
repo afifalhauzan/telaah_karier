@@ -38,6 +38,8 @@ export interface KnowledgeOptions {
   // Evaluation: the dataset row's own fact-check, so the agent cannot simply remember it
   excludeUrls?: string[];
   excludeAbove?: number;
+  // Evaluation: only the cases published before this date (YYYY-MM-DD), as the test set's cutoff
+  before?: string;
 }
 
 const EMPTY: Omit<KnowledgeResult, "status"> = { identity: [], similar: [], entities: [] };
@@ -69,6 +71,7 @@ export async function lookupKnowledge(
         embedding,
         ...(options.excludeUrls?.length ? { exclude_urls: options.excludeUrls } : {}),
         ...(options.excludeAbove ? { exclude_above: options.excludeAbove } : {}),
+        ...(options.before ? { before: options.before } : {}),
       }),
       signal,
       cache: "no-store",
