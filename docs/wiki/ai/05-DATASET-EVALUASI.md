@@ -144,6 +144,8 @@ Aturan anotasi:
 
 Rubrik ini menjadi acuan prompt analisis (`prompts.ts`) dan aturan (`signals.ts`). Penyetelannya hanya memakai split `dev`; run `test` berikutnya dilaporkan sebagai iterasi kedua (finding 14 di `04-FINDINGS-AND-LESSONS-LEARNED.md`).
 
+> **Diganti 25 Okt 2026.** Tabel di bawah adalah rubrik iterasi 2 dan dibiarkan sebagai catatan. Sejak 25 Okt, `tinggi` hanya bersandar pada dasar hukum: `unofficial_domain`, `paid_task` tanpa deposit, dan `cert_cluster` turun ke `sedang`; `moderate_combination` (dua tanda lemah) dihapus; ada tanda baru (visa turis, negara non-penempatan, judi online, anak di bawah 18, rekening/ATM, portal resmi, pernyataan resmi perusahaan). Rubrik yang berlaku ada di `07-PENGUATAN-AGENT.md` bagian 2.4 dan dipakai iterasi 3 (bagian 11).
+
 | Tingkat | Syarat |
 |---|---|
 | `tinggi` | Minimal satu **tanda pasti**: (a) minta uang dalam bentuk apa pun, yaitu biaya, deposit, transfer ke rekening, termasuk yang dijanjikan "nanti diganti/direimburse" atau dana talangan potong gaji; (b) minta OTP/kode verifikasi/PIN/kata sandi/selfie KTP; (c) tugas like/follow/subscribe berbayar atau penghasilan harian yang dijamin dari tugas online; (d) mengaku perusahaan besar/BUMN/instansi tetapi kanalnya jelas bukan milik mereka (email gratis, WA pribadi, domain gratisan); (e) kerja luar negeri non-resmi bergaji fantastis. **Atau** dua tanda lemah berbeda jenis sekaligus. |
@@ -255,6 +257,7 @@ Skrip ada di `web/eval/` dan dijalankan dari folder `web/`. API key dibaca dari 
 | `--concurrency` | Jumlah kasus paralel (bawaan 2). |
 | `--resume <folder>` | Melanjutkan run yang terputus dengan pengaturan aslinya; kasus yang sudah ada dilewati. |
 | `--final` | Wajib untuk `--split test`, supaya set test tidak terjalankan tanpa sengaja. |
+| `--kb-before YYYY-MM-DD` | Basis kasus hanya berisi kasus yang terbit sebelum tanggal itu (bagian 11). Situs cek fakta selalu dikecualikan dari pencarian web saat evaluasi. |
 
 | Varian | Komponen |
 |---|---|
@@ -266,5 +269,34 @@ Skrip ada di `web/eval/` dan dijalankan dari folder `web/`. API key dibaca dari 
 | `tanpa_baca_dulu` | Lengkap, tetapi lampiran langsung dikirim ke analisis tanpa tahap baca dulu |
 
 Lampiran dibaca di semua varian kecuali `tanpa_baca_dulu`, sehingga perbedaan antarvarian hanya pada komponen penilainya.
+
+---
+
+## 11. Iterasi 3: Split Waktu (ditetapkan 25 Okt 2026)
+
+Set `test` lama (100 baris) sudah dilihat dua kali dan kini sebagian besar kasusnya ada di basis kasus, jadi iterasi 3 memakai set baru yang dibangun dari basis kasus itu sendiri, dibagi menurut waktu.
+
+**Pembagian.** Kasus penipuan terverifikasi di `scam_reports` (TurnBackHoax dan media mitra CekFakta) diurutkan menurut tanggal terbit. **20% terbaru menjadi `test`**; 80% yang lebih lama menjadi basis kasus. Tanggal kasus test pertama adalah *cutoff*, dan selama run basis kasus hanya berisi kasus yang terbit **sebelum** cutoff (`--kb-before`). Ini meniru pemakaian sebenarnya: agent menelaah lowongan baru dengan pengetahuan dari kasus-kasus lama.
+
+**Dua arm.** Setiap kasus test masuk dalam dua bentuk, sesuai cara lowongan sampai ke pengguna:
+- **teks** (`T…`): teks unggahan seperti dikutip artikel;
+- **poster** (`G…`): poster yang dipotong dari header artikel Mafindo (`MafindoHeader`), tanpa cap verdict, label, atau bingkai. Nomor `T` dan `G` yang sama berasal dari kasus yang sama.
+
+**Lowongan asli** (`A…`): dari `legit_postings` (KarirHub Kemnaker dan portal mitra berlisensi: Glints, Jobstreet, Kalibrr, dan lainnya), sebanyak arm teks. Baris `asli` di `dataset.csv` lama tidak dipakai.
+
+**Pencegahan kebocoran.**
+- Basis kasus dipotong di cutoff, dan artikel kasus itu sendiri tetap dikeluarkan lewat URL dan kemiripan ≥ 0,9.
+- Situs cek fakta tidak boleh sampai ke pencarian web: `turnbackhoax.id`, `cekfakta.com`, dan `mafindo.or.id` dikecualikan di Tavily, dan rubrik cek fakta media berita (`/cekfakta/`, `/cek-fakta/`, `/hoaks/`, `/klarifikasi/`) dibuang dari hasil (`isFactCheckUrl`).
+- Batasnya: lowongan asli dari portal belum tentu bebas tanda yang dinilai `sedang` (misalnya kontak WA), dan kasus penipuan yang dibongkar sebelum cutoff tetapi beredar lagi sesudahnya tetap dikenali lewat identitasnya. Yang kedua memang perilaku yang diinginkan, bukan kebocoran.
+
+**Menjalankan.**
+```bash
+docker compose exec api php artisan eval:export          # mencetak cutoff dan jumlah per arm
+cp -r api/storage/app/private/eval web/eval/dataset/v2
+cd web
+pnpm eval --dataset eval/dataset/v2/dataset.csv --images eval/dataset/v2/images --split test --final --kb-before <cutoff> --variants ablation
+pnpm eval:report eval/results/<waktu>
+```
+Laporkan arm teks dan arm poster **terpisah** (filter `input_type`), di samping iterasi 1 dan 2 pada set lama.
 
 `web/eval/fixtures/smoke.csv` berisi 10 kasus **sintetis** untuk memastikan skrip berjalan (`pnpm eval --dataset eval/fixtures/smoke.csv --split dev,injeksi`). Hasilnya bukan angka evaluasi dan tidak boleh dilaporkan.
