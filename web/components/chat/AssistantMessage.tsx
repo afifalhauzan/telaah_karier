@@ -11,6 +11,7 @@ import {
   type Citation,
   type Claim,
   type ExplanationItem,
+  type KnownCase,
   type Reference,
   type Reasoning,
   type SalaryBenefitAssessment,
@@ -27,6 +28,7 @@ import { ReasoningComponent } from "@/components/cards/ReasoningComponent";
 import { AnalysisActions } from "@/components/cards/AnalysisActions";
 import { ActionInsightCard } from "@/components/cards/ActionInsightCard";
 import { SalaryBenefitCard } from "@/components/cards/SalaryBenefitCard";
+import { KnownScamCard } from "@/components/cards/KnownScamCard";
 import type { AnalysisAction, UIActionId } from "@/types/ui-actions";
 import { BuatPostPrompt, SessionMoveCard, SimilarTelaahCard } from "@/components/telaah-bersama/chat-cards";
 import { MessageFeedback } from "@/components/chat/message-feedback";
@@ -90,6 +92,7 @@ type RenderItem =
   | { kind: "reasoning"; key: string; reasoning: Reasoning[] }
   | { kind: "summary"; key: string; summary: string; citations: Citation[] }
   | { kind: "claims"; key: string; claims: Claim[] }
+  | { kind: "known-scam"; key: string; cases: KnownCase[] }
   | { kind: "salary-benefit"; key: string; assessment: SalaryBenefitAssessment }
   | { kind: "risks"; key: string; risks: Risk[] }
   | { kind: "checks"; key: string; checks: AnalysisCheck[] }
@@ -164,6 +167,7 @@ function hasInterleavableDataPart(part: MetabotUIMessagePart): boolean {
   return (
     part.type === "data-summary" ||
     part.type === "data-claims" ||
+    part.type === "data-known-scam" ||
     part.type === "data-salary-benefit" ||
     part.type === "data-risks" ||
     part.type === "data-checks" ||
@@ -290,6 +294,11 @@ export function AssistantMessage({
           return;
         }
 
+        if (part.type === "data-known-scam" && part.data.length > 0) {
+          items.push({ kind: "known-scam", key, cases: part.data });
+          return;
+        }
+
         if (part.type === "data-salary-benefit") {
           items.push({ kind: "salary-benefit", key, assessment: part.data });
           return;
@@ -383,6 +392,10 @@ export function AssistantMessage({
 
     if (analysisData.claims.length > 0) {
       items.push({ kind: "claims", key: `${message.id}-analysis-claims`, claims: analysisData.claims });
+    }
+
+    if (analysisData.knownCases?.length) {
+      items.push({ kind: "known-scam", key: `${message.id}-analysis-known-scam`, cases: analysisData.knownCases });
     }
 
     if (analysisData.salaryBenefit) {
@@ -512,6 +525,14 @@ export function AssistantMessage({
       return (
         <motion.div key={item.key} {...fadeUp}>
           <ChecksCard checks={item.checks} />
+        </motion.div>
+      );
+    }
+
+    if (item.kind === "known-scam") {
+      return (
+        <motion.div key={item.key} {...fadeUp}>
+          <KnownScamCard cases={item.cases} />
         </motion.div>
       );
     }
