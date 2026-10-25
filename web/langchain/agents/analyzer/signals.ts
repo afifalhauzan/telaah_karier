@@ -27,7 +27,10 @@ export type SignalId =
   | "new_domain"
   | "lookalike_domain"
   | "cert_cluster"
-  | "known_scam_identity";
+  | "known_scam_identity"
+  | "form_secret"
+  | "form_telegram"
+  | "throwaway_subdomain";
 
 export type SignalSeverity = "strong" | "moderate";
 
@@ -581,6 +584,56 @@ export function knownScamSignal({ identifier, caseCount, entities }: { identifie
     floorReason: "Kontak atau akun di materi ini sudah dipakai dalam lowongan palsu yang dibongkar pemeriksa fakta.",
     description: `${identifier[0].toUpperCase()}${identifier.slice(1)} di materi ini tercatat di ${caseCount} kasus penipuan lowongan yang sudah diverifikasi pemeriksa fakta${impersonated}. Penipu memakai ulang kontak dan akun yang sama untuk lowongan palsu berikutnya.`,
     evidence: [identifier],
+  };
+}
+
+/**
+ * From the registration trail: the form the posting leads to asks for a verification code, a
+ * password, or a selfie with the ID card. Fact-checks of 2025-2026 describe this as the takeover of
+ * the applicant's Telegram account.
+ */
+export function formSecretSignal(url: string, asks: string[]): DetectedSignal {
+  return {
+    id: "form_secret",
+    label: "Formulir pendaftaran meminta kode verifikasi, kata sandi, atau foto KTP",
+    severity: "strong",
+    riskType: "sensitive_data",
+    floor: "tinggi",
+    floorReason: "Rekrutmen resmi tidak pernah meminta kode verifikasi atau kata sandi pelamar.",
+    description: `Formulir di ${url} meminta ${asks.join(", ")}. Kode verifikasi dan kata sandi membuka akun pelamar (misalnya Telegram) bagi pihak lain.`,
+    evidence: [url],
+  };
+}
+
+/** From the trail: the form asks for the applicant's Telegram number, the most common 2026 pattern. */
+export function telegramFormSignal(url: string): DetectedSignal {
+  return {
+    id: "form_telegram",
+    label: "Formulir pendaftaran meminta nomor Telegram",
+    severity: "moderate",
+    riskType: "sensitive_data",
+    floor: "sedang",
+    floorReason: "Formulir lowongan palsu 2025-2026 meminta nomor Telegram, lalu kode verifikasinya untuk mengambil alih akun.",
+    description: `Formulir di ${url} meminta nomor Telegram. Rekrutmen resmi memakai email atau nomor ponsel, bukan akun Telegram pelamar.`,
+    evidence: [url],
+  };
+}
+
+/**
+ * A recruitment site on a long made-up subdomain of an unknown domain
+ * ("rekrutmenbersamaskkmigasdankkks.piillly.com", "infolowonganbnn2024.iiaall.com"): the shape of
+ * the addresses written in job scams the fact-checkers recorded.
+ */
+export function throwawaySubdomainSignal(host: string): DetectedSignal {
+  return {
+    id: "throwaway_subdomain",
+    label: "Situs pendaftaran di subdomain panjang domain tak dikenal",
+    severity: "moderate",
+    riskType: "suspicious_contact",
+    floor: "sedang",
+    floorReason: "Perusahaan merekrut lewat domainnya sendiri, bukan subdomain buatan di domain lain.",
+    description: `Alamat ${host} berupa nama rekrutmen panjang di atas domain yang tidak terkait perusahaan mana pun, pola yang sering dipakai situs lowongan palsu.`,
+    evidence: [host],
   };
 }
 

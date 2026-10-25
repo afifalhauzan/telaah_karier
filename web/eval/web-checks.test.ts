@@ -6,9 +6,19 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildChecks, certClusterSignals, knowledgeSignals, newDomainSignals } from "../langchain/agents/analyzer/checks";
+import { buildChecks, certClusterSignals, isThrowawaySubdomain, knowledgeSignals, newDomainSignals, trailSignals } from "../langchain/agents/analyzer/checks";
 import { summarizeCertEntries } from "../langchain/agents/analyzer/tools/ct-cluster";
-import { linkedinExternalLink, pageText } from "../langchain/agents/analyzer/tools/link-checks";
+import {
+  asksOf,
+  chatTitle,
+  linkedinExternalLink,
+  pageText,
+  parseGoogleForm,
+  registrationLinks,
+  type LinkChecks,
+} from "../langchain/agents/analyzer/tools/link-checks";
+import { decodeQr } from "../langchain/agents/analyzer/tools/qr";
+import QRCode from "qrcode";
 import { caseIdentifiers } from "../langchain/agents/knowledge/case-card";
 import { knowledgeSources, type KnowledgeResult } from "../langchain/agents/analyzer/tools/knowledge";
 import { detectSignals } from "../langchain/agents/analyzer/signals";
@@ -54,6 +64,9 @@ test("the checklist lists every check that ran, in pipeline order", () => {
         { link: "https://s.id/hilang", destination: null },
       ],
       page: { url: "https://www.jobstreet.co.id/id/job/123", text: null },
+      trail: [
+        { url: "https://forms.gle-example.com/form", from: "https://bit.ly/daftar-ids", outcome: "unreadable", title: null, asks: [], fields: [] },
+      ],
     },
     search,
     domainAges: [],
@@ -64,13 +77,12 @@ test("the checklist lists every check that ran, in pipeline order", () => {
     checks.map((check) => [check.label, check.status]),
     [
       ["Pola penipuan umum", "warning"],
-      ["Shortlink bit.ly/daftar-ids", "info"],
       ["Shortlink s.id/hilang", "warning"],
-      ["Isi halaman link", "info"],
+      ["Jejak pendaftaran: forms.gle-example.com/form", "info"],
       ["Jejak di web", "ok"],
     ]
   );
-  assert.match(checks[4].detail, /2 di antaranya dari situs idstar\.co\.id/);
+  assert.match(checks[3].detail, /2 di antaranya dari situs idstar\.co\.id/);
 });
 
 test("without rules or web checks, their lines are left out instead of claiming a clean result", () => {
@@ -203,4 +215,71 @@ test("a posting sharing an account with debunked cases gets a floor; similar cas
   const onlySimilar = buildChecks({ signals: [], links: null, search: null, domainAges: [], knowledge: { ...knowledge, identity: [] } })[1];
   assert.equal(onlySimilar.status, "info");
   assert.deepEqual(knowledgeSignals({ ...knowledge, identity: [] }), []);
+});
+
+test("a Google Form's questions are read from the data the page embeds, and what they ask is named", () => {
+  // Shape of FB_PUBLIC_LOAD_DATA_ on a public form (Oct 2026), trimmed to the fields the trail reads
+  const html = `<script>var FB_PUBLIC_LOAD_DATA_ = [null,["Isi data dengan benar",[[1,"Nama Lengkap",null,0],[2,"NIK KTP",null,2],[3,"Nomor Telegram aktif",null,0],[4,"Kode verifikasi yang dikirim ke Telegram",null,0]],null,null,null,null,null,null,"Rekrutmen PT Contoh"],null,"Rekrutmen PT Contoh 2026"];</script>`;
+  const form = parseGoogleForm(html)!;
+  assert.equal(form.title, "Rekrutmen PT Contoh 2026");
+  assert.deepEqual(form.fields, ["Nama Lengkap", "NIK KTP", "Nomor Telegram aktif", "Kode verifikasi yang dikirim ke Telegram"]);
+  assert.deepEqual(asksOf(form.fields.join("\n")), ["nama", "KTP/NIK", "nomor Telegram", "kode verifikasi/OTP"]);
+  assert.equal(parseGoogleForm("<html>Sign in</html>"), null);
+});
+
+test("chat links end the trail, and a page's Daftar buttons lead it on but the platform's own do not", () => {
+  assert.equal(chatTitle("https://wa.me/6281234567890?text=daftar"), "WhatsApp 6281234567890");
+  assert.equal(chatTitle("https://t.me/lokerbumn2026"), "Telegram @lokerbumn2026");
+  assert.equal(chatTitle("https://example.com/daftar"), null);
+
+  const markdown = [
+    "[Agree & Join LinkedIn](https://www.linkedin.com/signup/cold-join)",
+    "[DAFTAR SEKARANG](/form-pendaftaran)",
+    "URL: [https://lnkd.in/gkjzzJ8E](https://www.linkedin.com/redir/redirect?url=https%3A%2F%2Flnkd%2Ein%2FgkjzzJ8E)",
+    "[Tentang kami](/about)",
+    "[Chat admin](https://wa.me/6281234567890)",
+  ].join("\n");
+  assert.deepEqual(registrationLinks(markdown, "https://rekrut-kpc.site/info"), [
+    "https://rekrut-kpc.site/form-pendaftaran",
+    "https://lnkd.in/gkjzzJ8E",
+    "https://wa.me/6281234567890",
+  ]);
+});
+
+test("a form asking for a verification code sets a high floor, one asking for Telegram a medium one", () => {
+  const links: LinkChecks = {
+    shortlinks: [],
+    page: null,
+    trail: [
+      { url: "https://rekrutmenbersamaskkmigas.piillly.com/daftar", from: null, outcome: "page", title: null, asks: [], fields: [] },
+      { url: "https://docs.google.com/forms/d/e/x/viewform", from: null, outcome: "form", title: "Rekrutmen", asks: ["nama", "nomor Telegram", "kode verifikasi/OTP"], fields: ["Nama"] },
+    ],
+  };
+  assert.deepEqual(trailSignals(links).map((signal) => [signal.id, signal.floor]), [
+    ["form_secret", "tinggi"],
+    ["form_telegram", "sedang"],
+    ["throwaway_subdomain", "sedang"],
+  ]);
+  const [, form] = buildChecks({ signals: [], links, search: null, domainAges: [] }).slice(1);
+  assert.equal(form.status, "warning");
+  assert.match(form.detail, /Formulir "Rekrutmen" dengan 1 pertanyaan, meminta nama, nomor Telegram, kode verifikasi\/OTP/);
+
+  // Recorded addresses from fact-checked scams, against real employers' own subdomains
+  for (const host of ["rekrutmenbersamaskkmigasdankkks.piillly.com", "infolowonganbnn2024.iiaall.com", "openrecruitment-djpid.xindx.com"]) {
+    assert.ok(isThrowawaySubdomain(host), host);
+  }
+  for (const host of ["recruitment.pertamina.com", "karir.bca.co.id", "rekrutmen.kimiafarma.co.id", "pertamina.com"]) {
+    assert.ok(!isThrowawaySubdomain(host), host);
+  }
+});
+
+test("a posting that hides its link asks the user for it", () => {
+  const signals = detectSignals("Lowongan PT Contoh. Cek syarat lengkapnya di link bio profil!");
+  const checks = buildChecks({ signals, links: { shortlinks: [], page: null, trail: [] }, search: null, domainAges: [] });
+  assert.match(checks.find((check) => check.label === "Link pendaftaran")!.detail, /Salin link dari bio/);
+});
+
+test("a QR code on a poster is decoded to its address", async () => {
+  const image = await QRCode.toBuffer("https://bit.ly/daftar-kpc-2026", { width: 600 });
+  assert.equal(await decodeQr(image), "https://bit.ly/daftar-kpc-2026");
 });
