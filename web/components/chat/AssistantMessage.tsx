@@ -12,6 +12,7 @@ import {
   type Claim,
   type ExplanationItem,
   type KnownCase,
+  type SimilarCase,
   type Reference,
   type Reasoning,
   type SalaryBenefitAssessment,
@@ -29,6 +30,7 @@ import { AnalysisActions } from "@/components/cards/AnalysisActions";
 import { ActionInsightCard } from "@/components/cards/ActionInsightCard";
 import { SalaryBenefitCard } from "@/components/cards/SalaryBenefitCard";
 import { KnownScamCard } from "@/components/cards/KnownScamCard";
+import { SimilarCasesCard } from "@/components/cards/SimilarCasesCard";
 import { LinkRequestCard } from "@/components/cards/LinkRequestCard";
 import type { AnalysisAction, UIActionId } from "@/types/ui-actions";
 import { BuatPostPrompt, SessionMoveCard, SimilarTelaahCard } from "@/components/telaah-bersama/chat-cards";
@@ -99,6 +101,7 @@ type RenderItem =
   | { kind: "summary"; key: string; summary: string; citations: Citation[] }
   | { kind: "claims"; key: string; claims: Claim[] }
   | { kind: "known-scam"; key: string; cases: KnownCase[] }
+  | { kind: "similar-cases"; key: string; cases: SimilarCase[] }
   | { kind: "link-request"; key: string }
   | { kind: "salary-benefit"; key: string; assessment: SalaryBenefitAssessment }
   | { kind: "risks"; key: string; risks: Risk[] }
@@ -175,6 +178,7 @@ function hasInterleavableDataPart(part: MetabotUIMessagePart): boolean {
     part.type === "data-summary" ||
     part.type === "data-claims" ||
     part.type === "data-known-scam" ||
+    part.type === "data-similar-cases" ||
     part.type === "data-link-request" ||
     part.type === "data-salary-benefit" ||
     part.type === "data-risks" ||
@@ -333,6 +337,11 @@ export function AssistantMessage({
           return;
         }
 
+        if (part.type === "data-similar-cases" && part.data.length > 0) {
+          items.push({ kind: "similar-cases", key, cases: part.data });
+          return;
+        }
+
         if (part.type === "data-references" && part.data.length > 0) {
           items.push({ kind: "references", key, references: part.data });
           return;
@@ -434,6 +443,10 @@ export function AssistantMessage({
         key: `${message.id}-analysis-explanations`,
         explanations: analysisData.explanations,
       });
+    }
+
+    if (analysisData.similarCases?.length) {
+      items.push({ kind: "similar-cases", key: `${message.id}-analysis-similar-cases`, cases: analysisData.similarCases });
     }
 
     if (analysisData.references.length > 0) {
@@ -539,6 +552,14 @@ export function AssistantMessage({
       return (
         <motion.div key={item.key} {...fadeUp}>
           <ChecksCard checks={item.checks} />
+        </motion.div>
+      );
+    }
+
+    if (item.kind === "similar-cases") {
+      return (
+        <motion.div key={item.key} {...fadeUp}>
+          <SimilarCasesCard cases={item.cases} />
         </motion.div>
       );
     }

@@ -485,6 +485,11 @@ export async function POST(req: NextRequest) {
           await sleep(SECTION_STEP_DELAY_MS);
         }
 
+        if (analysis.similarCases?.length) {
+          writer.write({ type: "data-similar-cases", data: analysis.similarCases });
+          await sleep(SECTION_STEP_DELAY_MS);
+        }
+
         if (analysis.references?.length) {
           writer.write({ type: "data-references", data: analysis.references });
           await sleep(SECTION_STEP_DELAY_MS);

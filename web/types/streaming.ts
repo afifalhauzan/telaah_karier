@@ -11,6 +11,7 @@ import type {
   Claim,
   ExplanationItem,
   KnownCase,
+  SimilarCase,
   Reference,
   Reasoning,
   SalaryBenefitAssessment,
@@ -98,6 +99,7 @@ export type MetabotUIMessagePart =
   | { type: 'data-summary'; data: string | SummaryPartData }
   | { type: 'data-claims'; data: Claim[] }
   | { type: 'data-known-scam'; data: KnownCase[] }
+  | { type: 'data-similar-cases'; data: SimilarCase[] }
   | { type: 'data-link-request'; data: LinkRequest }
   | { type: 'data-salary-benefit'; data: SalaryBenefitAssessment }
   | { type: 'data-risks'; data: Risk[] }

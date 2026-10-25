@@ -802,6 +802,26 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
         shared: item.shared.map(identifierLabel),
       }));
     }
+    if (knowledge?.similar.length) {
+      result.similarCases = knowledge.similar.map((item) => ({
+        title: item.title,
+        url: item.url,
+        date: formatCaseDate(item.published_at),
+        entity: item.card?.entitas,
+        modus: item.card?.modus ?? [],
+        channels: item.card?.kanal ?? [],
+        traits: item.card?.ciri ?? [],
+        officialRoute: item.card?.jalurResmi,
+      }));
+    }
+  }
+  // The fact-checks have cards of their own (known scam, similar cases), so the source list keeps the web
+  if (knowledge) {
+    const caseUrls = new Set([...knowledge.identity, ...knowledge.similar].map((item) => item.url));
+    result.references = result.references.filter((reference) => !reference.url || !caseUrls.has(reference.url));
+    if (!result.references.length) {
+      result.references = GUIDANCE_REFERENCES;
+    }
   }
 
   return finish(result);

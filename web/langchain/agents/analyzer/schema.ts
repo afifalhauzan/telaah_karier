@@ -252,6 +252,21 @@ export const AnalysisSchema = z.object({
   knownCases: z
     .array(z.object({ title: z.string(), url: z.string(), date: z.string(), shared: z.array(z.string()) }))
     .optional(),
+  // Debunked cases that look like the posting: context to compare against, never evidence
+  similarCases: z
+    .array(
+      z.object({
+        title: z.string(),
+        url: z.string(),
+        date: z.string(),
+        entity: z.string().optional(),
+        modus: z.array(z.string()).default([]),
+        channels: z.array(z.string()).default([]),
+        traits: z.array(z.string()).default([]),
+        officialRoute: z.string().optional(),
+      })
+    )
+    .optional(),
 });
 
 /**
@@ -394,6 +409,7 @@ export type ExplanationItem = z.infer<typeof ExplanationItemSchema>;
 export type SalaryBenefitAssessment = z.infer<typeof SalaryBenefitAssessmentSchema>;
 export type AnalysisResult = z.infer<typeof AnalysisSchema>;
 export type KnownCase = NonNullable<AnalysisResult["knownCases"]>[number];
+export type SimilarCase = NonNullable<AnalysisResult["similarCases"]>[number];
 export type LLMAnalysisOutput = z.infer<typeof LLMAnalysisOutputSchema>;
 export type LLMActionOutput = z.infer<typeof LLMActionOutputSchema>;
 export type LLMFollowUpOutput = z.infer<typeof LLMFollowUpOutputSchema>;
