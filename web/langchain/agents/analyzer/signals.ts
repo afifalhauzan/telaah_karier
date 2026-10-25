@@ -184,6 +184,11 @@ const LINK_IN_BIO_PATTERNS = [
   /\blink\s*(?:in\s*)?bio\b/gi,
   /\b(?:klik|klick|klil|cek|buka|kunjungi)\s+(?:link|tautan|daftar)\b/gi,
   /\b(?:daftar|pendaftaran)\s+(?:melalui|lewat|via|di)\s+(?:link|tautan)\b/gi,
+  // In the comments or by DM: "link di kolom komentar", "komen MAU untuk dapat link", "info lebih lanjut DM"
+  /\b(?:link|tautan)\b[^.!?\n]{0,20}?\b(?:di|dalam|pada)\s+(?:kolom\s+)?(?:komen(?:tar)?|comments?)\b/gi,
+  /\b(?:cek|lihat|buka)\s+(?:kolom\s+)?(?:komen(?:tar)?|comments?)\b/gi,
+  /\bkomen(?:tar)?\s+["“']?\w+["”']?\s+(?:untuk|buat|biar|agar)\s+(?:dapat|dapet|dikirim|mendapatkan)\b/gi,
+  /\b(?:info|daftar|pendaftaran|link|tautan)\b[^.!?\n]{0,25}?\b(?:dm|inbox|direct\s+message)\b/gi,
 ];
 
 // Any address in the material once emails and handles are removed ("@loker.bumn.id" is an account, not a page).
@@ -392,13 +397,13 @@ const SIGNAL_RULES: SignalRule[] = [
   },
   {
     id: "link_in_bio",
-    label: "Kanal pendaftaran tidak terlihat (link di bio)",
+    label: "Kanal pendaftaran tidak terlihat (link di bio, komentar, atau DM)",
     severity: "moderate",
     riskType: "suspicious_contact",
     floor: "sedang",
     floorReason: "Alamat pendaftarannya tidak tercantum di materi, sehingga belum bisa dipastikan resmi.",
     description:
-      "Pendaftaran diarahkan ke link di bio atau tombol \"klik link\" tanpa alamat yang terlihat, sehingga keaslian kanalnya belum bisa diperiksa.",
+      "Pendaftaran diarahkan ke link di bio, di komentar, lewat DM, atau tombol \"klik link\" tanpa alamat yang terlihat, sehingga keaslian kanalnya belum bisa diperiksa.",
     patterns: LINK_IN_BIO_PATTERNS,
     onlyWithoutUrl: true,
   },

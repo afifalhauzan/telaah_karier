@@ -426,3 +426,13 @@ describe("dasar hukum floor tinggi", () => {
 describe("link_in_bio: handle berakhiran .id bukan alamat situs", () => {
   fires("link_in_bio", ["Daftar lewat link di bio IG @loker.bumn.id ya", "Follow @info.loker.id dan klik link di bio"]);
 });
+
+describe("link_in_bio: link di komentar atau lewat DM", () => {
+  fires("link_in_bio", [
+    "Link pendaftaran ada di kolom komentar",
+    "Cek komen untuk info daftar",
+    "Komen MAU untuk dapat link pendaftarannya",
+    "Info lebih lanjut DM admin",
+  ]);
+  silent("link_in_bio", ["Tanggung jawab: membalas komentar pelanggan di media sosial.", "Daftar di https://karir.contoh.co.id, info juga via DM."]);
+});
