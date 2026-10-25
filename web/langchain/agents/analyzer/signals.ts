@@ -186,10 +186,11 @@ const LINK_IN_BIO_PATTERNS = [
   /\b(?:daftar|pendaftaran)\s+(?:melalui|lewat|via|di)\s+(?:link|tautan)\b/gi,
 ];
 
-// Any address in the material once emails are removed (an email is a contact, not a page).
+// Any address in the material once emails and handles are removed ("@loker.bumn.id" is an account, not a page).
 const VISIBLE_URL =
   /\bhttps?:\/\/|\bwww\.|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|id|co|net|org|app|io|me|ly|gl|ee|site|online|xyz|info|biz|link|page|top|ke)\b/i;
 const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
+const HANDLE = /(?<![\w.])@[\w.]+/g;
 
 // Free or throwaway hosting that an established company or agency does not recruit through.
 const UNOFFICIAL_DOMAIN_PATTERNS = [
@@ -564,7 +565,7 @@ function isPayeeContext(text: string, start: number, end: number): boolean {
 }
 
 function hasVisibleUrl(text: string): boolean {
-  return VISIBLE_URL.test(text.replace(EMAIL, " "));
+  return VISIBLE_URL.test(text.replace(EMAIL, " ").replace(HANDLE, " "));
 }
 
 function collectEvidence(

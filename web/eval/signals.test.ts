@@ -422,3 +422,7 @@ describe("dasar hukum floor tinggi", () => {
     assert.equal(ruleBasedRiskLevel(detectSignals("Tugas like dibayar Rp 10.000, wajib deposit Rp 100.000 untuk tugas premium.")), "tinggi");
   });
 });
+
+describe("link_in_bio: handle berakhiran .id bukan alamat situs", () => {
+  fires("link_in_bio", ["Daftar lewat link di bio IG @loker.bumn.id ya", "Follow @info.loker.id dan klik link di bio"]);
+});
