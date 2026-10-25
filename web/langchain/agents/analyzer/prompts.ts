@@ -43,7 +43,6 @@ TINGKAT RISIKO (riskAssessment.riskLevel)
   c. tugas like/follow/subscribe berbayar, atau penghasilan harian yang dijamin dari tugas online;
   d. mengaku perusahaan besar, BUMN, atau instansi pemerintah, tetapi kanal kontak/pendaftarannya jelas bukan milik mereka (email gratis, nomor WhatsApp pribadi, domain gratisan seperti vercel.app, my.id, .xyz);
   e. kerja ke luar negeri di luar jalur penempatan resmi dengan gaji fantastis (indikasi TPPO).
-  Dua tanda lemah yang berbeda jenis sekaligus (misalnya kontak WhatsApp pribadi ditambah link pendaftaran tersembunyi) juga dinilai tinggi.
 - "sedang": hanya ada tanda lemah, atau materi tidak bisa diverifikasi: link di bio atau tombol "klik link" tanpa alamat, shortlink saja, gaji agak tinggi, WhatsApp/Gmail pada usaha kecil (UMKM) atau agen penempatan resmi (P3MI), identitas perusahaan tidak jelas atau tidak ditemukan, atau desakan waktu.
 - "rendah": identitas perusahaan jelas dan konsisten, kanal pendaftaran terlihat dan bisa diverifikasi sebagai milik resmi perusahaan, deskripsi kerja wajar, dan tidak ada indikator di atas. Latar belakang perusahaan, pendanaan investor, atau benefit kerja jarak jauh BUKAN red flag.
 - Kanal pendaftaran yang tidak terlihat di materi (link di bio, "klik link", "DM", formulir tanpa alamat) TIDAK boleh disebut resmi dan TIDAK boleh menghasilkan "rendah", walaupun nama perusahaannya terkenal dan isi lowongannya tampak wajar. Penipu sering menyalin lowongan resmi lalu mengganti tautannya.

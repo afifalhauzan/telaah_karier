@@ -137,18 +137,12 @@ describe("institution_impersonation: klaim instansi/BUMN/Tbk dengan kontak priba
   ]);
 });
 
-describe("moderate_combination dan kasus yang wajar tetap sedang", () => {
-  test("WA pribadi + shortlink: tinggi", () => {
-    const signals = detectSignals("Hubungi WA 0812 3456 7890. Formulir pendaftaran: bit.ly/lokerkasir");
-    assert.ok(signals.some((signal) => signal.id === "moderate_combination"));
-    assert.equal(ruleBasedRiskLevel(signals), "tinggi");
-  });
-
-  test("email gratis + link di bio: tinggi", () => {
-    assert.equal(ruleBasedRiskLevel(detectSignals("Kirim CV ke lokerkasir@gmail.com, info lengkap klik link di bio")), "tinggi");
-  });
-
+// "Tinggi" rests on a legal basis only (docs/wiki/ai/07, kriteria tinggi); a mix of weak signals
+// has none, so it stays "sedang" however many kinds appear together.
+describe("tanda lemah, sendiri maupun gabungan, tetap sedang", () => {
   const stillSedang = [
+    "Hubungi WA 0812 3456 7890. Formulir pendaftaran: bit.ly/lokerkasir",
+    "Kirim CV ke lokerkasir@gmail.com, info lengkap klik link di bio",
     // Two contact signals of the same kind (a small business or licensed agency).
     "Rumah Makan Sederhana butuh pelayan. WA 0812-3456-7890, email rmsederhana@gmail.com",
     "Lowongan staf gudang, formulir di https://bit.ly/stafgudang",

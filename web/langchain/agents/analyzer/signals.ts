@@ -23,7 +23,6 @@ export type SignalId =
   | "unofficial_domain"
   | "paid_task"
   | "institution_impersonation"
-  | "moderate_combination"
   | "new_domain"
   | "lookalike_domain"
   | "cert_cluster"
@@ -328,22 +327,6 @@ const INSTITUTION_IMPERSONATION = {
     "Materi mengatasnamakan instansi pemerintah, BUMN, atau perusahaan terbuka, tetapi kontaknya email gratis atau nomor WhatsApp pribadi yang bukan kanal resmi mereka.",
 } as const satisfies Omit<DetectedSignal, "evidence">;
 
-const MODERATE_COMBINATION = {
-  id: "moderate_combination",
-  label: "Gabungan kontak pribadi dan kanal pendaftaran tersembunyi",
-  severity: "strong",
-  riskType: "suspicious_contact",
-  floor: "tinggi",
-  floorReason: "Kontak pribadi dan kanal pendaftaran tersembunyi muncul bersamaan, sehingga tidak ada jalur resmi yang bisa diverifikasi.",
-  description:
-    "Kontak lewat email gratis atau chat pribadi muncul bersama link pendaftaran yang disamarkan atau tidak terlihat. Dua tanda ini saling menguatkan.",
-} as const satisfies Omit<DetectedSignal, "evidence">;
-
-// Two moderate signals of different kinds raise the floor; two of the same kind do not, since
-// a small business or licensed agency often lists both a WhatsApp number and a Gmail address.
-const CONTACT_SIGNALS: SignalId[] = ["personal_chat_contact", "free_email_domain"];
-const HIDDEN_CHANNEL_SIGNALS: SignalId[] = ["shortlink", "link_in_bio"];
-
 const LEVEL_RANK: Record<RiskLevel, number> = { rendah: 0, sedang: 1, tinggi: 2 };
 
 const NEGATION_BEFORE = /\b(?:tidak|tdk|tanpa|tak|bebas|gratis|bukan|jangan|free|never)\b/i;
@@ -461,12 +444,6 @@ function detectInstitutionImpersonation(text: string): DetectedSignal | null {
   return claim.length && channel.length ? toSignal(INSTITUTION_IMPERSONATION, [...claim, ...channel]) : null;
 }
 
-function detectModerateCombination(signals: DetectedSignal[]): DetectedSignal | null {
-  const contact = signals.find((signal) => CONTACT_SIGNALS.includes(signal.id));
-  const hidden = signals.find((signal) => HIDDEN_CHANNEL_SIGNALS.includes(signal.id));
-  return contact && hidden ? toSignal(MODERATE_COMBINATION, [contact.evidence[0], hidden.evidence[0]]) : null;
-}
-
 export function detectSignals(text: string): DetectedSignal[] {
   if (!text.trim().length) {
     return [];
@@ -492,10 +469,6 @@ export function detectSignals(text: string): DetectedSignal[] {
   const impersonation = detectInstitutionImpersonation(text);
   if (impersonation) {
     signals.push(impersonation);
-  }
-  const combination = detectModerateCombination(signals);
-  if (combination) {
-    signals.push(combination);
   }
   const lookalikes = findLookalikeDomains(text);
   if (lookalikes.length) {
