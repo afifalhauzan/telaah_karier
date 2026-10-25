@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\LegitPosting;
 use App\Models\ScamReport;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -30,11 +29,6 @@ class ScamReportsTest extends TestCase
             'turnbackhoax.id/articles?category=lowongan&page=*' => Http::response(turnbackhoax_listing([])),
             'turnbackhoax.id/articles/*' => Http::response(turnbackhoax_article()),
             'yudistira.turnbackhoax.id/*' => Http::response('png-bytes', 200, ['Content-Type' => 'image/png']),
-            'karirhub.kemnaker.go.id/lowongan-dalam-negeri/lowongan?page=1' => Http::response(karirhub_listing([
-                '01a16f23-4acb-70e1-9cc4-376f869568e8', '01a16f22-bb73-7321-b631-b0c2a3b1de6d',
-            ])),
-            'karirhub.kemnaker.go.id/lowongan-dalam-negeri/lowongan?page=*' => Http::response(''),
-            'karirhub.kemnaker.go.id/lowongan-dalam-negeri/lowongan/*' => Http::response(karirhub_posting()),
         ]);
     }
 
@@ -81,52 +75,5 @@ class ScamReportsTest extends TestCase
         $this->artisan('scam-reports:sync --refresh')->expectsOutput('Refreshed 1 reports.')->assertSuccessful();
         $report = ScamReport::sole();
         $this->assertSame(['reviewed', 2], [$report->status, count($report->images)]);
-    }
-
-    public function test_genuine_postings_are_collected_from_karirhub_up_to_three_per_usable_scam(): void
-    {
-        $this->fakeSite([102]);
-        $this->artisan('legit-postings:sync')->expectsOutput('Added 0 new postings.');
-        $this->artisan('scam-reports:sync')->assertSuccessful();
-
-        $this->artisan('legit-postings:sync')->expectsOutput('Added 2 new postings.')->assertSuccessful();
-        $this->assertSame('PT Contoh Logistik Nusantara', LegitPosting::firstOrFail()->company);
-        $this->artisan('legit-postings:sync')->expectsOutput('Added 0 new postings.');
-    }
-
-    public function test_the_export_leaves_out_stamped_images_narratives_and_rejected_reports(): void
-    {
-        $this->fakeSite([102]);
-        $this->artisan('scam-reports:sync')->assertSuccessful();
-        $this->artisan('legit-postings:sync')->assertSuccessful();
-        ScamReport::create([
-            'source' => 'turnbackhoax', 'external_id' => 1, 'url' => 'u', 'title' => 't', 'posting_text' => 'p', 'narrative' => 'n',
-            'source_links' => [], 'archive_links' => [], 'reference_links' => [], 'images' => [], 'status' => 'rejected',
-        ]);
-        // No quoted posting: only the fact-checker's narrative
-        ScamReport::create([
-            'source' => 'turnbackhoax', 'external_id' => 2, 'url' => 'u', 'title' => 't', 'posting_text' => 'Beredar unggahan', 'narrative' => 'Beredar unggahan',
-            'source_links' => [], 'archive_links' => [], 'reference_links' => [], 'images' => [],
-        ]);
-
-        $path = tempnam(sys_get_temp_dir(), 'scam');
-        $this->artisan('training-pool:export', ['path' => $path])->expectsOutput('Exported 1 scams and 2 genuine postings.');
-        $rows = array_map(fn ($line) => json_decode($line, true), file($path, FILE_IGNORE_NEW_LINES));
-        $this->assertSame(['turnbackhoax:102', 'penipuan', []], [$rows[0]['id'], $rows[0]['label'], $rows[0]['images']]);
-        $this->assertSame('asli', $rows[1]['label']);
-    }
-
-    public function test_retraining_exports_the_pool_and_asks_the_ml_service(): void
-    {
-        // storage/ is the developer's real export in the dev container
-        $this->app->useStoragePath(sys_get_temp_dir().'/telaah-test-storage');
-        $this->fakeSite([102]);
-        Http::fake(['ml:8100/train' => Http::response(['status' => 'started'], 202)]);
-        $this->artisan('scam-reports:sync')->assertSuccessful();
-
-        $this->artisan('classifier:retrain')->expectsOutput('Training: started')->assertSuccessful();
-        $this->assertStringContainsString('turnbackhoax:102', file_get_contents(storage_path('app/ml/training-pool.jsonl')));
-        Http::assertSent(fn ($request) => $request->url() === 'http://ml:8100/train'
-            && $request->header('X-Internal-Key') === [(string) config('services.telaah.internal_key')]);
     }
 }

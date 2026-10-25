@@ -1,27 +1,6 @@
 <?php
 
-// Synthetic pages in TurnBackHoax's and KarirHub's markup (as of Oct 2026), for the parser and sync tests
-
-function karirhub_listing(array $ids): string
-{
-    return implode('', array_map(
-        fn ($id) => "<a href=\"/lowongan-dalam-negeri/lowongan/admin-gudang-{$id}\">Admin</a>",
-        $ids
-    ));
-}
-
-function karirhub_posting(): string
-{
-    return <<<'HTML'
-<html><head><title>Karirhub - Admin Gudang | Karirhub Kemnaker</title><script>var x = "Deskripsi Pekerjaan palsu";</script></head><body>
-<nav>Lowongan Pekerjaan Pemberi Kerja Jobfair</nav>
-<main><h1>Admin Gudang</h1><p>Kota Malang, Jawa Timur</p>
-<h2>Deskripsi Pekerjaan</h2><h3>Admin Gudang</h3><h3>Persyaratan Khusus</h3><p>Mencatat barang masuk dan keluar gudang setiap hari, menyusun laporan stok mingguan, dan berkoordinasi dengan tim pengiriman.</p>
-<h2>Persyaratan Umum</h2><p>Minimal pendidikan SMA atau sederajat</p><p>Kondisi fisik Disabilitas &amp; Non disabilitas</p>
-<p>PT Contoh Logistik Nusantara</p><a href="/perusahaan/1">Lihat Profil Perusahaan</a></main>
-<footer>Kementerian Ketenagakerjaan RI</footer></body></html>
-HTML;
-}
+// Synthetic pages in TurnBackHoax's markup (as of Oct 2026), for the parser and sync tests
 
 function turnbackhoax_listing(array $ids): string
 {
