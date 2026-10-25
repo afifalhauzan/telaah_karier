@@ -2,7 +2,7 @@
 
 Status: **terimplementasi di branch `feat/telaah-alur`** (26 Okt 2026), belum di-deploy.
 
-Masukan yang dijawab: "apa bedanya dengan chatbot AI biasa?" Perbandingan dengan Claude Sonnet + skill (folder `web/eval/comparison/`) menunjukkan akurasi setara; aplikasi unggul di biaya (~17× lebih hemat token) dan latensi (~9× lebih cepat). Supaya keunggulannya bukan hanya biaya, agent dibingkai dalam tiga lapisan yang **tidak bisa direplikasi dengan prompt**:
+Masukan yang dijawab: "apa bedanya dengan chatbot AI biasa?" Perbandingan dengan Claude Sonnet + skill ([08-PERBANDINGAN-SONNET.md](08-PERBANDINGAN-SONNET.md), data di `web/eval/comparison/`) menunjukkan akurasi setara; aplikasi unggul di biaya (~17× lebih hemat token) dan latensi (~9× lebih cepat). Supaya keunggulannya bukan hanya biaya, agent dibingkai dalam tiga lapisan yang **tidak bisa direplikasi dengan prompt**:
 
 | Lapisan | Isi | Kenapa chatbot biasa tidak punya |
 |---|---|---|
