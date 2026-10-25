@@ -101,3 +101,8 @@ web/eval/results/pilih-model/*/*
 !web/eval/results/pilih-model/*/report.md
 !web/eval/results/pilih-model/*/run.json
 !web/eval/results/pilih-model/perbandingan.md
+# Iteration 3 (docs/wiki/ai/05, bagian 11): the report and run settings only
+!web/eval/results/iterasi3/
+web/eval/results/iterasi3/*
+!web/eval/results/iterasi3/report.md
+!web/eval/results/iterasi3/run.json
