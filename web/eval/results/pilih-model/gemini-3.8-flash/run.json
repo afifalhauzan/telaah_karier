@@ -1,0 +1,25 @@
+{
+  "startedAt": "2026-10-25T16:10:41.417Z",
+  "commit": "6cd8f2a",
+  "uncommittedChanges": false,
+  "dataset": {
+    "path": "eval/dataset/dataset.csv",
+    "sha256": "99256bd16d8f4e1269daf22a911dc6b67dea9369ae7ba8aba77e341f7d55bfcc"
+  },
+  "splits": [
+    "dev",
+    "injeksi"
+  ],
+  "variants": [
+    "lengkap"
+  ],
+  "models": {
+    "extraction": "gemini-3.8-flash",
+    "analysis": "gemini-3.8-flash"
+  },
+  "envOverrides": [
+    "GEMINI_ANALYSIS_MODEL=gemini-3.8-flash",
+    "GEMINI_EXTRACTION_MODEL=gemini-3.8-flash"
+  ],
+  "caseCount": 60
+}
