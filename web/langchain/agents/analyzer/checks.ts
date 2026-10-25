@@ -235,7 +235,15 @@ export function buildChecks({
     ...domainAges.map((age) => domainAgeCheck(age, now)),
     ...certClusters.map(certClusterCheck),
     ...(knowledge ? [knowledgeCheck(knowledge)] : []),
+    ...(signals ? legalChecks(signals) : []),
   ];
+}
+
+/** One line per law a "tinggi" signal rests on, so the user sees why the verdict is "tinggi". */
+export function legalChecks(signals: DetectedSignal[]): Check[] {
+  return signals
+    .filter((signal) => signal.floor === "tinggi" && signal.legalBasis)
+    .map((signal) => ({ label: `Dasar hukum: ${labelInSentence(signal)}`, status: "warning" as const, detail: signal.legalBasis! }));
 }
 
 /** The rule signal when the posting shares an identifier with a debunked case. */
