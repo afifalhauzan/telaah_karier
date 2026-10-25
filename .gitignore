@@ -95,3 +95,9 @@ web/eval/results/arsip-iterasi1/*
 !web/eval/results/arsip-iterasi1/2026-10-15T09-11-08/*.md
 !web/eval/results/arsip-iterasi1/2026-10-15T16-50-01/
 !web/eval/results/arsip-iterasi1/2026-10-15T16-50-01/*.md
+# Model choice (docs/wiki/ai/09): reports and the comparison only, as for the archived runs
+!web/eval/results/pilih-model/
+web/eval/results/pilih-model/*/*
+!web/eval/results/pilih-model/*/report.md
+!web/eval/results/pilih-model/*/run.json
+!web/eval/results/pilih-model/perbandingan.md
