@@ -167,7 +167,7 @@ Kasus yang memang wajar tetap `sedang` dan tidak dikejar: hanya bit.ly, puskesma
 
 ### Iterasi 2 pada set `test`
 
-Iterasi 1 (15 Okt 2026, `eval/results/2026-10-15T09-11-08`) tetap menjadi angka utama yang dilaporkan. Iterasi 2 dijalankan sekali setelah perbaikan di atas dan dilaporkan **di sampingnya**, dengan tiga catatan:
+Iterasi 1 (15 Okt 2026, `eval/results/arsip-iterasi1/2026-10-15T09-11-08`) tetap menjadi angka utama yang dilaporkan. Iterasi 2 dijalankan sekali setelah perbaikan di atas dan dilaporkan **di sampingnya**, dengan tiga catatan:
 
 1. **Rubrik disusun setelah melihat kesalahan di `test`.** Penyetelan aturan memakai `dev`, tetapi pola yang dikejar berasal dari analisis kesalahan iterasi 1. Karena itu kenaikan pada iterasi 2 kemungkinan lebih besar daripada kinerja pada lowongan yang benar-benar baru.
 2. **Pembersihan jejak artikel di 12 baris.** Sebagian teks `test` masih membawa tulisan pemeriksa fakta, sesuatu yang tidak akan ditempel pengguna sungguhan. Sebelum iterasi 2, jejak itu dibersihkan secara mekanis tanpa melihat hasil model:
