@@ -51,6 +51,12 @@ return [
         'request_delay_ms' => (int) env('SCAM_REPORTS_REQUEST_DELAY_MS', 1000),
     ],
 
+    // The web app's server, reached over the compose network: it writes the knowledge base's case
+    // cards, as it holds the model keys
+    'web' => [
+        'url' => env('WEB_INTERNAL_URL', 'http://web:3000'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),

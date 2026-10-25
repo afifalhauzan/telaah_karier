@@ -118,11 +118,13 @@ class SyncScamReports extends Command
 
                 return false;
             }
-            // A refresh keeps the review status: only what the article says is replaced
+            // A refresh keeps the review status: only what the article says is replaced, and its case
+            // card is written again from the new text (scam-reports:cards)
             ScamReport::updateOrCreate(['source' => self::SOURCE, 'external_id' => $id], [
                 'url' => $url,
                 ...collect($article)->except('image_urls')->all(),
                 'images' => $this->downloadImages($id, $article['image_urls']),
+                'card' => null,
             ]);
 
             return true;
