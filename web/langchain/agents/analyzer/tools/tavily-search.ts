@@ -119,7 +119,8 @@ function extractCompany(text: string): SearchEntity | null {
   const words: string[] = [];
   for (const word of match[2].trim().split(/\s+/)) {
     const bareWord = word.replace(/[.,;:]+$/, "");
-    if (COMPANY_STOPWORDS.has(bareWord.toLowerCase())) {
+    // "PT Vale Indonesia Tbk 2026": the year is the posting's, not the name's
+    if (COMPANY_STOPWORDS.has(bareWord.toLowerCase()) || /^(?:19|20)\d{2}$/.test(bareWord)) {
       break;
     }
     words.push(bareWord);

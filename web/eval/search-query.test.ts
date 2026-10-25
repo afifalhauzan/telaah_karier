@@ -58,3 +58,7 @@ test("a company abroad names its legal form after the name, and its own site mat
   assert.ok(mentionsEntity(source("https://bloomtech.co.jp", "株式会社ブルームテック"), entity));
   assert.ok(!mentionsEntity(source("https://example.com/jobs", "Remote Data Scientist jobs in Japan"), entity));
 });
+
+test("the posting's year is not part of the company name", () => {
+  assert.equal(queryFor("LOWONGAN PT VALE INDONESIA TBK 2026. Dibuka posisi operator"), '"PT VALE INDONESIA TBK" lowongan kerja');
+});
