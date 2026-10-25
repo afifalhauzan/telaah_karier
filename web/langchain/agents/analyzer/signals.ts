@@ -874,7 +874,8 @@ export function officialDenialSignal({ company, url, quote, conflict, fee }: { c
     riskType: fee ? "payment_request" : "suspicious_contact",
     floor: "tinggi",
     floorReason: `Situs resmi ${company} menyatakan tidak pernah merekrut dengan cara yang dipakai materi ini.`,
-    legalBasis: fee ? `${LEGAL_BASIS.impersonation}; ${LEGAL_BASIS.fee}` : LEGAL_BASIS.impersonation,
+    // A denied fee is also the posting's fee_request, which carries the fee laws
+    legalBasis: LEGAL_BASIS.impersonation,
     description: `Situs resmi ${company} menyatakan "${quote}", sedangkan materi ini ${conflict}. Lowongan ini memakai nama ${company} tanpa mengikuti cara rekrutmen resminya.`,
     evidence: [url],
   };

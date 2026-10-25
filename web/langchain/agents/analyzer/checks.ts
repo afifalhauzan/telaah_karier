@@ -239,11 +239,15 @@ export function buildChecks({
   ];
 }
 
-/** One line per law a "tinggi" signal rests on, so the user sees why the verdict is "tinggi". */
+/** The laws the "tinggi" signals rest on, one line per law with the signals it backs. */
 export function legalChecks(signals: DetectedSignal[]): Check[] {
-  return signals
-    .filter((signal) => signal.floor === "tinggi" && signal.legalBasis)
-    .map((signal) => ({ label: `Dasar hukum: ${labelInSentence(signal)}`, status: "warning" as const, detail: signal.legalBasis! }));
+  const byLaw = new Map<string, string[]>();
+  for (const signal of signals) {
+    if (signal.floor === "tinggi" && signal.legalBasis) {
+      byLaw.set(signal.legalBasis, [...(byLaw.get(signal.legalBasis) ?? []), labelInSentence(signal)]);
+    }
+  }
+  return [...byLaw].map(([law, labels]) => ({ label: `Dasar hukum: ${labels.join("; ")}`, status: "warning" as const, detail: law }));
 }
 
 /** The rule signal when the posting shares an identifier with a debunked case. */

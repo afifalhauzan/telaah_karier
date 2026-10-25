@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildChecks, certClusterSignals, isThrowawaySubdomain, knowledgeSignals, newDomainSignals, trailSignals } from "../langchain/agents/analyzer/checks";
+import { buildChecks, certClusterSignals, isThrowawaySubdomain, knowledgeSignals, legalChecks, newDomainSignals, trailSignals } from "../langchain/agents/analyzer/checks";
 import { summarizeCertEntries } from "../langchain/agents/analyzer/tools/ct-cluster";
 import {
   asksOf,
@@ -21,7 +21,7 @@ import { decodeQr } from "../langchain/agents/analyzer/tools/qr";
 import QRCode from "qrcode";
 import { caseIdentifiers } from "../langchain/agents/knowledge/case-card";
 import { knowledgeSources, type KnowledgeResult } from "../langchain/agents/analyzer/tools/knowledge";
-import { detectSignals } from "../langchain/agents/analyzer/signals";
+import { detectSignals, officialDenialSignal } from "../langchain/agents/analyzer/signals";
 import { registrableDomain } from "../langchain/agents/analyzer/tools/domain-age";
 import { deniableKinds, findDenials, isCompanyHost } from "../langchain/agents/analyzer/tools/official-statement";
 import { namedBrands } from "../langchain/agents/analyzer/lookalike";
@@ -311,4 +311,16 @@ test("an official statement is matched to what the posting does, from the compan
 
   assert.deepEqual(namedBrands("Rekrutmen PT Pertamina (Persero) 2026").map((brand) => brand.name), ["Pertamina"]);
   assert.deepEqual(namedBrands("PT Karya Mandiri Sejahtera membuka lowongan"), []);
+});
+
+test("each law behind a tinggi verdict is listed once, with the signals it backs", () => {
+  const signals = [
+    ...detectSignals("LOWONGAN PT PERTAMINA (PERSERO). Biaya pendaftaran Rp 150.000. Info WA 0812 3456 7890"),
+    officialDenialSignal({ company: "Pertamina", url: "https://recruitment.pertamina.com", quote: "Tidak pernah memungut biaya.", conflict: "meminta biaya dari pelamar", fee: true }),
+  ];
+  const lines = legalChecks(signals);
+  assert.deepEqual(lines.map((line) => line.detail.split(" (")[0]), ["UU 13/2003 Pasal 38", "KUHP Pasal 492"]);
+  assert.match(lines[1].label, /klaim instansi.*; pernyataan resmi Pertamina/);
+  // A "sedang" floor has no law to show
+  assert.deepEqual(legalChecks(detectSignals("Formulir di lowongan-kerja.vercel.app")), []);
 });
