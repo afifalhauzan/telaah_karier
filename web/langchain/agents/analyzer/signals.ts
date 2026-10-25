@@ -862,6 +862,24 @@ export function throwawaySubdomainSignal(host: string): DetectedSignal {
   };
 }
 
+/**
+ * From the company's own site: it states it never charges applicants or recruits over a channel the
+ * posting uses. The posting then speaks in a name that is not its own.
+ */
+export function officialDenialSignal({ company, url, quote, conflict, fee }: { company: string; url: string; quote: string; conflict: string; fee: boolean }): DetectedSignal {
+  return {
+    id: "official_denial",
+    label: `Pernyataan resmi ${company} membantah cara rekrutmen di materi`,
+    severity: "strong",
+    riskType: fee ? "payment_request" : "suspicious_contact",
+    floor: "tinggi",
+    floorReason: `Situs resmi ${company} menyatakan tidak pernah merekrut dengan cara yang dipakai materi ini.`,
+    legalBasis: fee ? `${LEGAL_BASIS.impersonation}; ${LEGAL_BASIS.fee}` : LEGAL_BASIS.impersonation,
+    description: `Situs resmi ${company} menyatakan "${quote}", sedangkan materi ini ${conflict}. Lowongan ini memakai nama ${company} tanpa mengikuti cara rekrutmen resminya.`,
+    evidence: [url],
+  };
+}
+
 export function compareRiskLevels(a: RiskLevel, b: RiskLevel): number {
   return LEVEL_RANK[a] - LEVEL_RANK[b];
 }

@@ -26,6 +26,7 @@ import {
 import {
   compareRiskLevels,
   describeFloorForProgress,
+  officialDenialSignal,
   describeSignalsForProgress,
   detectSignals,
   labelInSentence,
@@ -45,6 +46,7 @@ import {
   type KnowledgeResult,
 } from "./tools/knowledge";
 import { describeCertClustersForProgress, lookupCertClusters, type CertCluster } from "./tools/ct-cluster";
+import { conflictText, describeStatementForProgress, lookupOfficialStatement, type Denial, type OfficialStatement } from "./tools/official-statement";
 import { describeDomainAgesForProgress, lookupDomainAges, type DomainAge } from "./tools/domain-age";
 import { checkLinks, describeLinksForProgress, pageBlock, shortlinkLines, trailBlock, type LinkChecks, type TraceOutcome } from "./tools/link-checks";
 import { decodeQrLinks } from "./tools/qr";
@@ -113,6 +115,7 @@ export interface AnalysisRunMeta {
   certClusters?: Array<{ domain: string; status: CertCluster["status"]; recruitmentHosts: number; imitatedBrands: number }>;
   // Unset when the web checks are disabled. similar holds the cases' similarity scores.
   knowledge?: { status: KnowledgeResult["status"]; identity: number; shared: number; similar: number[] };
+  officialStatement?: { url: string; conflicts: Denial[] } | null;
   riskFloorApplied: boolean;
   // A "tinggi" verdict resting only on a manipulation attempt was lowered to "sedang".
   manipulationCapApplied: boolean;
@@ -663,13 +666,36 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       (links?.page?.text ? buildVerificationQuery(preprocessJobInput(links.page.text.slice(0, PAGE_QUERY_CHARS))) : null);
     const domains = employerDomains(ownInput);
     // The certificate logs and the knowledge base run beside the web search, adding no waiting of their own
-    [search, domainAges, certClusters, knowledge] = await Promise.all([
+    let statement: OfficialStatement | null;
+    [search, domainAges, certClusters, knowledge, statement] = await Promise.all([
       searchWeb(target),
       lookupDomainAges(domains),
       lookupCertClusters(domains),
       lookupKnowledge({ ownText, materialText }, options.knowledge),
+      useRules ? lookupOfficialStatement(ownText, target?.entity, signals) : null,
     ]);
-    evidence = { ...search, sources: [...search.sources, ...knowledgeSources(knowledge, search.sources.length)] };
+    const kbSources = knowledgeSources(knowledge, search.sources.length);
+    // The statement is cited like any source, so the model can quote the company's own words
+    const statementSource = statement
+      ? [{ id: `S${search.sources.length + kbSources.length + 1}`, title: `Pernyataan resmi ${statement.company}: ${statement.title}`, url: statement.url, snippet: statement.quote }]
+      : [];
+    evidence = { ...search, sources: [...search.sources, ...kbSources, ...statementSource] };
+    meta.officialStatement = statement ? { url: statement.url, conflicts: statement.conflicts } : null;
+    const statementStep = describeStatementForProgress(statement);
+    if (statementStep) {
+      addStep(statementStep);
+    }
+    if (statement && useRules) {
+      signals.push(
+        officialDenialSignal({
+          company: statement.company,
+          url: statement.url,
+          quote: statement.quote,
+          conflict: conflictText(statement),
+          fee: statement.conflicts.includes("biaya"),
+        })
+      );
+    }
     meta.timingsMs.search = Date.now() - searchStartedAt;
     meta.search = { status: search.status, retrievedCount: search.retrievedCount, sourceCount: search.sources.length };
     meta.knowledge = {
