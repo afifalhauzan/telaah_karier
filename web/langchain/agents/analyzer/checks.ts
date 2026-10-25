@@ -1,5 +1,6 @@
 import type { Check } from "./schema";
-import { labelInSentence, newDomainSignal, type DetectedSignal } from "./signals";
+import { certClusterSignal, labelInSentence, newDomainSignal, type DetectedSignal } from "./signals";
+import { clusterExamples, isSuspiciousCluster, type CertCluster } from "./tools/ct-cluster";
 import { domainAgeDays, NEW_DOMAIN_DAYS, type DomainAge } from "./tools/domain-age";
 import type { LinkChecks } from "./tools/link-checks";
 import type { WebSearchResult } from "./tools/tavily-search";
@@ -22,8 +23,8 @@ function hostOf(url: string): string {
 }
 
 function patternCheck(signals: DetectedSignal[]): Check {
-  // The domain age has its own line
-  const found = signals.filter((signal) => signal.id !== "new_domain");
+  // The domain age and the certificate logs have their own lines
+  const found = signals.filter((signal) => signal.id !== "new_domain" && signal.id !== "cert_cluster");
   return found.length
     ? { label: "Pola penipuan umum", status: "warning", detail: `Ditemukan ${found.map(labelInSentence).join(", ")}.` }
     : {
@@ -93,11 +94,32 @@ function domainAgeCheck({ domain, registeredAt }: DomainAge, now: Date): Check {
   return { label, status: "ok", detail: `Terdaftar sejak ${formatDate(registeredAt)}.` };
 }
 
+function certClusterCheck(cluster: CertCluster): Check {
+  const label = `Situs lain di domain ${cluster.domain}`;
+  if (cluster.status === "error") {
+    return { label, status: "skipped", detail: "Log sertifikat (Certificate Transparency) tidak dapat diperiksa saat ini." };
+  }
+  if (cluster.status === "large") {
+    return { label, status: "info", detail: "Domain besar dengan banyak layanan, jadi jumlah situsnya tidak menunjukkan apa-apa." };
+  }
+  if (isSuspiciousCluster(cluster)) {
+    const brands = cluster.imitatedBrands.length ? `, atas nama ${cluster.imitatedBrands.join(", ")}` : "";
+    const since = cluster.firstSeen ? ` sejak ${formatDate(cluster.firstSeen)}` : "";
+    return {
+      label,
+      status: "warning",
+      detail: `Log sertifikat memuat ${cluster.hostCount} situs di domain ini${since}${brands}, termasuk ${clusterExamples(cluster).join(", ")}.`,
+    };
+  }
+  return { label, status: "ok", detail: "Log sertifikat tidak memuat deretan situs rekrutmen lain di domain ini." };
+}
+
 export function buildChecks({
   signals,
   links,
   search,
   domainAges,
+  certClusters = [],
   now = new Date(),
 }: {
   // null when the rules did not run (evaluation ablation); the same for the web checks below.
@@ -105,6 +127,7 @@ export function buildChecks({
   links: LinkChecks | null;
   search: WebSearchResult | null;
   domainAges: DomainAge[];
+  certClusters?: CertCluster[];
   now?: Date;
 }): Check[] {
   return [
@@ -112,6 +135,7 @@ export function buildChecks({
     ...(links ? linkChecks(links) : []),
     ...(search ? [searchCheck(search)] : []),
     ...domainAges.map((age) => domainAgeCheck(age, now)),
+    ...certClusters.map(certClusterCheck),
   ];
 }
 
@@ -121,4 +145,11 @@ export function newDomainSignals(domainAges: DomainAge[], now: Date = new Date()
     const days = registeredAt ? domainAgeDays(registeredAt, now) : null;
     return days !== null && days < NEW_DOMAIN_DAYS ? [newDomainSignal(domain, days)] : [];
   });
+}
+
+/** Signals for domains that host a row of recruitment sites, from the certificate logs. */
+export function certClusterSignals(clusters: CertCluster[]): DetectedSignal[] {
+  return clusters
+    .filter(isSuspiciousCluster)
+    .map((cluster) => certClusterSignal(cluster));
 }

@@ -34,7 +34,8 @@ import {
   strongestFloor,
   type DetectedSignal,
 } from "./signals";
-import { buildChecks, newDomainSignals } from "./checks";
+import { buildChecks, certClusterSignals, newDomainSignals } from "./checks";
+import { describeCertClustersForProgress, lookupCertClusters, type CertCluster } from "./tools/ct-cluster";
 import { describeDomainAgesForProgress, lookupDomainAges, type DomainAge } from "./tools/domain-age";
 import { checkLinks, describeLinksForProgress, pageBlock, shortlinkLines, type LinkChecks } from "./tools/link-checks";
 import {
@@ -97,6 +98,7 @@ export interface AnalysisRunMeta {
   // Unset when the web checks are disabled. pageRead is null when there was no page to read.
   links?: { shortlinks: number; resolved: number; pageRead: boolean | null };
   domainAges?: Array<{ domain: string; registeredAt: string | null }>;
+  certClusters?: Array<{ domain: string; status: CertCluster["status"]; recruitmentHosts: number; imitatedBrands: number }>;
   riskFloorApplied: boolean;
   // A "tinggi" verdict resting only on a manipulation attempt was lowered to "sedang".
   manipulationCapApplied: boolean;
@@ -627,6 +629,7 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
 
   let search: WebSearchResult = { status: "skipped_no_query", retrievedCount: 0, sources: [] };
   let domainAges: DomainAge[] = [];
+  let certClusters: CertCluster[] = [];
   if (useSearch) {
     const searchStartedAt = Date.now();
     const ownInput = preprocessJobInput(ownText);
@@ -634,18 +637,30 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
     const target =
       buildVerificationQuery(ownInput) ??
       (links?.page?.text ? buildVerificationQuery(preprocessJobInput(links.page.text.slice(0, PAGE_QUERY_CHARS))) : null);
-    [search, domainAges] = await Promise.all([searchWeb(target), lookupDomainAges(employerDomains(ownInput))]);
+    const domains = employerDomains(ownInput);
+    // The certificate logs run beside the web search, so they add no waiting of their own
+    [search, domainAges, certClusters] = await Promise.all([searchWeb(target), lookupDomainAges(domains), lookupCertClusters(domains)]);
     meta.timingsMs.search = Date.now() - searchStartedAt;
     meta.search = { status: search.status, retrievedCount: search.retrievedCount, sourceCount: search.sources.length };
     meta.domainAges = domainAges.map(({ domain, registeredAt }) => ({ domain, registeredAt }));
+    meta.certClusters = certClusters.map(({ domain, status, recruitmentHosts, imitatedBrands }) => ({
+      domain,
+      status,
+      recruitmentHosts: recruitmentHosts.length,
+      imitatedBrands: imitatedBrands.length,
+    }));
     addStep(describeSearchForProgress(search));
 
     const ageStep = describeDomainAgesForProgress(domainAges);
     if (ageStep) {
       addStep(ageStep);
     }
+    const clusterStep = describeCertClustersForProgress(certClusters);
+    if (clusterStep) {
+      addStep(clusterStep);
+    }
     if (useRules) {
-      signals.push(...newDomainSignals(domainAges));
+      signals.push(...newDomainSignals(domainAges), ...certClusterSignals(certClusters));
     }
   }
   meta.signals = signals.map(({ id, severity }) => ({ id, severity }));
@@ -712,6 +727,7 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       links,
       search: useSearch ? search : null,
       domainAges,
+      certClusters,
     });
   }
 
