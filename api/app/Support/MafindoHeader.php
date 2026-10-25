@@ -12,7 +12,8 @@ use Illuminate\Support\Facades\Storage;
  * the screen's non-plain columns above that label, so the cut keeps no stamp, badge, or frame.
  * shortcut: about the bottom tenth of the poster is lost under the label, a dark poster on the
  * dark screen loses a few edge pixels, and a poster reaching the screen's border line would lose up
- * to 40 px (the widest seen starts at x=469); a new template is not recognised and yields no poster.
+ * to 40 px (the widest seen starts at x=469). A dark-mode screenshot on the dark screen cannot be told
+ * from it and yields no poster (3 of 102 headers in Oct 2026), as does a new template.
  */
 class MafindoHeader
 {
@@ -35,11 +36,15 @@ class MafindoHeader
     // Points that are always the frame, and the skin of the lower right hand, in every variant seen
     private const FRAME_POINTS = [[240, 450], [240, 100], [800, 860], [240, 800]];
 
-    private const FRAME_COLOURS = [[251, 195, 0], [101, 51, 137]];
+    // Yellow, purple, and light blue frames
+    private const FRAME_COLOURS = [[251, 195, 0], [101, 51, 137], [150, 182, 241]];
 
     private const HAND_POINT = [1360, 800];
 
     private const HAND_COLOUR = [248, 177, 167];
+
+    // Wide enough for the hand's shading where a header is drawn a few pixels off
+    private const HAND_TOLERANCE = 140;
 
     private const MIN_POSTER_WIDTH = 200;
 
@@ -100,7 +105,7 @@ class MafindoHeader
 
         return $isFrameColour($frame)
             && array_filter(self::FRAME_POINTS, fn ($point) => self::distance(self::rgb($gd, ...$point), $frame) >= 30) === []
-            && self::distance(self::rgb($gd, ...self::HAND_POINT), self::HAND_COLOUR) < 30;
+            && self::distance(self::rgb($gd, ...self::HAND_POINT), self::HAND_COLOUR) < self::HAND_TOLERANCE;
     }
 
     /** @return array{int, int} the poster's first and last column */

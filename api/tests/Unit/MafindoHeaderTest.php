@@ -26,7 +26,7 @@ class MafindoHeaderTest extends TestCase
 
     public function test_the_poster_is_cut_out_of_the_frame_above_the_verdict_label(): void
     {
-        foreach ([[251, 195, 0], [101, 51, 137]] as $frame) {
+        foreach ([[251, 195, 0], [101, 51, 137], [150, 182, 241]] as $frame) {
             $poster = imagecreatefromstring(MafindoHeader::poster($this->header(500, 1100, $frame)));
             $this->assertSame([601, 600], [imagesx($poster), imagesy($poster)]);
         }
