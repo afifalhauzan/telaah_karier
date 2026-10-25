@@ -238,7 +238,7 @@ export function HistoryPanel({
 
   if (collapsed) {
     return (
-      <nav aria-label="Riwayat telaah" className="flex flex-col items-center gap-1">
+      <nav aria-label="Riwayat telaah" className="flex h-full flex-col items-center gap-1">
         <RailButton
           label="Cari telaah"
           onClick={() => {

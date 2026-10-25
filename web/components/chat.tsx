@@ -33,6 +33,7 @@ import { buildCompactSeed } from "@/lib/compact-session";
 import { persistLatestExchange } from "@/lib/chat-persistence";
 import { useStreaming } from "@/contexts/StreamingContext";
 import { HistoryPanel, SidePanel } from "@/components/sidebar/sidebar";
+import { SessionDonut } from "@/components/sidebar/usage-meter";
 import { type SidebarSourceItem } from "@/components/sidebar/SourceItem";
 import { AnalysisSchema } from "@/langchain/agents/analyzer/schema";
 import type { FileUIPart } from "ai";
@@ -403,6 +404,7 @@ export function Chat() {
         </>
       );
     }
+    if (share > 0) return <SessionDonut share={share} />;
     return null;
   })();
 
