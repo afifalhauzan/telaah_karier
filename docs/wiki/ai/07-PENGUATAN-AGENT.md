@@ -126,6 +126,10 @@ Status pasal diperiksa Okt 2026: UU 13/2003 Pasal 38 tidak diubah UU 6/2023; UU 
 - Setelah deploy pertama, jalankan **sebagai www-data** (`docker compose exec` default-nya root; folder storage milik root membuat scheduler malam gagal menulis):
   - `docker compose exec -u www-data api php artisan scam-reports:sync --all`
   - `docker compose exec -u www-data api php artisan scam-reports:cards`
+  - `docker compose exec -u www-data api php artisan scam-reports:posters --all`
+  - `docker compose exec -u www-data api php artisan legit-postings:sync`
+- Image api perlu di-build ulang: ekstensi GD ditambahkan untuk memotong poster dari header artikel cek fakta.
+- Migrasi baru lainnya: `legit_postings`.
 
 ## 5. Pekerjaan Lanjutan
 
