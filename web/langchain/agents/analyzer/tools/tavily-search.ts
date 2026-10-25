@@ -96,7 +96,7 @@ const COMPANY_STOPWORDS = new Set([
 // Legal suffixes that sources often drop ("PT Bank Central Asia Tbk" vs "PT Bank Central Asia").
 const LEGAL_SUFFIXES = new Set(["tbk", "persero"]);
 // Words in many company names, so a domain containing one says nothing about whose site it is.
-const GENERIC_NAME_WORDS = new Set(["tbk", "persero", "indonesia", "group", "grup", "global", "international", "nusantara"]);
+export const GENERIC_NAME_WORDS = new Set(["tbk", "persero", "indonesia", "group", "grup", "global", "international", "nusantara"]);
 
 function cleanText(value: unknown): string {
   return typeof value === "string" ? value.replace(/\s+/g, " ").trim() : "";
@@ -106,7 +106,7 @@ function truncate(text: string, maxLength: number): string {
   return text.length > maxLength ? `${text.slice(0, maxLength).trimEnd()}…` : text;
 }
 
-function normalizeForMatch(value: string): string {
+export function normalizeForMatch(value: string): string {
   return ` ${value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()} `;
 }
 
@@ -293,7 +293,7 @@ export async function searchWeb(target: SearchTarget | null): Promise<WebSearchR
   }
 }
 
-async function tavilySearch(apiKey: string, params: { query: string; include_domains?: string[] }): Promise<Array<Omit<SearchSource, "id">>> {
+export async function tavilySearch(apiKey: string, params: { query: string; include_domains?: string[] }): Promise<Array<Omit<SearchSource, "id">>> {
   const response = await fetch("https://api.tavily.com/search", {
     method: "POST",
     headers: {

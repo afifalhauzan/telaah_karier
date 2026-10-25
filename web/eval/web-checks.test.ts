@@ -23,6 +23,8 @@ import { caseIdentifiers } from "../langchain/agents/knowledge/case-card";
 import { knowledgeSources, type KnowledgeResult } from "../langchain/agents/analyzer/tools/knowledge";
 import { detectSignals } from "../langchain/agents/analyzer/signals";
 import { registrableDomain } from "../langchain/agents/analyzer/tools/domain-age";
+import { deniableKinds, findDenials, isCompanyHost } from "../langchain/agents/analyzer/tools/official-statement";
+import { namedBrands } from "../langchain/agents/analyzer/lookalike";
 import type { WebSearchResult } from "../langchain/agents/analyzer/tools/tavily-search";
 
 const NOW = new Date("2026-10-22T00:00:00Z");
@@ -282,4 +284,31 @@ test("a posting that hides its link asks the user for it", () => {
 test("a QR code on a poster is decoded to its address", async () => {
   const image = await QRCode.toBuffer("https://bit.ly/daftar-kpc-2026", { width: 600 });
   assert.equal(await decodeQr(image), "https://bit.ly/daftar-kpc-2026");
+});
+
+test("an official statement is matched to what the posting does, from the company's own host only", () => {
+  const snippet =
+    "Waspada penipuan. PT Komatsu Indonesia tidak pernah memungut biaya dalam bentuk apa pun selama proses rekrutmen. Informasi lowongan hanya disampaikan melalui situs resmi kami.";
+  assert.deepEqual(findDenials(snippet).map((item) => item.kind), ["biaya", "kanal"]);
+  assert.equal(findDenials(snippet)[0].quote, "PT Komatsu Indonesia tidak pernah memungut biaya dalam bentuk apa pun selama proses rekrutmen.");
+  assert.deepEqual(findDenials("Kami tidak pernah melakukan rekrutmen melalui WhatsApp pribadi.").map((item) => item.kind), ["chat"]);
+  assert.deepEqual(findDenials("Pendaftaran gratis untuk seluruh pelamar."), []);
+  // Wordings seen on pln.co.id
+  assert.deepEqual(findDenials("PLN tidak melakukan korespondensi terkait rekrutmen.").map((item) => item.kind), ["kanal"]);
+  assert.deepEqual(
+    findDenials("PT PLN (Persero) conducts all recruitment processes exclusively through its official online recruitment platform.").map((item) => item.kind),
+    ["kanal"]
+  );
+
+  const posting = detectSignals("Lowongan PT Komatsu Indonesia, biaya pendaftaran Rp 150.000, hubungi WA 0812 3456 7890");
+  assert.deepEqual(deniableKinds(posting), ["biaya", "chat", "kanal"]);
+  assert.deepEqual(deniableKinds(detectSignals("Lowongan PT Komatsu Indonesia, daftar di komatsu.co.id/karir")), []);
+
+  const komatsu = { kind: "company" as const, name: "PT Komatsu Indonesia" };
+  assert.equal(isCompanyHost("www.komatsu.co.id", komatsu), true);
+  assert.equal(isCompanyHost("komatsu-karir.com", komatsu), false);
+  assert.equal(isCompanyHost("kpc.co.id", { kind: "company", name: "PT Kaltim Prima Coal", acronym: "KPC" }), true);
+
+  assert.deepEqual(namedBrands("Rekrutmen PT Pertamina (Persero) 2026").map((brand) => brand.name), ["Pertamina"]);
+  assert.deepEqual(namedBrands("PT Karya Mandiri Sejahtera membuka lowongan"), []);
 });

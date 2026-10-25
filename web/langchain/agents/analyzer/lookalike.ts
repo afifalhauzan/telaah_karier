@@ -160,3 +160,16 @@ export function findLookalikeDomains(text: string): LookalikeDomain[] {
   }
   return found;
 }
+
+// Brand words that are also ordinary words or other companies' names ("PT Karya Mandiri", "Garuda Food")
+const AMBIGUOUS_TOKENS = new Set(["mandiri", "garuda", "astra"]);
+
+/** The listed brands the text names, by full name or a distinctive token, with the domains they recruit from. */
+export function namedBrands(text: string): Array<{ name: string; official: string[] }> {
+  const lower = ` ${text.toLowerCase().replace(/[^a-z0-9]+/g, " ")} `;
+  return BRANDS.filter(
+    (brand) =>
+      lower.includes(` ${brand.name.toLowerCase()} `) ||
+      brand.tokens.some((token) => token.length >= 6 && !AMBIGUOUS_TOKENS.has(token) && lower.includes(` ${token} `))
+  ).map(({ name, official }) => ({ name, official }));
+}
