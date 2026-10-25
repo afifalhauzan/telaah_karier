@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { buildChecks, certClusterSignals, isThrowawaySubdomain, knowledgeSignals, legalChecks, newDomainSignals, trailSignals } from "../langchain/agents/analyzer/checks";
+import { bioLinkRequest, buildChecks, certClusterSignals, isThrowawaySubdomain, knowledgeSignals, legalChecks, newDomainSignals, trailSignals } from "../langchain/agents/analyzer/checks";
 import { summarizeCertEntries } from "../langchain/agents/analyzer/tools/ct-cluster";
 import {
   asksOf,
@@ -323,4 +323,23 @@ test("each law behind a tinggi verdict is listed once, with the signals it backs
   assert.match(lines[1].label, /klaim instansi.*; pernyataan resmi Pertamina/);
   // A "sedang" floor has no law to show
   assert.deepEqual(legalChecks(detectSignals("Formulir di lowongan-kerja.vercel.app")), []);
+});
+
+test("the applicant is asked for the bio link only when the trail found nothing to read", () => {
+  const ask = (text: string, trail: LinkChecks["trail"] = []) => bioLinkRequest(text, detectSignals(text), { shortlinks: [], page: null, trail });
+
+  assert.deepEqual(ask("Lowongan admin, daftar lewat link di bio IG @loker.bumn.id."), { platform: "instagram", handle: "loker.bumn.id" });
+  assert.deepEqual(ask("Info lengkap cek link di bio TikTok kami"), { platform: "tiktok" });
+  // An email's "@" is no account
+  assert.deepEqual(ask("Kirim CV ke hrd.loker@gmail.com atau klik link di bio"), {});
+
+  const profile = "https://www.instagram.com/infoloker.resmi";
+  assert.deepEqual(ask(`Lowongan terbaru di ${profile}`, [{ url: profile, from: null, outcome: "login", title: null, asks: [], fields: [] }]), {
+    platform: "instagram",
+    handle: "infoloker.resmi",
+  });
+
+  const form = { url: "https://docs.google.com/forms/d/e/x/viewform", from: null, outcome: "form" as const, title: null, asks: [], fields: [] };
+  assert.equal(ask("Daftar lewat link di bio IG @loker.bumn.id", [form]), null);
+  assert.equal(ask("Kirim CV ke hrd@contoh.co.id"), null);
 });
