@@ -764,6 +764,7 @@ export function Chat() {
               ) : messages.length === 0 ? (
                 <ChatStart
                   onSuggestionClick={handleStarterClick}
+                  onAlurClick={handleSuggestionClick}
                   isLoading={isLoading || isInitializing || !isAuthReady}
                 />
               ) : (

@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Route } from "lucide-react";
 
 interface Suggestion {
   id: number;
@@ -9,6 +10,8 @@ interface Suggestion {
 
 interface ChatStartProps {
   onSuggestionClick: (text: string) => void;
+  // Sent as is: a first-person message opens the TelaahAlur check (lib/telaah-alur/trigger.ts)
+  onAlurClick: (text: string) => void;
   isLoading: boolean;
 }
 
@@ -19,7 +22,9 @@ const SUGGESTIONS: Suggestion[] = [
   { id: 4, text: "Apakah wajar kalau recruiter meminta biaya administrasi?" },
 ];
 
-export function ChatStart({ onSuggestionClick, isLoading }: ChatStartProps) {
+const ALUR_MESSAGE = "Saya sudah terlanjur mendaftar lowongan kerja. Apa yang harus saya cek sekarang?";
+
+export function ChatStart({ onSuggestionClick, onAlurClick, isLoading }: ChatStartProps) {
   return (
     // Compact on phones so the greeting and the suggestions fit without scrolling
     <div className="flex flex-col items-center justify-center px-2 py-2 antialiased md:min-h-[60vh] md:px-6 md:py-12">
@@ -78,6 +83,19 @@ export function ChatStart({ onSuggestionClick, isLoading }: ChatStartProps) {
               </button>
             </div>
           ))}
+        </div>
+        <div
+          className="mt-4 flex justify-center animate-in fade-in slide-in-from-bottom-4 fill-mode-backwards duration-700"
+          style={{ animationDelay: `${150 + SUGGESTIONS.length * 100}ms` }}
+        >
+          <button
+            onClick={() => onAlurClick(ALUR_MESSAGE)}
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 transition-colors hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
+          >
+            <Route className="h-4 w-4" aria-hidden />
+            Sudah terlanjur mendaftar? Cek langkahnya
+          </button>
         </div>
       </div>
     </div>
