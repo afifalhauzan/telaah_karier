@@ -6,7 +6,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { preprocessJobInput } from "../langchain/agents/analyzer/preprocessor";
-import { buildVerificationQuery, mentionsEntity, stripSourceIds } from "../langchain/agents/analyzer/tools/tavily-search";
+import { buildVerificationQuery, isFactCheckUrl, mentionsEntity, stripSourceIds } from "../langchain/agents/analyzer/tools/tavily-search";
 
 const queryFor = (text: string) => buildVerificationQuery(preprocessJobInput(text))?.query ?? null;
 
@@ -61,4 +61,12 @@ test("a company abroad names its legal form after the name, and its own site mat
 
 test("the posting's year is not part of the company name", () => {
   assert.equal(queryFor("LOWONGAN PT VALE INDONESIA TBK 2026. Dibuka posisi operator"), '"PT VALE INDONESIA TBK" lowongan kerja');
+});
+
+test("an evaluation leaves fact-check sites and rubrics out of the web search", () => {
+  assert.equal(isFactCheckUrl("https://turnbackhoax.id/articles/37273"), true);
+  assert.equal(isFactCheckUrl("https://www.kompas.com/cekfakta/read/2026/10/01/lowongan-palsu"), true);
+  assert.equal(isFactCheckUrl("https://www.liputan6.com/cek-fakta/read/123/lowongan"), true);
+  assert.equal(isFactCheckUrl("https://www.pertamina.com/id/waspada-penipuan"), false);
+  assert.equal(isFactCheckUrl("https://karirhub.kemnaker.go.id/lowongan-dalam-negeri"), false);
 });

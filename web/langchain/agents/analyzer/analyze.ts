@@ -94,6 +94,8 @@ export interface AnalyzeOptions {
   earlierMaterial?: string;
   // The evaluation leaves each row's own fact-check out of the knowledge base
   knowledge?: KnowledgeOptions;
+  // The evaluation keeps fact-check sites out of the web search (tools/tavily-search.ts)
+  excludeFactChecks?: boolean;
 }
 
 export interface AnalysisRunMeta {
@@ -691,7 +693,7 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
     // The certificate logs and the knowledge base run beside the web search, adding no waiting of their own
     let statement: OfficialStatement | null;
     [search, domainAges, certClusters, knowledge, statement] = await Promise.all([
-      searchWeb(target),
+      searchWeb(target, { excludeFactChecks: options.excludeFactChecks }),
       lookupDomainAges(domains),
       lookupCertClusters(domains),
       lookupKnowledge({ ownText, materialText }, options.knowledge),

@@ -243,7 +243,16 @@ export function mentionsEntity(source: SearchSource, entity: SearchEntity): bool
   );
 }
 
-export async function searchWeb(target: SearchTarget | null): Promise<WebSearchResult> {
+// Evaluation: the fact-checks of the test postings would hand the agent its answer. Whole sites are
+// left out by the search engine; the fact-check rubrics of news sites by their path.
+export const FACT_CHECK_DOMAINS = ["turnbackhoax.id", "cekfakta.com", "mafindo.or.id"];
+const FACT_CHECK_PATH = /\/(?:cek-?fakta|hoaks|hoax|klarifikasi)(?:[-/]|$)/i;
+
+export const isFactCheckUrl = (url: string) =>
+  FACT_CHECK_DOMAINS.some((domain) => hostnameOf(url) === domain || hostnameOf(url).endsWith(`.${domain}`)) ||
+  FACT_CHECK_PATH.test(new URL(url).pathname);
+
+export async function searchWeb(target: SearchTarget | null, { excludeFactChecks = false }: { excludeFactChecks?: boolean } = {}): Promise<WebSearchResult> {
   const apiKey = process.env.TAVILY_API_KEY;
 
   if (!apiKey) {
@@ -256,11 +265,12 @@ export async function searchWeb(target: SearchTarget | null): Promise<WebSearchR
   const { query, entity, siteDomain } = target;
 
   try {
+    const exclude = excludeFactChecks ? { exclude_domains: FACT_CHECK_DOMAINS } : {};
     const [main, byName, site] = await Promise.all([
-      tavilySearch(apiKey, { query }),
+      tavilySearch(apiKey, { query, ...exclude }),
       // "lowongan kerja" finds a big company's career pages but steers a small company's search to
       // job pages of other companies; the name alone finds its LinkedIn and job-board profiles
-      entity.kind === "company" ? tavilySearch(apiKey, { query: `"${entity.name}"` }).catch(() => []) : [],
+      entity.kind === "company" ? tavilySearch(apiKey, { query: `"${entity.name}"`, ...exclude }).catch(() => []) : [],
       siteDomain
         ? // The site search is extra evidence: its failure must not lose the main results
           tavilySearch(apiKey, { query: `${entity.name} lowongan karir`, include_domains: [siteDomain] }).catch(() => [])
@@ -269,6 +279,7 @@ export async function searchWeb(target: SearchTarget | null): Promise<WebSearchR
 
     const retrieved: Array<Omit<SearchSource, "id">> = [];
     for (const item of [...main, ...byName, ...site]) {
+      if (excludeFactChecks && isFactCheckUrl(item.url)) continue;
       if (!retrieved.some((source) => source.url === item.url)) {
         retrieved.push(item);
       }
@@ -294,7 +305,7 @@ export async function searchWeb(target: SearchTarget | null): Promise<WebSearchR
   }
 }
 
-export async function tavilySearch(apiKey: string, params: { query: string; include_domains?: string[] }): Promise<Array<Omit<SearchSource, "id">>> {
+export async function tavilySearch(apiKey: string, params: { query: string; include_domains?: string[]; exclude_domains?: string[] }): Promise<Array<Omit<SearchSource, "id">>> {
   const response = await fetch("https://api.tavily.com/search", {
     method: "POST",
     headers: {
