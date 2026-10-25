@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { buildChecks, certClusterSignals, newDomainSignals } from "../langchain/agents/analyzer/checks";
 import { summarizeCertEntries } from "../langchain/agents/analyzer/tools/ct-cluster";
-import { pageText } from "../langchain/agents/analyzer/tools/link-checks";
+import { linkedinExternalLink, pageText } from "../langchain/agents/analyzer/tools/link-checks";
 import { detectSignals } from "../langchain/agents/analyzer/signals";
 import { registrableDomain } from "../langchain/agents/analyzer/tools/domain-age";
 import type { WebSearchResult } from "../langchain/agents/analyzer/tools/tavily-search";
@@ -171,4 +171,12 @@ test("a linked page keeps the addresses written in it and drops button links and
   );
   assert.match(page, /APPLY HERE: https:\/\/interfell\.simera\.io\/jobs\/10826$/);
   assert.doesNotMatch(page, /signup|trk=|!\[/);
+});
+
+test("lnkd.in's warning page gives the outside address it stands for", () => {
+  // Recorded from https://lnkd.in/gkjzzJ8E, the apply link in a LinkedIn post (25 Oct 2026)
+  const html = `<h1 class="t-24 t-bold t-black mb2">This link will take you to a page that’s not on LinkedIn</h1>
+    <a class="artdeco-button artdeco-button--tertiary" data-tracking-control-name="external_url_click" data-tracking-will-navigate href="https://forms.gle/e9AvwcP9MdMNwvXd6?a=1&amp;b=2">`;
+  assert.equal(linkedinExternalLink(html), "https://forms.gle/e9AvwcP9MdMNwvXd6?a=1&b=2");
+  assert.equal(linkedinExternalLink("<html>LinkedIn post</html>"), null);
 });

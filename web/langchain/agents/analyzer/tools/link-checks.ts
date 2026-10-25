@@ -1,12 +1,15 @@
 import { findLinks } from "../../telaah-bersama/identifiers";
 
 // Evidence from the links in a posting, gathered before the analysis. Only known shorteners are
-// requested from our server, and only for their redirect header; every other page is read through
-// Tavily. A user-supplied address is never fetched from here, so it cannot reach internal hosts.
+// requested from our server, and only for their redirect (lnkd.in: its warning page); every other
+// page is read through Tavily. A user-supplied address is never fetched from here, so it cannot reach internal hosts.
 
 const SHORTENERS = new Set([
   "bit.ly", "s.id", "tinyurl.com", "cutt.ly", "shorturl.at", "rb.gy", "t.ly", "is.gd", "ow.ly", "bit.do", "forms.gle",
+  "lnkd.in",
 ]);
+// lnkd.in answers an address outside LinkedIn with a warning page naming it, instead of a redirect
+const LINKEDIN_EXTERNAL_LINK = /data-tracking-control-name="external_url_click"[^>]*href="([^"]+)"/;
 // Chats and social profiles hold no posting to read.
 const UNREADABLE_HOSTS = [
   "wa.me", "whatsapp.com", "t.me", "telegram.me", "instagram.com", "facebook.com", "fb.com", "tiktok.com",
@@ -52,15 +55,25 @@ function matchesHost(host: string, domains: Iterable<string>): boolean {
   return false;
 }
 
+/** The outside address on lnkd.in's warning page. */
+export function linkedinExternalLink(html: string): string | null {
+  return html.match(LINKEDIN_EXTERNAL_LINK)?.[1].replace(/&amp;/g, "&") ?? null;
+}
+
 async function followRedirects(link: string): Promise<string | null> {
   const signal = AbortSignal.timeout(RESOLVE_TIMEOUT_MS);
   let url = link;
   try {
     for (let hop = 0; hop < MAX_HOPS; hop += 1) {
       const response = await fetch(url, { redirect: "manual", signal });
-      await response.body?.cancel();
-      const location = response.headers.get("location");
-      if (response.status < 300 || response.status >= 400 || !location) return null;
+      let location = response.headers.get("location");
+      if (response.status === 200 && hostOf(url) === "lnkd.in") {
+        location = linkedinExternalLink(await response.text());
+      } else {
+        await response.body?.cancel();
+        if (response.status < 300 || response.status >= 400) return null;
+      }
+      if (!location) return null;
 
       const next = new URL(location, url).toString();
       // Stop before the destination: only shorteners are ever requested
@@ -114,7 +127,10 @@ async function readPage(url: string): Promise<PageRead | null> {
 function pickPageUrl(links: string[], shortlinks: ShortlinkResolution[]): string | null {
   const candidates = [
     ...links.filter((link) => !SHORTENERS.has(hostOf(link))),
-    ...shortlinks.flatMap((item) => item.destination ?? []),
+    // A shared LinkedIn post reads cleaner (post and comments, no sign-in wall) by its lnkd.in link
+    ...shortlinks.flatMap((item) =>
+      item.destination ? (matchesHost(hostOf(item.destination), ["linkedin.com"]) ? item.link : item.destination) : []
+    ),
   ];
   return (
     candidates.find((url) => {
@@ -124,18 +140,26 @@ function pickPageUrl(links: string[], shortlinks: ShortlinkResolution[]): string
   );
 }
 
-/** Opens the shortlinks in the material, then reads the page the posting points to. */
-export async function checkLinks(text: string): Promise<LinkChecks> {
-  const links = findLinks(text);
-  const shortlinks = await Promise.all(
+function resolveShortlinks(links: string[], limit: number): Promise<ShortlinkResolution[]> {
+  return Promise.all(
     links
       .filter((link) => SHORTENERS.has(hostOf(link)))
-      .slice(0, MAX_SHORTLINKS)
+      .slice(0, Math.max(limit, 0))
       .map(async (link) => ({ link, destination: await followRedirects(link) }))
   );
+}
+
+/** Opens the shortlinks in the material, reads the page the posting points to, then its shortlinks. */
+export async function checkLinks(text: string): Promise<LinkChecks> {
+  const links = findLinks(text);
+  const shortlinks = await resolveShortlinks(links, MAX_SHORTLINKS);
 
   const pageUrl = pickPageUrl(links, shortlinks);
-  return { shortlinks, page: pageUrl ? await readPage(pageUrl) : null };
+  const page = pageUrl ? await readPage(pageUrl) : null;
+  // A shared post often keeps the apply link on the page itself ("apply via the link below")
+  const pageLinks = page?.text ? findLinks(page.text).filter((link) => !links.includes(link)) : [];
+  const pageShortlinks = await resolveShortlinks(pageLinks, MAX_SHORTLINKS - shortlinks.length);
+  return { shortlinks: [...shortlinks, ...pageShortlinks], page };
 }
 
 /** Shortlink destinations as material lines, so the rules and the search see the real address. */
