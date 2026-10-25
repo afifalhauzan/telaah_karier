@@ -28,7 +28,7 @@ import { ContextPanel, collectSessionContext, countSessionContext } from "@/comp
 import toast from 'react-hot-toast';
 import React from "react";
 import Link from "next/link";
-import { SESSION_WARNING_SHARE, notifyBlocked, sessionShare, sessionsLeft, useQuotaStore } from "@/lib/quota-store";
+import { notifyBlocked, sessionShare, sessionsLeft, useQuotaStore } from "@/lib/quota-store";
 import { buildCompactSeed } from "@/lib/compact-session";
 import { persistLatestExchange } from "@/lib/chat-persistence";
 import { useStreaming } from "@/contexts/StreamingContext";
@@ -401,13 +401,6 @@ export function Chat() {
             Lanjutkan di sesi baru
           </button>
         </>
-      );
-    }
-    if (share > 0) {
-      return (
-        <span className={share >= SESSION_WARNING_SHARE ? "text-amber-700" : undefined}>
-          Sesi ini terpakai {Math.round(share * 100)}%
-        </span>
       );
     }
     return null;
