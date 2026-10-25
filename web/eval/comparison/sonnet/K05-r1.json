@@ -1,0 +1,49 @@
+{
+  "analysisSteps": [
+    "Membaca materi lowongan dan memeriksa pola permintaan biaya, data sensitif, tugas berbayar, dan kontak pribadi; tidak ada yang ditemukan.",
+    "Mencatat bahwa kata 'payment' hanya bagian dari nama jabatan (Payment Staff) dan tugas pekerjaan, bukan permintaan pembayaran kepada pelamar.",
+    "Mencari PT Tiki Jalur Nugraha Ekakurir di web dan menemukan profil perusahaan di situs jne.co.id serta portal rekrutmen recruitment.jne.co.id.",
+    "Memeriksa tanggal: batas pendaftaran 30 Oktober 2026 masih akan datang dari tanggal hari ini (25 Oktober 2026).",
+    "Umur domain jne.co.id tidak dapat diperiksa karena layanan pengecekan menolak akses, sehingga tidak dijadikan dasar penilaian."
+  ],
+  "conversationText": "Halo, saya sudah menelaah lowongan Payment Staff ini. Berikut hasilnya.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "rendah",
+    "text": "Tingkat Risiko Awal: Rendah. Identitas perusahaan jelas (nama PT lengkap dan situs jne.co.id yang terkait dengan profil perusahaan di web), uraian pekerjaan dan kualifikasi wajar, serta tidak ada permintaan biaya, data sensitif, maupun kontak pribadi.",
+    "confidence": 0.8
+  },
+  "risks": [
+    {
+      "type": "missing_context",
+      "description": "Materi hanya mencantumkan beranda situs perusahaan, bukan tautan langsung untuk melamar. Pastikan melamar hanya lewat kanal resmi perusahaan dan jangan membayar apa pun selama proses rekrutmen.",
+      "evidence": ""
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Gaji dan tunjangan tidak dicantumkan dalam materi.",
+    "highlights": ["Posisi penuh waktu tingkat pemula/junior (D3)", "Pengalaman Procurement 1-2 tahun"],
+    "hint": "Tanyakan kisaran gaji dan benefit melalui kanal resmi perusahaan sebelum menerima tawaran."
+  },
+  "summary": "Lowongan Payment Staff di PT Tiki Jalur Nugraha Ekakurir (JNE), Jakarta Barat, tidak menunjukkan tanda penipuan: tidak ada permintaan biaya, data sensitif, tugas berbayar, atau kontak WhatsApp/email gratis. Tugas dan kualifikasinya sesuai dengan posisi keuangan/pengadaan di perusahaan logistik. Nama perusahaan dan situsnya cocok dengan profil JNE yang ditemukan di web, dan JNE memiliki portal rekrutmen sendiri, tetapi materi tidak memuat tautan lamaran spesifik sehingga bukti bahwa postingan ini berasal dari portal itu terbatas. Batas pendaftaran 30 Oktober 2026 masih akan datang. Tetap pastikan lowongan ini ada di kanal karir resmi JNE sebelum mengirim berkas.",
+  "summarySources": [
+    { "title": "Profil Perusahaan JNE", "url": "https://www.jne.co.id/profil-perusahaan" },
+    { "title": "Portal rekrutmen PT Tiki Jalur Nugraha Ekakurir", "url": "https://recruitment.jne.co.id/jobs?jobId=UVhBRDEzcmVkR2Q4bXRIVjdYZDZEQT09" }
+  ],
+  "explanations": [
+    {
+      "title": "Kata 'payment' pada jabatan",
+      "explanation": "Payment Staff adalah jabatan yang memproses pembayaran perusahaan kepada vendor. Ini bukan permintaan pembayaran kepada pelamar."
+    },
+    {
+      "title": "Cara memastikan keaslian",
+      "explanation": "Buka situs resmi jne.co.id lalu menu Karir, atau portal rekrutmen resmi JNE, dan cari posisi yang sama. Perusahaan resmi tidak memungut biaya dalam proses rekrutmen."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara memastikan lowongan ini ada di portal karir resmi JNE?",
+    "Apa saja tanda proses rekrutmen JNE yang mencurigakan?",
+    "Bagaimana mempersiapkan diri untuk posisi Payment Staff ini?"
+  ]
+}

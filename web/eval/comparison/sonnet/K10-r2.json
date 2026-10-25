@@ -1,0 +1,53 @@
+{
+  "analysisSteps": [
+    "Membaca poster PDF dua halaman (PT Vale Indonesia Tbk, posisi Snr. Geotech & Hydrology Engineer, Pomalaa).",
+    "Memeriksa pola risiko: tidak ada permintaan biaya, data sensitif, kontak pribadi, atau email gratis; hanya ada satu shortlink s.id.",
+    "Membuka shortlink: mengarah ke ptviforms.valeindonesia.com, subdomain valeindonesia.com. Alamat vale.com/indonesia di poster juga dialihkan ke valeindonesia.com.",
+    "Mencari lowongan dan perusahaan di web: ditemukan dokumen lowongan Vale di vale.com dan listing lama posisi serupa; umur domain tidak dapat diperiksa karena layanan RDAP menolak akses.",
+    "Menilai tanggal: batas pendaftaran 16 Oktober 2026 sudah lewat dari 25 Oktober 2026."
+  ],
+  "conversationText": "Halo, saya sudah menelaah poster lowongan PT Vale Indonesia Tbk yang Anda kirim. Berikut hasilnya.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "rendah",
+    "text": "Tingkat Risiko Awal: Rendah. Identitas perusahaan jelas, tidak ada permintaan biaya atau data sensitif, dan shortlink pendaftaran mengarah ke subdomain valeindonesia.com yang terkait dengan situs resmi Vale. Batas pendaftaran sudah lewat, jadi status lowongan perlu dicek ulang.",
+    "confidence": 0.65
+  },
+  "risks": [
+    {
+      "type": "suspicious_contact",
+      "description": "Pendaftaran memakai shortlink s.id. Hasil penelusuran mengarah ke subdomain valeindonesia.com, tetapi isi formulir tidak dapat dibaca sehingga tetap perlu dicek lewat situs resmi.",
+      "evidence": "Please submit your application to https://s.id/9nw15"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Poster tidak mencantumkan gaji atau benefit. Syarat berupa S1 Teknik Pertambangan/Sipil dan pengalaman minimal 7 tahun sesuai dengan jabatan senior.",
+    "highlights": ["Tidak ada nominal gaji", "Syarat pengalaman 7 tahun sesuai level senior"],
+    "hint": "Tanyakan kisaran gaji dan benefit hanya melalui kanal resmi perusahaan."
+  },
+  "summary": "Poster ini mengatasnamakan PT Vale Indonesia Tbk untuk posisi Snr. Geotech & Hydrology Engineer di Pomalaa. Isinya wajar untuk jabatan teknik pertambangan, tidak ada permintaan biaya, data sensitif, kontak pribadi, maupun email gratis, dan poster menyatakan perusahaan tidak memungut biaya serta hanya mengirim undangan lewat email @vale.com. Pernyataan itu tidak membuktikan keaslian dengan sendirinya. Shortlink pendaftaran mengarah ke ptviforms.valeindonesia.com, dan alamat vale.com/indonesia dialihkan ke valeindonesia.com, tetapi isi formulirnya tidak dapat dibaca dan umur domain tidak dapat diperiksa. Batas pendaftaran 16 Oktober 2026 sudah lewat, jadi pastikan lowongan masih dibuka lewat situs karier resmi Vale sebelum mengirim data.",
+  "summarySources": [
+    { "title": "Recruitment PT Vale Indonesia Tbk (dokumen lowongan nasional Morowali, vale.com)", "url": "https://vale.com/documents/d/guest/20260410_national-vacancies-for-morowali" },
+    { "title": "Other Jobs in Mining (Petromindo, listing lama Senior Geotechnical & Hydrology Engineer)", "url": "https://www.petromindo.com/job-gallery/23598" }
+  ],
+  "explanations": [
+    {
+      "title": "Mengapa risikonya rendah",
+      "explanation": "Tidak ditemukan permintaan uang, OTP, atau data sensitif, dan tidak ada kontak pribadi. Satu-satunya hal yang perlu diperhatikan adalah shortlink, yang setelah dibuka mengarah ke subdomain valeindonesia.com."
+    },
+    {
+      "title": "Mengapa tetap perlu dicek",
+      "explanation": "Penipu bisa menyalin poster resmi dan mengganti tautannya. Cocokkan tautan pendaftaran dengan yang tertera di halaman karier resmi Vale, dan waspadai undangan dari email selain @vale.com."
+    },
+    {
+      "title": "Batas pendaftaran sudah lewat",
+      "explanation": "Poster mencantumkan penutupan 16 Oktober 2026, sementara hari ini 25 Oktober 2026. Ini bukan tanda penipuan, tetapi lowongan mungkin sudah ditutup."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara memastikan tautan pendaftaran ini milik resmi PT Vale Indonesia?",
+    "Apa tanda undangan tahap seleksi dari Vale yang asli?",
+    "Apa yang harus saya lakukan jika sudah mengisi formulir dari shortlink ini?"
+  ]
+}

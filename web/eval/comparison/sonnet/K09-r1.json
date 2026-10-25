@@ -1,0 +1,64 @@
+{
+  "analysisSteps": [
+    "Membaca teks pengguna dan poster: nama perusahaan PT Vale Indonesia Tbk, klaim grup MIND ID, dan cara melamar lewat link di bio.",
+    "Mencari alamat web pendaftaran di materi: tidak ada alamat yang tertulis, hanya QR code dan kalimat link resmi ada di bagian bawah artikel.",
+    "Mencari PT Vale Indonesia Tbk di web: perusahaannya nyata, tetapi ada peringatan resmi tentang lowongan palsu yang mencatut namanya.",
+    "Menilai kanal pendaftaran yang tidak terlihat sehingga lowongan belum bisa dipastikan resmi."
+  ],
+  "conversationText": "Halo, saya sudah menelaah poster dan teks lowongan PT Vale Indonesia Tbk yang Anda kirim.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "sedang",
+    "text": "Tingkat Risiko Awal: Sedang. Perusahaannya nyata dan tidak ada permintaan uang atau data sensitif, tetapi kanal melamar hanya lewat link di bio dan QR code tanpa alamat web yang terlihat, sehingga belum bisa dipastikan resmi.",
+    "confidence": 0.7
+  },
+  "risks": [
+    {
+      "type": "suspicious_contact",
+      "description": "Cara melamar hanya lewat link di bio profil, tanpa alamat web yang tertulis di materi. Kanal seperti ini tidak bisa diverifikasi sebagai milik resmi perusahaan, dan penipu sering menyalin lowongan asli lalu mengganti tautannya.",
+      "evidence": "melalui link di bio profil"
+    },
+    {
+      "type": "missing_context",
+      "description": "Poster menyebut link resmi ada di bagian bawah artikel, tetapi artikel dan tautannya tidak ikut terkirim. Poster memuat QR code yang tujuannya tidak bisa diperiksa, dan tidak ada batas akhir pendaftaran.",
+      "evidence": "LINK RESMI UNTUK MELAMAR DAN SALINAN INFO RESMI ADA DI BAGIAN BAWAH ARTIKELNYA"
+    },
+    {
+      "type": "missing_context",
+      "description": "Posisi, syarat, dan lokasi yang dijanjikan di judul tidak tampil di poster. Poster ini juga dibagikan oleh akun agregator (info loker), bukan akun resmi perusahaan.",
+      "evidence": "Syarat, Lokasi & Cara Melamar kerja"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Materi tidak menyebut gaji maupun benefit.",
+    "highlights": [],
+    "hint": "Tanyakan rentang gaji dan benefit melalui kanal resmi perusahaan, bukan lewat akun perantara."
+  },
+  "summary": "PT Vale Indonesia Tbk adalah perusahaan tambang nikel nyata yang beroperasi di Sorowako, Sulawesi Selatan, dan pada Maret 2024 wakil presiden direktur perusahaan mengimbau masyarakat waspada terhadap lowongan palsu yang mencatut namanya. Materi yang Anda kirim tidak memuat alamat web pendaftaran, hanya \"link di bio profil\" dan QR code, sehingga belum bisa dipastikan resmi. Tidak ada permintaan biaya atau data sensitif di materi ini. Pembukaan 9 Oktober 2026 sudah lewat dan batas akhir tidak disebut, jadi pastikan lowongan masih dibuka di situs karier resmi PT Vale. Klaim bahwa perusahaan ini bagian dari grup holding BUMN MIND ID juga perlu dicek di kanal resmi perusahaan.",
+  "summarySources": [
+    {
+      "title": "PT Vale Waspada Informasi Lowongan Kerja Palsu (Republika)",
+      "url": "https://ekonomi.republika.co.id/berita/s9tjdc502/pt-vale-waspada-informasi-lowongan-kerja-palsu"
+    }
+  ],
+  "explanations": [
+    {
+      "title": "Mengapa link di bio belum bisa dianggap resmi",
+      "explanation": "Alamat pendaftaran tidak terlihat di materi, jadi tidak bisa dicocokkan dengan situs milik perusahaan. Lowongan resmi biasanya mudah ditemukan di situs karier perusahaan itu sendiri."
+    },
+    {
+      "title": "Cara memeriksa lowongan ini",
+      "explanation": "Buka langsung situs karier resmi PT Vale Indonesia lewat pencarian atau akun resmi perusahaan, lalu cek apakah posisi yang sama ada di sana. Jangan memindai QR code atau mengisi data pribadi sebelum alamat tujuannya jelas."
+    },
+    {
+      "title": "Tanda yang perlu diwaspadai berikutnya",
+      "explanation": "Jika nanti ada permintaan biaya, transfer, OTP, atau kontak WhatsApp pribadi, hentikan proses. Perusahaan resmi tidak memungut biaya selama rekrutmen."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara menemukan situs karier resmi PT Vale Indonesia?",
+    "Apa risikonya memindai QR code di poster lowongan?",
+    "Apa yang harus saya cek sebelum mengirim CV lewat link dari poster ini?"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "analysisSteps": [
+    "Membaca isi lowongan pelayan restoran dan memeriksa pola permintaan biaya, data sensitif, kontak pribadi, shortlink, serta klaim instansi besar: tidak ada yang ditemukan.",
+    "Mencatat bahwa gaji dirahasiakan, tidak ada alamat atau kontak usaha di teks, dan lowongan memuat batasan jenis kelamin dan usia.",
+    "Mencari 'Warung Matus' ikan bakar di web dan menemukan profil usaha serta lowongan yang sama di portal KitaLulus.",
+    "Menilai bahwa usaha kecil tersebut terlihat nyata dan pendaftaran dilakukan lewat portal kerja, tetapi sumber independen di luar portal belum ditemukan."
+  ],
+  "conversationText": "Halo, berikut hasil telaah awal saya untuk lowongan pelayan restoran ini.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "rendah",
+    "text": "Tingkat Risiko Awal: Rendah. Lowongan memuat tugas dan benefit yang wajar untuk warung makan, tanpa permintaan biaya, data sensitif, atau kontak pribadi. Usahanya ditemukan pada profil di portal KitaLulus, namun belum ada sumber independen lain.",
+    "confidence": 0.6
+  },
+  "risks": [
+    {
+      "type": "missing_context",
+      "description": "Rentang gaji dirahasiakan sehingga kelayakan upah tidak dapat dinilai. Tanyakan besaran gaji dan jam kerja sebelum menerima tawaran.",
+      "evidence": "Rentang gaji Dirahasiakan"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Perlu Diverifikasi",
+    "summary": "Gaji tidak disebutkan. Benefit yang tertulis berupa makan 3x sehari, THR sesuai ketentuan, serta cuti dan libur sesuai kebijakan warung.",
+    "highlights": ["makan 3x sehari", "Tunjangan Hari Raya (THR) sesuai ketentuan", "pelatihan dasar memasak, pelayanan, dan pengelolaan warung"],
+    "hint": "Tanyakan besaran gaji, jam kerja, dan hari libur secara jelas sebelum mulai bekerja, dan bandingkan dengan UMK setempat."
+  },
+  "summary": "Lowongan pelayan di Warung Matus ikan bakar ini tidak memuat permintaan biaya, data sensitif, kontak pribadi, shortlink, atau klaim instansi besar. Pencarian web menunjukkan profil usaha dan lowongan serupa di portal KitaLulus, yang mengaitkan warung ini dengan Bangkalan, Jawa Timur, tetapi sumber tersebut hanya satu portal sehingga keberadaan usaha belum terverifikasi independen. Gaji dirahasiakan, dan lowongan membatasi pelamar pada perempuan berusia 18-45 tahun. Ketentuan itu perlu diperhatikan, bukan tanda penipuan. Lamar lewat portal resmi dan jangan membayar apa pun selama proses rekrutmen.",
+  "summarySources": [
+    { "title": "Profil Warung Matus Ikan Bakar di KitaLulus", "url": "https://kitalulus.com/company/warung-matus-ikan-bakar-lksu" },
+    { "title": "Lowongan Pelayan Restoran Warung Matus di KitaLulus", "url": "https://kitalulus.com/lowongan/detail/pelayan-restoran-x8jf" }
+  ],
+  "explanations": [
+    {
+      "title": "Mengapa risikonya rendah",
+      "explanation": "Isi lowongan hanya berisi tugas, syarat, dan benefit pelayan warung. Tidak ada biaya, permintaan OTP atau KTP, kontak WhatsApp pribadi, maupun tautan mencurigakan."
+    },
+    {
+      "title": "Gaji dirahasiakan",
+      "explanation": "Gaji yang disembunyikan membuat Anda tidak bisa menilai kewajarannya. Tanyakan angka pastinya sebelum bergabung."
+    },
+    {
+      "title": "Batasan jenis kelamin dan usia",
+      "explanation": "Syarat perempuan dan usia maksimal 45 tahun sering ditemui pada lowongan UMKM. Hal ini bersifat diskriminatif tetapi bukan penanda penipuan."
+    }
+  ],
+  "suggestedQuestions": [
+    "Apa yang perlu saya tanyakan soal gaji dan jam kerja sebelum menerima lowongan ini?",
+    "Bagaimana cara memastikan warung ini benar-benar ada?",
+    "Apa saja tanda lowongan di portal kerja berubah menjadi penipuan?"
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "analysisSteps": [
+    "Membaca teks pengguna dan poster lampiran (judul 'Info Loker Terbaru 2026', logo Satpol PP, Damkar, dan Dishub).",
+    "Memeriksa pola risiko: tidak ada permintaan biaya, data sensitif, kontak pribadi, shortlink, atau domain mencurigakan.",
+    "Memeriksa kanal pendaftaran dan identitas penyelenggara: tidak ada alamat web, kontak, nama instansi daerah, atau nomor pengumuman resmi.",
+    "Tidak ada nama perusahaan, link, atau domain untuk dibuka atau dicari di web, sehingga jejak digitalnya belum dapat diverifikasi."
+  ],
+  "conversationText": "Halo, berikut telaah awal saya untuk poster lowongan Satpol PP, Damkar, dan Dishub ini.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "sedang",
+    "text": "Tingkat Risiko Awal: Sedang. Poster mengatasnamakan instansi pemerintah, tetapi tidak mencantumkan penyelenggara yang jelas maupun kanal pendaftaran yang bisa diverifikasi, sehingga keasliannya belum dapat dipastikan.",
+    "confidence": 0.7
+  },
+  "risks": [
+    {
+      "type": "missing_context",
+      "description": "Poster tidak menyebut instansi atau pemerintah daerah penyelenggara, nomor pengumuman, tautan, atau kontak pendaftaran. Ajakan 'Daftar sekarang' tidak menunjuk ke kanal mana pun yang bisa diperiksa.",
+      "evidence": "Rekrutmen ini bersifat umum"
+    },
+    {
+      "type": "missing_context",
+      "description": "Tiga instansi berbeda (satuan pemerintah daerah dan kementerian) digabung dalam satu poster, dengan sebutan 'Kementerian Perhubungan (Dishub)' yang mencampur kementerian dan dinas. Tahun juga tidak konsisten: teks tertulis 2025, poster bertuliskan 2026.",
+      "evidence": "KEMENTERIAN PERHUBUNGAN (DISHUB)"
+    },
+    {
+      "type": "missing_context",
+      "description": "Syarat 'berpenampilan menarik' dan penempatan 'seluruh Indonesia sesuai domisili' tidak lazim untuk rekrutmen aparatur pemerintah. Klaim 'tidak memungut biaya' dan 'rekrutmen resmi' tidak membuktikan keaslian karena penipu juga menuliskannya.",
+      "evidence": "PENDAFTARAN Ini Tidak memungut biaya Apapun"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Poster tidak mencantumkan gaji. Hanya ada gambaran umum seperti jaminan kesehatan dan jenjang karier jelas pada poster.",
+    "highlights": ["Gaji tidak disebutkan", "Jaminan kesehatan dan jenjang karier hanya disebut secara umum"],
+    "hint": "Tanyakan rincian status kepegawaian (ASN, PPPK, atau non-ASN) dan gaji langsung kepada instansi penyelenggara."
+  },
+  "summary": "Poster ini belum menunjukkan permintaan uang atau data sensitif, tetapi juga belum bisa dipastikan asli. Penyelenggara, instansi daerah, dan kanal pendaftarannya tidak disebutkan, dan tahun pada teks (2025) berbeda dengan poster (2026). Lowongan aparatur pemerintah biasanya diumumkan melalui situs resmi instansi berakhiran .go.id, sehingga sebaiknya pengumuman ini dicek langsung di kanal resmi instansi terkait sebelum mendaftar atau membagikan data pribadi. Jejak digital penyelenggara belum dapat diverifikasi karena tidak ada nama perusahaan, link, atau domain yang bisa ditelusuri.",
+  "summarySources": [],
+  "explanations": [
+    {
+      "title": "Mengapa risikonya sedang",
+      "explanation": "Tidak ada tanda pasti penipuan seperti biaya atau kontak pribadi, tetapi identitas penyelenggara dan kanal pendaftaran tidak terlihat, sehingga materi belum bisa diverifikasi."
+    },
+    {
+      "title": "Klaim 'tidak memungut biaya'",
+      "explanation": "Kalimat ini tidak membuktikan lowongan resmi. Pastikan juga tidak ada permintaan uang di tahap berikutnya, misalnya lewat chat atau 'pelatihan'."
+    },
+    {
+      "title": "Cara memverifikasi",
+      "explanation": "Cek pengumuman di situs atau akun resmi pemerintah daerah atau instansi yang disebut, dan tanyakan langsung ke kantornya. Jangan mendaftar lewat tautan atau nomor yang hanya Anda terima dari poster ini."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara memastikan pengumuman rekrutmen Satpol PP atau Damkar ini asli?",
+    "Apa saja tanda lowongan instansi pemerintah yang palsu?",
+    "Data apa saja yang aman dan tidak aman saya berikan saat mendaftar?"
+  ]
+}

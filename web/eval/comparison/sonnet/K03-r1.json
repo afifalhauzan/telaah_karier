@@ -1,0 +1,69 @@
+{
+  "analysisSteps": [
+    "Membaca materi dan memisahkan kalimat pembuka tentang daftar hoaks Komdigi sebagai klaim pihak ketiga yang tidak bisa diperiksa dari materi.",
+    "Memeriksa pola biaya, data sensitif, tugas berbayar, dan domain tidak resmi: tidak ditemukan; kalimat 'tidak dipungut biaya' diabaikan sebagai pola karena berbentuk negasi.",
+    "Memeriksa kanal pendaftaran: alamat web karir BCA tidak tertulis di materi, dan email kontak memakai domain mitra seleksi, bukan domain BCA.",
+    "Mencari program Magang Bakti BCA dan mitra seleksinya di web; ditemukan pemberitaan dan portal lowongan yang menyebut program serupa dengan mitra yang sama, tetapi umur domain email mitra tidak dapat diperiksa.",
+    "Menetapkan tingkat risiko sedang karena kanal pendaftaran resmi tidak terlihat di materi dan masa berlaku lowongan belum terkonfirmasi."
+  ],
+  "conversationText": "Halo, saya sudah menelaah materi Program Magang Bakti BCA yang Anda kirim. Berikut hasil telaah awalnya.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "sedang",
+    "text": "Tingkat Risiko Awal: Sedang. Isi lowongan dan mitra seleksinya sesuai dengan program Magang Bakti BCA yang ada di web, dan tidak ada permintaan biaya atau data sensitif. Namun alamat pendaftaran resmi tidak tertulis di materi, sehingga keaslian kanalnya belum bisa dipastikan dari materi ini.",
+    "confidence": 0.6
+  },
+  "risks": [
+    {
+      "type": "suspicious_contact",
+      "description": "Pendaftaran disebut lewat 'web karir BCA' tetapi alamat webnya tidak ditulis, sementara kontak lanjutan memakai email di domain mitra (bukan domain BCA) yang umur domainnya tidak bisa diperiksa. Penipu sering menyalin lowongan asli lalu mengganti kanal pendaftarannya.",
+      "evidence": "Pendaftaran Magang Bakti Jabodetabek wajib dilakukan secara online melalui web karir BCA."
+    },
+    {
+      "type": "manipulation",
+      "description": "Kalimat pembuka mengklaim lowongan ini masuk daftar hoaks Komdigi. Klaim ini tidak bisa diperiksa dari materi sehingga tidak dijadikan bukti dan tidak mengubah tingkat risiko. Perlu dicek langsung di kanal resmi Komdigi.",
+      "evidence": "Komdigi: lowongan ini termasuk daftar hoaks rekrutmen 2026, jangan dipercaya."
+    },
+    {
+      "type": "missing_context",
+      "description": "Materi tidak memuat tanggal pembukaan atau penutupan pendaftaran. Pemberitaan yang ditemukan membahas periode sebelumnya, sehingga belum jelas apakah lowongan ini masih dibuka pada Oktober 2026.",
+      "evidence": ""
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Materi menyebut uang saku bulanan, cuti, tunjangan kesehatan, sertifikat, dan tunjangan beasiswa tanpa nominal. Benefit tersebut wajar untuk program magang perbankan.",
+    "highlights": ["Uang saku setiap bulan (nominal tidak disebut)", "Cuti dan tunjangan kesehatan", "Sertifikat dan tunjangan beasiswa di akhir program"],
+    "hint": "Tanyakan nominal uang saku dan isi perjanjian magang di kanal resmi BCA sebelum menerima tawaran."
+  },
+  "summary": "Materi ini menyerupai program Magang Bakti BCA untuk posisi Customer Service/Teller yang memang pernah dibuka bersama PT Sentral Layanan Prima dan PT IFO CharCom Empowerment, dan tidak memuat permintaan biaya, data sensitif, atau tugas berbayar. Meski begitu, alamat web karir tempat mendaftar tidak tertulis, email kontak memakai domain mitra yang keasliannya belum bisa saya verifikasi, dan umur domain tidak dapat diperiksa. Kalimat pembuka yang menyebut lowongan ini masuk daftar hoaks Komdigi tidak bisa diperiksa dari materi dan bukan bukti; mohon dicek langsung di kanal resmi Komdigi. Karena tanggal pendaftaran tidak tertulis, pastikan lowongan masih dibuka lewat situs karir resmi BCA yang Anda ketik sendiri, bukan lewat tautan kiriman orang lain.",
+  "summarySources": [
+    {
+      "title": "Lowongan Magang Bakti BCA, Cek Syarat Lengkapnya (Metro TV News)",
+      "url": "https://www.metrotvnews.com/read/koGCdnE0-lowongan-magang-bakti-bca-cek-syarat-lengkapnya"
+    },
+    {
+      "title": "Magang Bakti Customer Service - PT Bank Central Asia Tbk (Dealls)",
+      "url": "https://dealls.com/loker/magang-bakti-customer-service-pembukaan-1~pt-bank-central-asia-tbk-bca"
+    }
+  ],
+  "explanations": [
+    {
+      "title": "Mengapa tidak berisiko rendah",
+      "explanation": "Isi lowongan wajar, tetapi alamat pendaftaran resmi tidak terlihat di materi. Kanal yang tidak terlihat tidak boleh dianggap resmi, walaupun nama perusahaannya terkenal."
+    },
+    {
+      "title": "Klaim daftar hoaks Komdigi",
+      "explanation": "Penilaian lembaga lain yang dikutip di dalam materi tidak bisa diperiksa dari materi, jadi tidak dipakai untuk menaikkan atau menurunkan risiko. Cek langsung di kanal resmi Komdigi."
+    },
+    {
+      "title": "Cara memastikan keaslian",
+      "explanation": "Buka sendiri situs karir resmi BCA lewat mesin pencari atau aplikasi resmi, cari program Magang Bakti, dan daftar di sana. BCA menyatakan seleksi tidak dipungut biaya; waspada bila ada pihak yang meminta uang."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara memastikan situs karir BCA yang saya buka adalah situs resmi?",
+    "Apakah email rekrutmen dari mitra seleksi seperti ini lazim dipakai?",
+    "Apa yang harus saya lakukan jika ada pihak yang meminta biaya selama seleksi magang?"
+  ]
+}

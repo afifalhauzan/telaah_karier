@@ -1,0 +1,58 @@
+{
+  "analysisSteps": [
+    "Membaca isi lowongan Program Magang Bakti BCA: posisi, syarat, benefit, dan alur pendaftaran.",
+    "Memeriksa pola risiko: tidak ditemukan permintaan biaya, data sensitif, email gratisan, shortlink, atau domain tiruan; email seleksi memakai domain perusahaan mitra.",
+    "Mencari BCA, PT Sentral Layanan Prima, dan program Magang Bakti di web; ditemukan pemberitaan dan listing yang konsisten dengan isi lowongan.",
+    "Mencoba memeriksa umur domain pt-slp.co.id dan ifocharcom.com, tetapi layanan pengecekan tidak dapat diakses sehingga umur domain belum terverifikasi.",
+    "Menilai bahwa alamat web karir BCA tidak tertulis di materi, sehingga kanal pendaftaran belum bisa dipastikan dari materi saja."
+  ],
+  "conversationText": "Halo, berikut telaah awal untuk lowongan Program Magang Bakti BCA yang Anda kirim.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "sedang",
+    "text": "Tingkat Risiko Awal: Sedang. Isi lowongan wajar dan konsisten dengan informasi program Magang Bakti BCA di web, tanpa permintaan biaya atau data sensitif. Namun alamat web karir BCA tidak dicantumkan di materi dan umur domain email seleksi belum terverifikasi, sehingga kanal pendaftaran perlu dipastikan sendiri.",
+    "confidence": 0.6
+  },
+  "risks": [
+    {
+      "type": "missing_context",
+      "description": "Pendaftaran disebut lewat web karir BCA, tetapi alamat web tidak ditulis di materi. Penipu kerap menyalin lowongan asli lalu mengganti tautan pendaftaran, jadi pastikan Anda masuk lewat situs resmi BCA.",
+      "evidence": "secara online melalui web karir BCA"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Wajar",
+    "summary": "Nominal uang saku tidak disebutkan. Benefit yang tertulis (training, uang saku bulanan, cuti, tunjangan kesehatan, sertifikat, tunjangan beasiswa) lazim untuk program magang bank dan tidak berlebihan.",
+    "highlights": [
+      "Uang saku setiap bulan (nominal tidak disebutkan)",
+      "Tunjangan kesehatan dan cuti",
+      "Sertifikat dan tunjangan beasiswa di akhir program"
+    ],
+    "hint": "Tanyakan nominal uang saku dan ketentuan tunjangan melalui kanal resmi BCA sebelum menerima tawaran."
+  },
+  "summary": "Isi lowongan sejalan dengan pemberitaan dan listing program Magang Bakti BCA di web. PT Sentral Layanan Prima juga tercatat sebagai mitra yang berkaitan dengan BCA. Lowongan menegaskan seluruh proses seleksi tidak dipungut biaya, tetapi pernyataan itu saja tidak membuktikan keaslian. Alamat web karir BCA tidak tertulis di materi dan umur domain email mitra (pt-slp.co.id, ifocharcom.com) belum dapat diperiksa, sehingga risiko dinilai sedang. Materi tidak memuat tanggal penutupan, sehingga pastikan program periode ini masih dibuka di situs karir resmi BCA. Syarat seperti belum menikah dan berpenampilan menarik memang tertulis di program ini, tetapi tidak menandakan penipuan.",
+  "summarySources": [
+    { "title": "Lowongan Magang Bakti BCA, Cek Syarat Lengkapnya (Metro TV)", "url": "https://www.metrotvnews.com/read/koGCdnE0-lowongan-magang-bakti-bca-cek-syarat-lengkapnya" },
+    { "title": "Magang Bakti BCA (Kalibrr, halaman Bank Central Asia)", "url": "https://www.kalibrr.id/c/bank-central-asia-1/jobs/252482/magang-bakti-bca" },
+    { "title": "Lowongan PT Sentral Layanan Prima (Disnakerja)", "url": "https://www.disnakerja.com/lowongan-kerja-pt-sentral-layanan-prima/" }
+  ],
+  "explanations": [
+    {
+      "title": "Mengapa risikonya sedang, bukan rendah",
+      "explanation": "Isi lowongan tampak wajar, tetapi alamat pendaftaran tidak terlihat di materi. Kanal yang tidak terlihat belum bisa dipastikan milik resmi BCA, jadi penilaian tidak sampai ke rendah."
+    },
+    {
+      "title": "Cara memastikan keaslian",
+      "explanation": "Buka langsung situs karir resmi BCA (ketik alamatnya sendiri, jangan lewat tautan kiriman orang lain) dan cari program Magang Bakti. Hanya daftar lewat portal itu, karena lamaran lewat email tidak diproses."
+    },
+    {
+      "title": "Email seleksi dari mitra",
+      "explanation": "Email rekrutmenbakti@pt-slp.co.id dan recruitment@ifocharcom.com memakai domain perusahaan mitra, bukan email gratisan. Umur domainnya belum terverifikasi, jadi cocokkan dengan pengumuman di situs resmi BCA sebelum membalas."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara mengecek bahwa pendaftaran Magang Bakti ini benar-benar lewat situs karir resmi BCA?",
+    "Apa saja tahapan seleksi yang wajar dan hal apa yang harus saya waspadai di tiap tahap?",
+    "Apakah ada tanda-tanda bahwa email dari mitra seleksi seperti PT SLP atau IFO CharCom palsu?"
+  ]
+}

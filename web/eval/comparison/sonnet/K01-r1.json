@@ -1,0 +1,70 @@
+{
+  "analysisSteps": [
+    "Membaca seluruh isi lowongan: jabatan Welder di Korea, rincian pembiayaan, dan nomor SIP2MI.",
+    "Mendeteksi pola: seluruh komponen biaya penempatan dibebankan kepada Pekerja Migran Indonesia, kontak memakai email gratis, dan tidak ada nominal gaji.",
+    "Mencari nama perusahaan di web: ditemukan profil yang menyebut PT Della Fadhil Anugrah sebagai P3MI dengan alamat Grand Slipi Tower yang sama dengan materi.",
+    "Mencoba mencari nomor SIP2MI dan umur domain; nomor tidak ditemukan di sumber yang dapat dibuka dan data umur domain tidak dapat diambil.",
+    "Menentukan tingkat risiko dan memeriksa bahwa batas berlaku lowongan sudah lewat."
+  ],
+  "conversationText": "Halo, saya sudah menelaah lowongan Welder ke Korea ini. Berikut hasil penilaian awalnya.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "tinggi",
+    "text": "Tingkat Risiko Awal: Tinggi. Lowongan ini membebankan seluruh biaya (pemeriksaan, visa, tiket, hingga jasa perusahaan) kepada pelamar, dan perusahaan resmi umumnya tidak memungut biaya selama rekrutmen. Identitas P3MI tampak ada di web, tetapi besaran biaya dan keabsahan izinnya perlu dicek langsung.",
+    "confidence": 0.6
+  },
+  "risks": [
+    {
+      "type": "payment_request",
+      "description": "Semua komponen biaya penempatan (kesehatan, psikologi, jaminan sosial, SKCK, visa, transportasi, tiket, dan jasa perusahaan) dibebankan kepada pekerja, tanpa nominal yang jelas. Pelamar perlu memastikan rincian dan batas biaya yang sah sebelum membayar apa pun.",
+      "evidence": "Jasa Perusahaan : ditanggung oleh Pekerja Migran Indonesia"
+    },
+    {
+      "type": "payment_request",
+      "description": "Biaya tiket keberangkatan dan visa kerja juga ditanggung pelamar, dan tidak disebutkan kapan serta kepada siapa pembayaran dilakukan.",
+      "evidence": "Tiket Keberangkatan : ditanggung oleh Pekerja Migran Indonesia"
+    },
+    {
+      "type": "suspicious_contact",
+      "description": "Kontak pendaftaran memakai email domain gratis dan nomor telepon pribadi, bukan domain resmi perusahaan; kolom website dikosongkan. Hal ini lazim pada sebagian agen penempatan, tetapi tetap perlu diverifikasi.",
+      "evidence": "anugrahdellafadhil@gmail.com"
+    },
+    {
+      "type": "missing_context",
+      "description": "Gaji hanya ditulis mata uangnya (Won, bulanan) tanpa nominal, dan nama pemberi kerja ditulis seperti nama orang tanpa bentuk badan usaha (PT/CV). Nama pengguna kerja di Korea juga tidak disebutkan.",
+      "evidence": "Gaji : Won (KRW) Bulanan"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Nominal gaji tidak dicantumkan; hanya tertulis satuan Won (KRW) per bulan. Fasilitas yang disebut meliputi akomodasi, penginapan, asuransi, konsumsi, cuti, dan lembur.",
+    "highlights": ["Gaji dalam Won per bulan tanpa nominal", "Fasilitas: akomodasi, asuransi, konsumsi, lembur"],
+    "hint": "Minta rincian gaji pokok, lembur, dan potongan secara tertulis dalam kontrak kerja sebelum memutuskan."
+  },
+  "summary": "Lowongan Welder ke Korea ini memuat nomor SIP2MI dan, menurut pencarian web, nama serta alamat pemberi kerjanya cocok dengan sebuah perusahaan penempatan pekerja migran (P3MI) di Grand Slipi Tower, Jakarta Barat. Namun seluruh biaya penempatan, termasuk jasa perusahaan, dibebankan kepada pelamar, dan ini tergolong tanda bahaya karena perusahaan resmi umumnya tidak memungut biaya selama rekrutmen. Batas berlaku lowongan (21 Oktober 2026) sudah lewat, sehingga pastikan lowongan masih dibuka. Nomor SIP2MI tidak dapat saya verifikasi dari sumber yang dibuka, sehingga perlu dicek langsung di kanal resmi pemerintah untuk pelindungan pekerja migran. Terindikasi berisiko, bukan vonis pasti: bila hendak melanjutkan, minta rincian biaya tertulis yang sesuai aturan sebelum membayar.",
+  "summarySources": [
+    {
+      "title": "PT Della Fadhil Anugrah di Kalibrr (profil P3MI dan alamat)",
+      "url": "https://kalibrr.id/id-ID/c/pt-della-fadhil-anugrah/jobs/260616/maintenance-technician-for-heavy-industries-plant"
+    }
+  ],
+  "explanations": [
+    {
+      "title": "Biaya ditanggung pekerja",
+      "explanation": "Semua pos biaya, termasuk jasa perusahaan, tertulis dibebankan kepada pekerja. Periksa apakah besarannya sesuai ketentuan resmi dan jangan membayar sebelum ada rincian tertulis serta bukti penerimaan."
+    },
+    {
+      "title": "Verifikasi izin P3MI",
+      "explanation": "Nomor SIP2MI yang tercantum tidak ditemukan di sumber yang saya buka. Cek keabsahan izin dan lowongan ini lewat kanal resmi pelindungan pekerja migran sebelum melanjutkan."
+    },
+    {
+      "title": "Batas berlaku sudah lewat",
+      "explanation": "Lowongan tercantum berlaku sampai 21 Oktober 2026, sedangkan hari ini 25 Oktober 2026. Pastikan lowongan masih dibuka di kanal resmi."
+    }
+  ],
+  "suggestedQuestions": [
+    "Biaya apa saja yang wajar ditanggung pekerja migran ke Korea?",
+    "Bagaimana cara mengecek nomor SIP2MI sebuah perusahaan?",
+    "Apa yang harus saya siapkan sebelum menandatangani kontrak kerja luar negeri?"
+  ]
+}

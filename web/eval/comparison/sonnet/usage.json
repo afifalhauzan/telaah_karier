@@ -1,0 +1,22 @@
+{
+  "_note": "Dari notifikasi Agent tool (model sonnet, subagent general-purpose). totalTokens = subagent_tokens, yaitu seluruh token konteks subagen termasuk system prompt agen dan definisi alat, bukan hanya token analisis. durationMs = waktu dinding subagen.",
+  "K01-r1": { "totalTokens": 76827, "toolUses": 9, "durationMs": 80524 },
+  "K01-r2": { "totalTokens": 74223, "toolUses": 6, "durationMs": 67613 },
+  "K02-r1": { "totalTokens": 70122, "toolUses": 6, "durationMs": 49489 },
+  "K03-r1": { "totalTokens": 74057, "toolUses": 8, "durationMs": 58055 },
+  "K04-r1": { "totalTokens": 68457, "toolUses": 5, "durationMs": 42806 },
+  "K04-r2": { "totalTokens": 69980, "toolUses": 6, "durationMs": 44121 },
+  "K05-r1": { "totalTokens": 71927, "toolUses": 8, "durationMs": 45215 },
+  "K06-r1": { "totalTokens": 72437, "toolUses": 7, "durationMs": 57686 },
+  "K07-r1": { "totalTokens": 72554, "toolUses": 7, "durationMs": 54523 },
+  "K07-r2": { "totalTokens": 71340, "toolUses": 6, "durationMs": 48197 },
+  "K08-r1": { "totalTokens": 71232, "toolUses": 6, "durationMs": 50046 },
+  "K09-r1": { "totalTokens": 72167, "toolUses": 8, "durationMs": 62378 },
+  "K10-r1": { "totalTokens": 77789, "toolUses": 11, "durationMs": 63180 },
+  "K10-r2": { "totalTokens": 78336, "toolUses": 14, "durationMs": 178923 },
+  "K11-r1": { "totalTokens": 69193, "toolUses": 4, "durationMs": 44089 },
+  "K12-r1": { "totalTokens": 74717, "toolUses": 7, "durationMs": 71499 },
+  "K13-r1": { "totalTokens": 75912, "toolUses": 7, "durationMs": 58560 },
+  "K14-r1": { "totalTokens": 74390, "toolUses": 9, "durationMs": 55740 },
+  "K15-r1": { "totalTokens": 69575, "toolUses": 5, "durationMs": 45850 }
+}

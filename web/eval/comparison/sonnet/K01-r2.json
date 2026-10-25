@@ -1,0 +1,82 @@
+{
+  "analysisSteps": [
+    "Membaca isi lowongan Welder (Korea) beserta rincian pembiayaan dan nomor SIP yang tertera.",
+    "Mencocokkan pola: ada pembebanan biaya (jasa perusahaan, visa, tiket, tes kesehatan) kepada calon pekerja; kontak WhatsApp dan Gmail pada penempatan berizin tidak dihitung sebagai tanda kuat.",
+    "Mencari perusahaan di web: ditemukan profil PT Della Fadhil Anugrah di Kalibrr, Glints, dan KitaLulus dengan deskripsi usaha yang berbeda-beda.",
+    "Memeriksa tanggal: masa berlaku lowongan berakhir 21 Oktober 2026, sudah lewat dari hari ini (25 Oktober 2026).",
+    "Menetapkan tingkat risiko berdasarkan beban biaya kepada pelamar dan identitas pemberi kerja yang perlu diverifikasi."
+  ],
+  "conversationText": "Halo, berikut telaah awal saya untuk lowongan Welder tujuan Korea ini.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "tinggi",
+    "text": "Tingkat Risiko Awal: Tinggi. Lowongan membebankan banyak biaya kepada calon pekerja, termasuk jasa perusahaan, visa kerja, dan tiket keberangkatan, sehingga perlu diverifikasi ketat sebelum Anda mengeluarkan uang.",
+    "confidence": 0.6
+  },
+  "risks": [
+    {
+      "type": "payment_request",
+      "description": "Jasa perusahaan, visa kerja, tiket keberangkatan, dan pemeriksaan kesehatan dinyatakan ditanggung oleh calon pekerja. Pembebanan biaya seperti ini bisa sah pada sebagian jalur penempatan, tetapi nominal dan dasarnya harus dicek di kanal resmi sebelum membayar apa pun.",
+      "evidence": "Jasa Perusahaan : ditanggung oleh Pekerja Migran Indonesia"
+    },
+    {
+      "type": "payment_request",
+      "description": "Biaya visa kerja dan tiket keberangkatan dibebankan kepada pekerja tanpa nominal atau rincian yang jelas.",
+      "evidence": "Visa Kerja : ditanggung oleh Pekerja Migran Indonesia"
+    },
+    {
+      "type": "missing_context",
+      "description": "Nama pemberi kerja ditulis sebagai nama perorangan, bukan nama badan usaha (PT), kolom website kosong, dan kontak berupa Gmail serta nomor pribadi. Di web, nama tersebut ditemukan sebagai PT dengan profil yang berbeda-beda (agen penempatan di sebagian situs, usaha bimbingan belajar di situs lain).",
+      "evidence": ""
+    },
+    {
+      "type": "missing_context",
+      "description": "Gaji hanya tertulis satuan mata uang (Won, bulanan) tanpa nominal, dan nama perusahaan pengguna di Korea tidak disebutkan.",
+      "evidence": "Gaji : Won (KRW) Bulanan"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Perlu Diverifikasi",
+    "summary": "Nominal gaji tidak dicantumkan, hanya mata uang Won per bulan. Fasilitas disebut berupa akomodasi, penginapan, asuransi, konsumsi, cuti, dan lembur, tetapi tanpa rincian.",
+    "highlights": [
+      "Gaji dalam Won (KRW) per bulan, tanpa angka",
+      "Fasilitas: akomodasi, penginapan, asuransi, konsumsi, lembur",
+      "Biaya visa, tiket, dan jasa perusahaan ditanggung pekerja"
+    ],
+    "hint": "Minta rincian gaji, kontrak kerja, dan total biaya tertulis sebelum menyetujui apa pun."
+  },
+  "summary": "Lowongan Welder untuk penempatan di Korea ini mencantumkan nomor SIP2MI dan rincian pembiayaan, yang lazim pada penempatan pekerja migran. Namun hampir semua biaya, termasuk jasa perusahaan, visa kerja, dan tiket, dibebankan kepada calon pekerja, sehingga terindikasi berisiko tinggi sampai dasar dan nominalnya diverifikasi. Pemberi kerja tertulis sebagai nama perorangan dan jejak webnya menunjukkan profil usaha yang berbeda-beda. Masa berlaku lowongan berakhir 21 Oktober 2026 dan sudah lewat, jadi pastikan lowongan masih dibuka di kanal resmi. Cek keabsahan nomor SIP dan perusahaan langsung di SISKOP2MI atau dinas ketenagakerjaan setempat, dan jangan transfer uang sebelum ada kontrak resmi.",
+  "summarySources": [
+    {
+      "title": "PT. Della Fadhil Anugrah - Kalibrr",
+      "url": "https://www.kalibrr.id/c/pt-della-fadhil-anugrah/jobs"
+    },
+    {
+      "title": "PT Della Fadhil Anugrah - Glints",
+      "url": "https://glints.com/id/companies/pt-della-fadhil-anugrah/dd29ec9c-1a67-4491-b9a6-c4fa45877e2c"
+    },
+    {
+      "title": "pt della fadhil anugrah - KitaLulus",
+      "url": "https://kitalulus.com/company/pt-della-fadhil-anugrah-ukc4"
+    }
+  ],
+  "explanations": [
+    {
+      "title": "Mengapa biaya ditanggung pekerja jadi sorotan",
+      "explanation": "Perusahaan resmi umumnya tidak memungut biaya selama rekrutmen. Pada penempatan luar negeri, pembagian biaya diatur dan berbeda tiap jalur, jadi total biaya dan dasar aturannya harus Anda minta secara tertulis."
+    },
+    {
+      "title": "Nomor SIP dan identitas perusahaan",
+      "explanation": "Nomor SIP2MI yang tertera tidak bisa diperiksa dari materi ini. Verifikasi di kanal resmi dan pastikan namanya cocok dengan badan usaha (PT) yang berizin, bukan nama perorangan."
+    },
+    {
+      "title": "Masa berlaku sudah lewat",
+      "explanation": "Lowongan berlaku sampai 21 Oktober 2026. Tanggal ini sudah lewat, sehingga lowongan mungkin sudah ditutup atau materinya sudah lama."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara mengecek nomor SIP2MI ini di kanal resmi?",
+    "Biaya penempatan apa saja yang wajar dibebankan kepada pekerja migran?",
+    "Apa yang harus saya minta tertulis sebelum menyetujui penempatan ke Korea?"
+  ]
+}

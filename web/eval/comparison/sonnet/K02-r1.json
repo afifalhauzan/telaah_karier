@@ -1,0 +1,65 @@
+{
+  "analysisSteps": [
+    "Membaca pesan dan mencari pola yang dikenal dalam penipuan lowongan.",
+    "Menemukan pola tugas online like dan subscribe YouTube berkedok freelance.",
+    "Mencari nama \"MARKETING MAGA\" di web; tidak ditemukan jejak perusahaan, tetapi modus serupa dilaporkan media.",
+    "Pesan tidak memuat link, nama perusahaan lengkap (PT/CV), gaji, atau alamat sehingga domain tidak dapat diperiksa.",
+    "Menetapkan tingkat risiko berdasarkan pola tugas like/subscribe dan identitas yang tidak jelas."
+  ],
+  "conversationText": "Halo! Saya sudah menelaah pesan tawaran kerja yang Anda kirim.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "tinggi",
+    "text": "Tingkat Risiko Awal: Tinggi. Tawaran freelance untuk tugas like dan subscribe channel YouTube sesuai dengan modus tugas online berbayar yang umum dipakai untuk penipuan. Identitas pengirim dan perusahaannya juga tidak jelas.",
+    "confidence": 0.85
+  },
+  "risks": [
+    {
+      "type": "payment_request",
+      "description": "Pekerjaan berupa tugas like dan subscribe YouTube adalah modus tugas online yang sering berujung permintaan setoran atau top up dengan janji komisi.",
+      "evidence": "membutuhkan banyak freelance untuk mengerjakan tugas LIKE dan SUBSCRIBE channel Youtube"
+    },
+    {
+      "type": "missing_context",
+      "description": "Pesan tidak menyebut nama perusahaan resmi (PT/CV), alamat, gaji, maupun kanal pendaftaran yang bisa diverifikasi. Nama \"MARKETING MAGA\" tidak ditemukan jejaknya di web.",
+      "evidence": "Perkenalkan Saya dari MARKETING MAGA."
+    },
+    {
+      "type": "suspicious_contact",
+      "description": "Penjelasan pekerjaan hendak dilakukan lewat percakapan pribadi dari pengirim tak dikenal, tanpa informasi yang bisa dicek lebih dulu.",
+      "evidence": "Bisakah saya meminta waktunya sebentar untuk menjelaskan pekerjaan sampingan"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Pesan tidak menyebut gaji, upah per tugas, atau benefit apa pun.",
+    "highlights": [],
+    "hint": "Pekerjaan yang hanya mengandalkan like dan subscribe lalu menjanjikan imbalan perlu diwaspadai, apalagi bila nanti diminta menyetor uang."
+  },
+  "summary": "Pesan ini menawarkan pekerjaan sampingan berupa like dan subscribe channel YouTube untuk meningkatkan popularitas konten klien. Pola ini sesuai dengan modus tugas online berbayar yang dilaporkan media, yaitu korban awalnya diberi imbalan kecil lalu didorong menyetor uang. Nama \"MARKETING MAGA\" tidak ditemukan sebagai perusahaan yang dapat diverifikasi, dan pesan tidak memuat nama perusahaan lengkap, gaji, atau kanal resmi. Terindikasi berisiko tinggi; jangan mentransfer uang atau memberikan data pribadi dan data perbankan.",
+  "summarySources": [
+    {
+      "title": "Hati-hati! Tawaran Pekerjaan Like dan Subscribe Malah Bikin Duit Melayang",
+      "url": "https://www.metrotvnews.com/read/K5nC4Zvn-hati-hati-tawaran-pekerjaan-ilikei-dan-isubscribei-malah-bikin-duit-melayang"
+    }
+  ],
+  "explanations": [
+    {
+      "title": "Mengapa tugas like dan subscribe berisiko",
+      "explanation": "Perusahaan sungguhan jarang membayar orang awam hanya untuk like dan subscribe. Modus ini biasanya memberi bayaran kecil di awal agar korban percaya, lalu meminta setoran modal atau top up untuk tugas berikutnya."
+    },
+    {
+      "title": "Identitas pemberi kerja belum jelas",
+      "explanation": "Tidak ada nama perusahaan lengkap, alamat, situs, atau kontak resmi. Tanpa itu, pelamar tidak punya cara memastikan siapa yang menawarkan pekerjaan."
+    },
+    {
+      "title": "Yang sebaiknya dilakukan",
+      "explanation": "Jangan membalas lebih jauh, jangan bergabung ke grup Telegram atau WhatsApp yang diarahkan, dan jangan mentransfer uang. Anda dapat melaporkan nomor pengirim lewat kanal pengaduan resmi."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana ciri-ciri tugas online berbayar yang berujung penipuan?",
+    "Apa yang harus saya lakukan jika sudah membalas pesan ini?",
+    "Bagaimana cara memeriksa apakah sebuah perusahaan benar-benar ada?"
+  ]
+}
