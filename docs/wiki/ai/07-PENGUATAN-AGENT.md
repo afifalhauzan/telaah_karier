@@ -79,6 +79,7 @@ Agent menelusuri jalur yang sama (`web/langchain/agents/analyzer/tools/link-chec
 - Shortlink dibuka tujuannya (termasuk halaman peringatan `lnkd.in`), lalu halaman dibaca lewat Tavily dan **tombol "Daftar"** di halaman itu diikuti.
 - **Google Form** dibaca langsung dari `docs.google.com` (pertanyaannya ada di data halaman); formulir yang dibatasi login akun Google tercatat sebagai tertutup login.
 - Setiap langkah berakhir dengan status: formulir (dengan data yang diminta), halaman, chat WhatsApp/Telegram, tertutup login, atau tidak dapat dibaca. Profil Instagram/Facebook/TikTok tertutup login, jadi untuk "link di bio" pengguna diminta menyalin link-nya.
+- **Link di bio** tidak bisa dibaca sistem: dicoba Okt 2026, profil Instagram/Facebook tertutup login, indeks pencarian tidak memuat link bio, dan TikTok oEmbed tidak lagi mengirim caption maupun uploader. Jumlah follower sengaja tidak diperiksa (mudah dibeli, tanpa dasar hukum). Jadi bila materi menyebut link di bio, atau link-nya berupa profil yang tertutup login, dan jejak tidak menemukan halaman/formulir/chat, chat menampilkan kartu `data-bio-link` berisi langkah menyalin link per platform. Link yang ditempel dikirim sebagai materi lanjutan lowongan yang sama (`same_posting`), lalu ditelusuri seperti link biasa.
 - Sinyal: formulir meminta kode verifikasi, kata sandi, atau foto KTP → floor tinggi; meminta nomor Telegram → floor sedang; subdomain rekrutmen panjang di domain tak dikenal → floor sedang.
 
 ### 2.3 Link dan perusahaan luar negeri
