@@ -65,5 +65,19 @@ services:
     depends_on:
       - api
 
+  ml:
+    build:
+      context: .
+      dockerfile: ml/Dockerfile
+    environment:
+      ML_POOL_PATH: /pool/app/ml/training-pool.jsonl
+      ML_MODELS_DIR: /data/models
+    ports:
+      - "8100:8100"
+    volumes:
+      - ./api/storage:/pool:ro
+      - ml-models:/data/models
+
 volumes:
   pgdata:
+  ml-models:

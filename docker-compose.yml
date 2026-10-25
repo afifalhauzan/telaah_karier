@@ -58,11 +58,29 @@ services:
       BACKEND_URL: http://api:8000/api
       TELAAH_INTERNAL_KEY: ${TELAAH_INTERNAL_KEY:?set TELAAH_INTERNAL_KEY in .env}
       TELAAH_SIGNING_KEY: ${TELAAH_SIGNING_KEY:?set TELAAH_SIGNING_KEY in .env}
+      ML_URL: http://ml:8100
     ports:
       - "${WEB_PORT:-3000}:3000"
     depends_on:
       - api
 
+  # The classifier: trained from the pool the api exports into its storage, models kept in ml-models
+  ml:
+    build:
+      context: .
+      dockerfile: ml/Dockerfile
+    restart: unless-stopped
+    environment:
+      TELAAH_INTERNAL_KEY: ${TELAAH_INTERNAL_KEY:?set TELAAH_INTERNAL_KEY in .env}
+      ML_POOL_PATH: /pool/app/ml/training-pool.jsonl
+      ML_MODELS_DIR: /data/models
+    expose:
+      - "8100"
+    volumes:
+      - api-storage:/pool:ro
+      - ml-models:/data/models
+
 volumes:
   pgdata:
   api-storage:
+  ml-models:
