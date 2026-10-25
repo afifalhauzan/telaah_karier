@@ -2,8 +2,10 @@ FROM php:8.4-cli-alpine
 
 WORKDIR /var/www/html
 
-RUN apk add --no-cache git unzip postgresql-dev \
-    && docker-php-ext-install pdo_pgsql
+# GD cuts the scam poster out of fact-checkers' article headers (App\Support\MafindoHeader)
+RUN apk add --no-cache git unzip postgresql-dev libpng-dev libjpeg-turbo-dev libwebp-dev \
+    && docker-php-ext-configure gd --with-jpeg --with-webp \
+    && docker-php-ext-install pdo_pgsql gd
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 

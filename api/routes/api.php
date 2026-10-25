@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ConversationController;
+use App\Http\Controllers\KnowledgeController;
 use App\Http\Controllers\QuotaController;
 use App\Http\Controllers\TelaahInteractionController;
 use App\Http\Controllers\TelaahMatchController;
@@ -49,6 +50,9 @@ Route::prefix('telaah-bersama')->group(function () {
 
     Route::get('/{post}', [TelaahPostController::class, 'show'])->whereNumber('post');
 });
+
+// The knowledge base of fact-checked job scams, asked by the web server during an analysis
+Route::middleware('internal')->post('/knowledge/search', [KnowledgeController::class, 'search']);
 
 Route::prefix('quota')->group(function () {
     Route::get('/', [QuotaController::class, 'show'])->middleware('auth:sanctum');

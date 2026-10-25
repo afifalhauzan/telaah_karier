@@ -9,6 +9,7 @@ export default defineConfig({
       "eval/auth-schemas.test.ts",
       "eval/chat-composer.test.ts",
       "eval/quota.test.ts",
+      "eval/telaah-alur.test.ts",
     ],
   },
 });

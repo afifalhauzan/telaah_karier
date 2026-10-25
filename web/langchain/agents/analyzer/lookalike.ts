@@ -131,7 +131,12 @@ function dressesUp(label: string, brand: Brand): boolean {
   return tokens.some((token) => token.length >= 6 && withinOneEdit(bare, token));
 }
 
-function lookalikeFor(host: string): LookalikeDomain | null {
+/** Whether a host is on a domain one of the listed brands (or the government) recruits from. */
+export function isOfficialHost(host: string): boolean {
+  return [...BRANDS, GOVERNMENT].some((brand) => isOfficial(host, brand));
+}
+
+export function lookalikeFor(host: string): LookalikeDomain | null {
   for (const brand of [...BRANDS, GOVERNMENT]) {
     if (isOfficial(host, brand)) continue;
     if (ownedLabels(host).some((label) => dressesUp(label, brand))) {
@@ -154,4 +159,17 @@ export function findLookalikeDomains(text: string): LookalikeDomain[] {
     if (match) found.push(match);
   }
   return found;
+}
+
+// Brand words that are also ordinary words or other companies' names ("PT Karya Mandiri", "Garuda Food")
+const AMBIGUOUS_TOKENS = new Set(["mandiri", "garuda", "astra"]);
+
+/** The listed brands the text names, by full name or a distinctive token, with the domains they recruit from. */
+export function namedBrands(text: string): Array<{ name: string; official: string[] }> {
+  const lower = ` ${text.toLowerCase().replace(/[^a-z0-9]+/g, " ")} `;
+  return BRANDS.filter(
+    (brand) =>
+      lower.includes(` ${brand.name.toLowerCase()} `) ||
+      brand.tokens.some((token) => token.length >= 6 && !AMBIGUOUS_TOKENS.has(token) && lower.includes(` ${token} `))
+  ).map(({ name, official }) => ({ name, official }));
 }

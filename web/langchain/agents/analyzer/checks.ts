@@ -1,7 +1,20 @@
 import type { Check } from "./schema";
-import { labelInSentence, newDomainSignal, type DetectedSignal } from "./signals";
-import { domainAgeDays, NEW_DOMAIN_DAYS, type DomainAge } from "./tools/domain-age";
-import type { LinkChecks } from "./tools/link-checks";
+import { isOfficialHost } from "./lookalike";
+import {
+  certClusterSignal,
+  detectSignals,
+  formSecretSignal,
+  knownScamSignal,
+  labelInSentence,
+  newDomainSignal,
+  telegramFormSignal,
+  throwawaySubdomainSignal,
+  type DetectedSignal,
+} from "./signals";
+import { clusterExamples, isSuspiciousCluster, type CertCluster } from "./tools/ct-cluster";
+import { domainAgeDays, NEW_DOMAIN_DAYS, registrableDomain, type DomainAge } from "./tools/domain-age";
+import { formatCaseDate, identifierLabel, type KnowledgeResult } from "./tools/knowledge";
+import type { LinkChecks, TraceStep } from "./tools/link-checks";
 import type { WebSearchResult } from "./tools/tavily-search";
 
 // The checklist under the verdict: every check that ran and what it found, built from the
@@ -22,8 +35,8 @@ function hostOf(url: string): string {
 }
 
 function patternCheck(signals: DetectedSignal[]): Check {
-  // The domain age has its own line
-  const found = signals.filter((signal) => signal.id !== "new_domain");
+  // The domain age, the certificate logs, the knowledge base, and the trail's forms have their own lines
+  const found = signals.filter((signal) => !["new_domain", "cert_cluster", "known_scam_identity", "form_secret", "form_telegram"].includes(signal.id));
   return found.length
     ? { label: "Pola penipuan umum", status: "warning", detail: `Ditemukan ${found.map(labelInSentence).join(", ")}.` }
     : {
@@ -33,30 +46,108 @@ function patternCheck(signals: DetectedSignal[]): Check {
       };
 }
 
-function linkChecks(links: LinkChecks): Check[] {
-  const checks: Check[] = links.shortlinks.map(({ link, destination }) =>
-    destination
-      ? { label: `Shortlink ${link.replace(/^https?:\/\//, "")}`, status: "info", detail: `Mengarah ke ${destination}` }
-      : {
-          label: `Shortlink ${link.replace(/^https?:\/\//, "")}`,
-          status: "warning",
-          detail: "Tujuannya tidak dapat dibuka otomatis. Jangan isi data apa pun sebelum tahu ke mana link ini mengarah.",
-        }
-  );
+// Asked for in a form, these put the applicant's identity or accounts at stake
+const SENSITIVE_ASKS = new Set(["KTP/NIK", "nomor Telegram", "kode verifikasi/OTP", "kata sandi/PIN", "foto selfie/KTP", "nomor rekening"]);
+const SECRET_ASKS = new Set(["kode verifikasi/OTP", "kata sandi/PIN", "foto selfie/KTP"]);
 
-  if (links.page) {
-    const host = hostOf(links.page.url);
-    checks.push(
-      links.page.text
-        ? { label: "Isi halaman link", status: "ok", detail: `Halaman di ${host} dibaca dan ikut ditelaah.` }
-        : {
-            label: "Isi halaman link",
-            status: "info",
-            detail: `Halaman di ${host} tidak dapat dibaca otomatis. Tempel isi lowongannya di chat agar ikut ditelaah.`,
-          }
-    );
+const shortUrl = (url: string) => {
+  const bare = url.replace(/^https?:\/\//, "").replace(/^www\./, "");
+  return bare.length > 60 ? `${bare.slice(0, 57)}…` : bare;
+};
+
+function trailCheck(step: TraceStep): Check {
+  const label = `Jejak pendaftaran: ${shortUrl(step.url)}`;
+  const asks = step.asks.length ? `, meminta ${step.asks.join(", ")}` : "";
+  const sensitive = step.asks.some((item) => SENSITIVE_ASKS.has(item));
+  switch (step.outcome) {
+    case "form":
+      return {
+        label,
+        status: sensitive ? "warning" : "info",
+        detail: `Formulir${step.title ? ` "${step.title}"` : ""} dengan ${step.fields.length} pertanyaan${asks || ", tanpa permintaan data pribadi yang terdeteksi"}.`,
+      };
+    case "chat":
+      return { label, status: "warning", detail: `Pendaftaran berlanjut di chat ${step.title}, bukan kanal resmi perusahaan.` };
+    case "login":
+      return {
+        label,
+        status: "info",
+        detail:
+          step.title === "Google Form"
+            ? "Google Form yang hanya bisa dibuka dengan login akun Google, jadi pertanyaannya tidak dapat dibaca otomatis."
+            : `Halaman di ${step.title} tertutup login. Kirim screenshot-nya, atau salin link di bio atau tombol daftarnya, agar ikut ditelusuri.`,
+      };
+    case "unreadable":
+      return { label, status: "info", detail: "Halaman tidak dapat dibaca otomatis (sudah mati atau memblokir pembacaan). Tempel isinya di chat agar ikut ditelaah." };
+    default:
+      return { label, status: sensitive ? "warning" : "ok", detail: `Halaman${step.title ? ` "${step.title}"` : ""} dibaca dan ikut ditelaah${asks}.` };
+  }
+}
+
+function linkChecks(links: LinkChecks, signals: DetectedSignal[] | null): Check[] {
+  const checks: Check[] = links.shortlinks
+    .filter(({ destination }) => !destination)
+    .map(({ link }) => ({
+      label: `Shortlink ${link.replace(/^https?:\/\//, "")}`,
+      status: "warning",
+      detail: "Tujuannya tidak dapat dibuka otomatis. Jangan isi data apa pun sebelum tahu ke mana link ini mengarah.",
+    }));
+  checks.push(...links.trail.map(trailCheck));
+
+  // "Link di bio", "klik link": the address is where only the applicant can see it
+  if (!links.trail.length && signals?.some((signal) => signal.id === "link_in_bio")) {
+    checks.push({
+      label: "Link pendaftaran",
+      status: "info",
+      detail: "Alamat pendaftaran tidak tertulis di materi (link di bio atau tombol). Salin link dari bio atau tombol daftarnya, lalu kirim ke sini agar ditelusuri sampai ke formulirnya.",
+    });
   }
   return checks;
+}
+
+// Only the applicant can open a bio, a comment thread, or a DM (probed Oct 2026: neither Tavily nor
+// the search index nor TikTok oEmbed returns a bio link), so the chat asks for the link first
+const PROFILE =
+  /(?:instagram\.com\/(?!p\/|reels?\/|stories\/|explore\/)|tiktok\.com\/@|facebook\.com\/(?!share|groups|story\.php|permalink\.php|profile\.php|photo|watch))([A-Za-z0-9_.]{2,50})/i;
+// "@loker.bumn", not the "@" of an email address
+const MENTION = /(?:^|[\s(:])@([A-Za-z0-9_.]{3,30})/;
+
+export interface LinkRequest {
+  place: "bio" | "komentar" | "dm";
+  handle?: string;
+}
+
+/**
+ * Asked before the analysis: the material sends applicants to a link it does not show, and no QR
+ * code on the poster holds it. Null when the link is there to trace.
+ */
+export function linkRequest(text: string, qrLinks: string[] = []): LinkRequest | null {
+  if (qrLinks.length || !detectSignals(text).some((signal) => signal.id === "link_in_bio")) return null;
+  const place = /\b(?:komen(?:tar)?|comments?)\b/i.test(text) ? "komentar" : /\b(?:dm|inbox|direct\s+message)\b/i.test(text) ? "dm" : "bio";
+  const handle = (PROFILE.exec(text)?.[1] ?? MENTION.exec(text)?.[1])?.replace(/\.+$/, "");
+  return handle ? { place, handle } : { place };
+}
+
+/** Rule signals from the registration trail: what the form asks, and the shape of its address. */
+export function trailSignals(links: LinkChecks): DetectedSignal[] {
+  const signals: DetectedSignal[] = [];
+  const secret = links.trail.find((step) => step.asks.some((item) => SECRET_ASKS.has(item)));
+  if (secret) signals.push(formSecretSignal(secret.url, secret.asks.filter((item) => SECRET_ASKS.has(item))));
+  const telegram = links.trail.find((step) => step.asks.includes("nomor Telegram"));
+  if (telegram) signals.push(telegramFormSignal(telegram.url));
+  const throwaway = [...new Set(links.trail.map((step) => hostOf(step.url)))].find(isThrowawaySubdomain);
+  if (throwaway) signals.push(throwawaySubdomainSignal(throwaway));
+  return signals;
+}
+
+const RECRUITMENT_LABEL = /rekrut|recruit|loker|lowongan|daftar|pendaftaran|karir|karier|career|hiring|seleksi|magang|kerja/i;
+
+/** A long recruitment-worded subdomain on a domain no employer in our list recruits from. */
+export function isThrowawaySubdomain(host: string): boolean {
+  const domain = registrableDomain(host);
+  if (!domain || domain === host || isOfficialHost(host)) return false;
+  const sub = host.slice(0, -domain.length - 1);
+  return sub.replace(/[.-]/g, "").length >= 12 && RECRUITMENT_LABEL.test(sub);
 }
 
 function searchCheck(search: WebSearchResult): Check {
@@ -70,7 +161,7 @@ function searchCheck(search: WebSearchResult): Check {
     case "empty":
       return { label, status: "info", detail: `Pencarian ${name} tidak menemukan sumber yang membahasnya.` };
     case "skipped_no_query":
-      return { label, status: "skipped", detail: "Materi tidak menyebut nama perusahaan (PT/CV) atau situs yang bisa dicari." };
+      return { label, status: "skipped", detail: "Materi tidak menyebut nama perusahaan berbadan hukum (PT, CV, Inc, Ltd, dan sejenisnya) atau situs yang bisa dicari." };
     case "skipped_no_key":
     case "error":
       return { label, status: "skipped", detail: "Pencarian web sedang tidak tersedia." };
@@ -93,11 +184,63 @@ function domainAgeCheck({ domain, registeredAt }: DomainAge, now: Date): Check {
   return { label, status: "ok", detail: `Terdaftar sejak ${formatDate(registeredAt)}.` };
 }
 
+function certClusterCheck(cluster: CertCluster): Check {
+  const label = `Situs lain di domain ${cluster.domain}`;
+  if (cluster.status === "error") {
+    return { label, status: "skipped", detail: "Log sertifikat (Certificate Transparency) tidak dapat diperiksa saat ini." };
+  }
+  if (cluster.status === "large") {
+    return { label, status: "info", detail: "Domain besar dengan banyak layanan, jadi jumlah situsnya tidak menunjukkan apa-apa." };
+  }
+  if (isSuspiciousCluster(cluster)) {
+    const brands = cluster.imitatedBrands.length ? `, atas nama ${cluster.imitatedBrands.join(", ")}` : "";
+    const since = cluster.firstSeen ? ` sejak ${formatDate(cluster.firstSeen)}` : "";
+    return {
+      label,
+      status: "warning",
+      detail: `Log sertifikat memuat ${cluster.hostCount} situs di domain ini${since}${brands}, termasuk ${clusterExamples(cluster).join(", ")}.`,
+    };
+  }
+  return { label, status: "ok", detail: "Log sertifikat tidak memuat deretan situs rekrutmen lain di domain ini." };
+}
+
+const caseEntities = (cases: KnowledgeResult["identity"]) => [...new Set(cases.flatMap((item) => item.card?.entitas ?? []))];
+
+function knowledgeCheck(knowledge: KnowledgeResult): Check {
+  const label = "Basis kasus terverifikasi";
+  if (knowledge.status === "error") {
+    return { label, status: "skipped", detail: "Basis kasus dari pemeriksa fakta tidak dapat diperiksa saat ini." };
+  }
+  const direct = knowledge.identity.find((item) => item.shared.length);
+  if (direct) {
+    const entities = caseEntities(knowledge.identity);
+    const latest = knowledge.identity.map((item) => item.published_at ?? "").sort().at(-1) || null;
+    return {
+      label,
+      status: "warning",
+      detail: `${identifierLabel(direct.shared[0])} tercatat di ${knowledge.identity.length} kasus penipuan yang sudah diverifikasi${
+        entities.length ? ` (${entities.slice(0, 4).join(", ")})` : ""
+      }, terakhir ${formatCaseDate(latest)}.`,
+    };
+  }
+  if (knowledge.similar.length) {
+    const [first] = knowledge.similar;
+    return {
+      label,
+      status: "info",
+      detail: `Mirip dengan ${knowledge.similar.length} kasus penipuan terverifikasi, misalnya "${first.title}" (${formatCaseDate(first.published_at)}). Kemiripan bukan bukti; dipakai sebagai konteks.`,
+    };
+  }
+  return { label, status: "ok", detail: "Tidak ada kasus terverifikasi yang mirip atau memakai kontak dan akun yang sama." };
+}
+
 export function buildChecks({
   signals,
   links,
   search,
   domainAges,
+  certClusters = [],
+  knowledge = null,
   now = new Date(),
 }: {
   // null when the rules did not run (evaluation ablation); the same for the web checks below.
@@ -105,14 +248,38 @@ export function buildChecks({
   links: LinkChecks | null;
   search: WebSearchResult | null;
   domainAges: DomainAge[];
+  certClusters?: CertCluster[];
+  knowledge?: KnowledgeResult | null;
   now?: Date;
 }): Check[] {
   return [
     ...(signals ? [patternCheck(signals)] : []),
-    ...(links ? linkChecks(links) : []),
+    ...(links ? linkChecks(links, signals) : []),
     ...(search ? [searchCheck(search)] : []),
     ...domainAges.map((age) => domainAgeCheck(age, now)),
+    ...certClusters.map(certClusterCheck),
+    ...(knowledge ? [knowledgeCheck(knowledge)] : []),
+    ...(signals ? legalChecks(signals) : []),
   ];
+}
+
+/** The laws the "tinggi" signals rest on, one line per law with the signals it backs. */
+export function legalChecks(signals: DetectedSignal[]): Check[] {
+  const byLaw = new Map<string, string[]>();
+  for (const signal of signals) {
+    if (signal.floor === "tinggi" && signal.legalBasis) {
+      byLaw.set(signal.legalBasis, [...(byLaw.get(signal.legalBasis) ?? []), labelInSentence(signal)]);
+    }
+  }
+  return [...byLaw].map(([law, labels]) => ({ label: `Dasar hukum: ${labels.join("; ")}`, status: "warning" as const, detail: law }));
+}
+
+/** The rule signal when the posting shares an identifier with a debunked case. */
+export function knowledgeSignals(knowledge: KnowledgeResult): DetectedSignal[] {
+  const direct = knowledge.identity.find((item) => item.shared.length);
+  return direct
+    ? [knownScamSignal({ identifier: identifierLabel(direct.shared[0]), caseCount: knowledge.identity.length, entities: caseEntities(knowledge.identity) })]
+    : [];
 }
 
 /** Signals for domains registered too recently to have a track record. */
@@ -121,4 +288,11 @@ export function newDomainSignals(domainAges: DomainAge[], now: Date = new Date()
     const days = registeredAt ? domainAgeDays(registeredAt, now) : null;
     return days !== null && days < NEW_DOMAIN_DAYS ? [newDomainSignal(domain, days)] : [];
   });
+}
+
+/** Signals for domains that host a row of recruitment sites, from the certificate logs. */
+export function certClusterSignals(clusters: CertCluster[]): DetectedSignal[] {
+  return clusters
+    .filter(isSuspiciousCluster)
+    .map((cluster) => certClusterSignal(cluster));
 }

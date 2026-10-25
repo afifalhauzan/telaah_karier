@@ -6,7 +6,6 @@ import { FileText, LogOut, User } from "lucide-react";
 import { useAuthStore } from "@/lib/auth-store";
 import { useCurrentUser } from "@/hooks/useCurrentUser";
 import { Button } from "@/components/ui/button";
-import { QuotaBar } from "@/components/auth/quota-bar";
 
 interface AuthButtonProps {
   onLogoutClick?: () => void;
@@ -62,6 +61,14 @@ export function AuthButton({ onLogoutClick, logoutRedirectTo, guestFallback }: A
   // "Pencari Kerja #3d9a" -> "#3d9a": the name others see in TelaahBareng, shown next to the account name
   const publicTag = user.pseudonym?.match(/#\w+$/)?.[0];
   const displayName = user.name;
+  const tag = publicTag ? (
+    <span
+      title={`Nama publikmu di TelaahBareng: ${user.pseudonym}`}
+      className="shrink-0 rounded-md border border-primary/20 bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium leading-none text-primary"
+    >
+      {publicTag}
+    </span>
+  ) : null;
 
   return (
     <div className="relative" ref={dropdownRef}>
@@ -79,7 +86,10 @@ export function AuthButton({ onLogoutClick, logoutRedirectTo, guestFallback }: A
             </div>
           </div>
           <div className="hidden md:flex flex-col items-start text-left">
-            <span className="text-sm font-medium leading-none text-foreground">{displayName}</span>
+            <span className="flex items-center gap-1.5 text-sm font-medium leading-none text-foreground">
+              {displayName}
+              {tag}
+            </span>
           </div>
         </div>
       </Button>
@@ -96,7 +106,10 @@ export function AuthButton({ onLogoutClick, logoutRedirectTo, guestFallback }: A
                 </div>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground">{displayName}</p>
+                <p className="flex items-center gap-1.5 text-sm font-medium text-foreground">
+                  {displayName}
+                  {tag}
+                </p>
                 <p className="text-xs text-muted-foreground break-all">{user.email}</p>
               </div>
             </div>
@@ -111,7 +124,6 @@ export function AuthButton({ onLogoutClick, logoutRedirectTo, guestFallback }: A
               <FileText className="w-4 h-4" />
               Post saya
             </Link>
-            <QuotaBar />
             <button
               onClick={handleLogoutClick}
               className="w-full flex items-center gap-3 px-3 py-2 text-sm text-foreground hover:bg-accent rounded-md transition-colors"

@@ -1,3 +1,4 @@
+import { findLinks } from "../telaah-bersama/identifiers";
 import { findLookalikeDomains, type LookalikeDomain } from "./lookalike";
 import { RISK_LEVEL_LABELS, type RiskLevel, type RiskType } from "./schema";
 
@@ -23,9 +24,21 @@ export type SignalId =
   | "unofficial_domain"
   | "paid_task"
   | "institution_impersonation"
-  | "moderate_combination"
   | "new_domain"
-  | "lookalike_domain";
+  | "lookalike_domain"
+  | "cert_cluster"
+  | "known_scam_identity"
+  | "form_secret"
+  | "form_telegram"
+  | "throwaway_subdomain"
+  | "visa_non_work"
+  | "non_placement_country"
+  | "gambling_job"
+  | "minor_recruitment"
+  | "money_mule"
+  | "document_holding"
+  | "official_portal"
+  | "official_denial";
 
 export type SignalSeverity = "strong" | "moderate";
 
@@ -36,6 +49,8 @@ export interface DetectedSignal {
   riskType: RiskType;
   floor?: RiskLevel;
   floorReason?: string;
+  // The law a "tinggi" floor rests on; every "tinggi" floor has one (docs/wiki/ai/07)
+  legalBasis?: string;
   description: string;
   evidence: string[];
 }
@@ -47,12 +62,32 @@ interface SignalRule {
   riskType: RiskType;
   floor?: RiskLevel;
   floorReason?: string;
+  legalBasis?: string;
   description: string;
   patterns: RegExp[];
-  negatable?: boolean;
+  // "before": only a negation word before the phrase; a waiver after it ("tiket ditanggung") is about fees
+  negatable?: boolean | "before";
   // Only when the material shows no address at all: "klik link di bio" next to a real URL hides nothing.
   onlyWithoutUrl?: boolean;
 }
+
+// The laws a "tinggi" floor rests on. A pattern without one (a free domain, a paid like/follow task,
+// a contact shared with a debunked case) is a reason to check, so it stops at "sedang".
+export const LEGAL_BASIS = {
+  fee: "UU 13/2003 Pasal 38 (pencari kerja tidak dipungut biaya penempatan); UU 18/2017 Pasal 30 (calon pekerja migran tidak dibebani biaya penempatan); KUHP Pasal 492 (penipuan)",
+  access:
+    "KUHP Pasal 332 (mengakses sistem elektronik orang lain tanpa hak, pengganti UU ITE Pasal 30); UU 27/2022 PDP Pasal 65 (memperoleh data pribadi orang lain secara melawan hukum)",
+  impersonation: "KUHP Pasal 492 (penipuan dengan nama atau kedudukan palsu); UU ITE Pasal 35 (informasi elektronik dibuat seolah-olah otentik)",
+  domain: "UU ITE Pasal 23 ayat (2) (nama domain wajib dipakai dengan iktikad baik dan tidak melanggar hak orang lain); UU 20/2016 Merek Pasal 100",
+  migration:
+    "UU 18/2017 Pasal 13 (calon pekerja migran wajib memiliki visa kerja) serta Pasal 69 dan 81 (penempatan di luar jalur resmi dipidana); KUHP Pasal 455 (perdagangan orang)",
+  nonPlacement:
+    "Kamboja, Myanmar, dan Thailand bukan negara penempatan pekerja migran Indonesia (KP2MI), sehingga penempatan ke sana nonprosedural menurut UU 18/2017 Pasal 69 dan 81; KUHP Pasal 455 (perdagangan orang)",
+  gambling: "KUHP Pasal 426 (menyelenggarakan atau turut serta dalam usaha perjudian tanpa izin)",
+  minor:
+    "UU 18/2017 Pasal 5 huruf a (calon pekerja migran minimal 18 tahun); UU 13/2003 Pasal 74 (larangan pekerjaan terburuk bagi anak); UU 35/2014 Pasal 76I (eksploitasi anak)",
+  mule: "UU 8/2010 TPPU Pasal 5 (menerima atau menguasai harta hasil tindak pidana, termasuk lewat rekening yang diserahkan ke orang lain)",
+} as const;
 
 // Applicant-facing fees. "uang" is only paired with purposes that are paid BY the applicant;
 // "uang transport/makan/lembur" are benefits and must not match.
@@ -149,12 +184,18 @@ const LINK_IN_BIO_PATTERNS = [
   /\blink\s*(?:in\s*)?bio\b/gi,
   /\b(?:klik|klick|klil|cek|buka|kunjungi)\s+(?:link|tautan|daftar)\b/gi,
   /\b(?:daftar|pendaftaran)\s+(?:melalui|lewat|via|di)\s+(?:link|tautan)\b/gi,
+  // In the comments or by DM: "link di kolom komentar", "komen MAU untuk dapat link", "info lebih lanjut DM"
+  /\b(?:link|tautan)\b[^.!?\n]{0,20}?\b(?:di|dalam|pada)\s+(?:kolom\s+)?(?:komen(?:tar)?|comments?)\b/gi,
+  /\b(?:cek|lihat|buka)\s+(?:kolom\s+)?(?:komen(?:tar)?|comments?)\b/gi,
+  /\bkomen(?:tar)?\s+["“']?\w+["”']?\s+(?:untuk|buat|biar|agar)\s+(?:dapat|dapet|dikirim|mendapatkan)\b/gi,
+  /\b(?:info|daftar|pendaftaran|link|tautan)\b[^.!?\n]{0,25}?\b(?:dm|inbox|direct\s+message)\b/gi,
 ];
 
-// Any address in the material once emails are removed (an email is a contact, not a page).
+// Any address in the material once emails and handles are removed ("@loker.bumn.id" is an account, not a page).
 const VISIBLE_URL =
   /\bhttps?:\/\/|\bwww\.|\b[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|id|co|net|org|app|io|me|ly|gl|ee|site|online|xyz|info|biz|link|page|top|ke)\b/i;
 const EMAIL = /[\w.+-]+@[\w-]+(?:\.[\w-]+)+/g;
+const HANDLE = /(?<![\w.])@[\w.]+/g;
 
 // Free or throwaway hosting that an established company or agency does not recruit through.
 const UNOFFICIAL_DOMAIN_PATTERNS = [
@@ -196,6 +237,84 @@ const INSTITUTION_CLAIM =
 // phone number; their pages also name the ministry that licenses them.
 const PLACEMENT_AGENCY_CONTEXT = /\b(?:P3MI|SIP2MI|SIP3MI|No\.?\s*SIP|SISKOP2MI|Pekerja\s+Migran\s+Indonesia)\b/i;
 
+// Abroad on a visa that does not allow work: the route the 2024-2026 online-scam compounds recruit by.
+const VISA_NON_WORK_PATTERNS = [
+  /\bvisa\s+(?:turis|turist|tourist|wisata|kunjungan|liburan|pelancong|ziarah|umroh|umrah|on\s+arrival|voa)\b/gi,
+  /\bvisa\s+kerja\b[^.!?\n]{0,40}?\b(?:diurus|dibuat|diproses|menyusul)\b[^.!?\n]{0,25}?\b(?:di\s+sana|setelah\s+(?:tiba|sampai|berangkat)|di\s+negara\s+tujuan|nanti)\b/gi,
+  /\bberangkat\b[^.!?\n]{0,25}?\b(?:sebagai|seperti)\s+(?:turis|wisatawan)\b/gi,
+];
+
+const NON_PLACEMENT_COUNTRY = String.raw`(?:kamboja|cambodia|phnom\s+penh|sihanoukville|myanmar|thailand|bangkok|pattaya)`;
+const NON_PLACEMENT_COUNTRY_PATTERNS = [
+  new RegExp(
+    String.raw`\b(?:kerja|bekerja|penempatan|ditempatkan|berangkat|keberangkatan|lokasi|negara|lowongan|loker|work(?:ing)?|job|based)\b[^.!?\n]{0,40}?\b${NON_PLACEMENT_COUNTRY}\b`,
+    "gi"
+  ),
+  new RegExp(String.raw`\b${NON_PLACEMENT_COUNTRY}\b[^.!?\n]{0,25}?\b(?:gaji|salary|usd)\b`, "gi"),
+];
+
+// Running online gambling, not a casino on a licensed cruise ship: "slot" alone is also "slot terbatas".
+const GAMBLING_JOB_PATTERNS = [
+  /\b(?:judi|slot|kasino|casino|togel|taruhan|betting)\s+(?:online|daring)\b/gi,
+  /\b(?:situs|web(?:site)?|game|permainan|agen|bandar|operator|admin|cs|customer\s+service|telemarketing)\s+(?:judi|slot|togel|kasino|casino|taruhan|betting)\b/gi,
+  /\bjudol\b/gi,
+];
+
+// Handing over or renting out a bank account, ATM card, or SIM card. "Kirim nomor rekening" for the
+// salary is normal and does not match.
+const MONEY_MULE_PATTERNS = [
+  /\b(?:jual|beli|sewa|sewakan|menyewakan|pinjam(?:kan)?|meminjamkan)\s+(?:rekening|rek\b|kartu\s+atm|atm\b|buku\s+tabungan|akun\s+(?:bank|m-?banking|e-?wallet|dana|ovo|gopay))/gi,
+  /\b(?:serahkan|menyerahkan|kirim(?:kan)?|mengirimkan|titip(?:kan)?|menitipkan)\s+(?:kartu\s+atm|atm\b|buku\s+tabungan|kartu\s+(?:sim|perdana)|sim\s?card)/gi,
+  /\bbuka(?:kan)?\s+rekening\b[^.!?\n]{0,50}?\b(?:dibayar|bayaran|fee|komisi|imbalan|upah|rp\.?\s?\d)/gi,
+  /\bjoki\s+rekening\b|\brekening\s+(?:dormant|bodong)\b/gi,
+];
+
+// Original documents kept by the employer as a guarantee; showing them at an interview is normal.
+const NOT_WORD = String.raw`(?!\b(?:tidak|tdk|tanpa|bukan|tak)\b)`;
+const DOCUMENT_HOLDING_PATTERNS = [
+  new RegExp(
+    String.raw`\b(?:ijazah|paspor|passport|bpkb|akta\s+kelahiran|buku\s+nikah|sertifikat)\s+asli\b(?:${NOT_WORD}[^.!?\n]){0,40}?\b(?:ditahan|disimpan|dititipkan|diserahkan|dijadikan\s+jaminan|sebagai\s+jaminan|jaminan)\b`,
+    "gi"
+  ),
+  /\b(?:menyerahkan|serahkan|menitipkan|titipkan|menahan|ditahan|tahan)\s+(?:ijazah|paspor|passport|bpkb)\b/gi,
+  /\b(?:ijazah|paspor|passport|bpkb)\b[^.!?\n]{0,20}?\bsebagai\s+jaminan\b/gi,
+  /\bjaminan\s+(?:ijazah|paspor|bpkb)\b/gi,
+];
+
+// An applicant under 18, for work abroad or in nightlife: both are closed to children by law.
+const UNDER_18 = /\b(?:usia|umur)\s*(?::|min(?:imal|\.)?|mulai|dari)?\s*1[3-7]\s*(?:-|–|s\.?\s?d\.?|sampai|hingga|\+|th\b|thn\b|tahun)/gi;
+const ABROAD =
+  /\b(?:luar\s+negeri|malaysia|singapura|singapore|hong\s?kong|taiwan|jepang|japan|korea|saudi|dubai|uea|qatar|kuwait|brunei|kamboja|cambodia|myanmar|thailand|eropa|polandia|turki|australia|abroad|overseas)\b/gi;
+const NIGHTLIFE =
+  /\b(?:pemandu\s+lagu|purel|lady\s+companion|karaoke|diskotik|diskotek|klub\s+malam|club\s+malam|hiburan\s+malam|tempat\s+hiburan|bar|pub|panti\s+pijat|pijat|massage|spa|dancer|penari|hostes|hostess)\b/gi;
+
+// Programs whose registration opens on one portal only; a sign-up page elsewhere is not theirs.
+const OFFICIAL_PROGRAMS = [
+  {
+    name: "Program Magang Nasional",
+    claim: /\b(?:program\s+)?magang\s+(?:nasional|kemnaker|kemenaker|kementerian\s+ketenagakerjaan)\b|\bmagang\s?hub\b/i,
+    portal: "maganghub.kemnaker.go.id",
+    domains: ["go.id"],
+  },
+  {
+    name: "seleksi CPNS/PPPK",
+    claim: /\b(?:CPNS|PPPK|CASN|SSCASN|seleksi\s+ASN|penerimaan\s+ASN)\b/i,
+    portal: "sscasn.bkn.go.id",
+    domains: ["go.id"],
+  },
+  {
+    name: "Rekrutmen Bersama BUMN",
+    claim: /\brekrutmen\s+bersama\s+BUMN\b|\bRBB\s+BUMN\b|\bFHCI\b/i,
+    portal: "portal FHCI (fhcibumn.id)",
+    domains: ["fhcibumn.id", "bumn.go.id"],
+  },
+];
+// Hosts that are no registration page of their own: profiles, chats, and shorteners (resolved apart)
+const NOT_A_SIGN_UP_HOST =
+  /(?:^|\.)(?:instagram\.com|facebook\.com|fb\.com|tiktok\.com|twitter\.com|x\.com|youtube\.com|threads\.net|linkedin\.com|wa\.me|whatsapp\.com|t\.me|bit\.ly|s\.id|tinyurl\.com|cutt\.ly|shorturl\.at|rb\.gy|t\.ly|is\.gd|ow\.ly|bit\.do|forms\.gle|lnkd\.in|linktr\.ee)$/;
+// A link the material presents as the way to sign up, not one it cites: the word sits in its sentence
+const SIGN_UP_WORD = /\b(?:daftar|pendaftaran|registrasi|formulir|form|apply|link|tautan|klik)\b/i;
+
 const SHORTLINK_PATTERNS = [
   /\b(?:https?:\/\/)?(?:www\.)?(?:bit\.ly|s\.id|tinyurl\.com|cutt\.ly|shorturl\.at|rb\.gy|t\.ly|is\.gd|ow\.ly|bit\.do|linktr\.ee|lnk\.bio|heylink\.me)\/[\w\-./?=&%#]+/gi,
 ];
@@ -208,6 +327,7 @@ const SIGNAL_RULES: SignalRule[] = [
     riskType: "payment_request",
     floor: "tinggi",
     floorReason: "Perusahaan resmi umumnya tidak memungut biaya apa pun selama proses rekrutmen.",
+    legalBasis: LEGAL_BASIS.fee,
     description:
       "Lowongan meminta pelamar membayar sejumlah biaya. Perusahaan resmi umumnya tidak memungut biaya apa pun selama proses rekrutmen.",
     patterns: FEE_PATTERNS,
@@ -220,6 +340,7 @@ const SIGNAL_RULES: SignalRule[] = [
     riskType: "sensitive_data",
     floor: "tinggi",
     floorReason: "Kode OTP, PIN, kata sandi, atau foto KTP sambil selfie tidak dibutuhkan dalam rekrutmen resmi.",
+    legalBasis: LEGAL_BASIS.access,
     description:
       "Ada permintaan data sensitif (seperti OTP, PIN, atau foto KTP sambil selfie) yang berisiko disalahgunakan untuk penipuan atau pinjaman ilegal.",
     patterns: SENSITIVE_DATA_PATTERNS,
@@ -276,38 +397,104 @@ const SIGNAL_RULES: SignalRule[] = [
   },
   {
     id: "link_in_bio",
-    label: "Kanal pendaftaran tidak terlihat (link di bio)",
+    label: "Kanal pendaftaran tidak terlihat (link di bio, komentar, atau DM)",
     severity: "moderate",
     riskType: "suspicious_contact",
     floor: "sedang",
     floorReason: "Alamat pendaftarannya tidak tercantum di materi, sehingga belum bisa dipastikan resmi.",
     description:
-      "Pendaftaran diarahkan ke link di bio atau tombol \"klik link\" tanpa alamat yang terlihat, sehingga keaslian kanalnya belum bisa diperiksa.",
+      "Pendaftaran diarahkan ke link di bio, di komentar, lewat DM, atau tombol \"klik link\" tanpa alamat yang terlihat, sehingga keaslian kanalnya belum bisa diperiksa.",
     patterns: LINK_IN_BIO_PATTERNS,
     onlyWithoutUrl: true,
   },
   {
     id: "unofficial_domain",
     label: "Pendaftaran lewat domain gratisan/tidak resmi",
-    severity: "strong",
+    severity: "moderate",
     riskType: "suspicious_contact",
-    floor: "tinggi",
+    floor: "sedang",
     floorReason: "Perusahaan dan instansi resmi tidak membuka pendaftaran di hosting gratis atau domain sekali pakai.",
     description:
       "Link pendaftaran berada di hosting gratis atau domain murah sekali pakai (misalnya vercel.app, my.id, .xyz), bukan domain resmi perusahaan atau instansi.",
     patterns: UNOFFICIAL_DOMAIN_PATTERNS,
   },
   {
+    // The task itself breaks no law; the deposit it leads to does, and fee_request catches that.
     id: "paid_task",
     label: "Tugas online berbayar (like/follow/subscribe)",
-    severity: "strong",
+    severity: "moderate",
     riskType: "payment_request",
-    floor: "tinggi",
+    floor: "sedang",
     floorReason: "Pekerjaan berupa tugas like/follow/subscribe berbayar adalah pola penipuan yang biasanya berujung permintaan deposit.",
     description:
       "Pekerjaan berupa tugas like/follow/subscribe atau penghasilan harian yang dijamin. Pola ini biasanya berujung permintaan deposit untuk \"tugas premium\".",
     patterns: PAID_TASK_PATTERNS,
     negatable: true,
+  },
+  {
+    id: "visa_non_work",
+    label: "Kerja ke luar negeri dengan visa turis atau kunjungan",
+    severity: "strong",
+    riskType: "tppo",
+    floor: "tinggi",
+    floorReason: "Bekerja di luar negeri wajib memakai visa kerja; keberangkatan dengan visa turis adalah jalur nonprosedural yang dipakai perekrut TPPO.",
+    legalBasis: LEGAL_BASIS.migration,
+    description:
+      "Pelamar diberangkatkan dengan visa turis atau kunjungan, atau visa kerjanya dijanjikan diurus belakangan. Pekerja migran resmi berangkat dengan visa kerja lewat P3MI berizin.",
+    patterns: VISA_NON_WORK_PATTERNS,
+    negatable: "before",
+  },
+  {
+    id: "non_placement_country",
+    label: "Penempatan kerja ke Kamboja, Myanmar, atau Thailand",
+    severity: "strong",
+    riskType: "tppo",
+    floor: "tinggi",
+    floorReason: "Kamboja, Myanmar, dan Thailand bukan negara penempatan resmi pekerja migran Indonesia.",
+    legalBasis: LEGAL_BASIS.nonPlacement,
+    description:
+      "Lowongan menempatkan pekerja di Kamboja, Myanmar, atau Thailand. Pemerintah tidak membuka penempatan resmi ke negara-negara itu, dan ribuan WNI direkrut ke sana untuk sindikat penipuan daring.",
+    patterns: NON_PLACEMENT_COUNTRY_PATTERNS,
+    negatable: "before",
+  },
+  {
+    id: "gambling_job",
+    label: "Pekerjaan untuk situs judi online",
+    severity: "strong",
+    riskType: "tppo",
+    floor: "tinggi",
+    floorReason: "Menjalankan atau membantu usaha judi online adalah tindak pidana.",
+    legalBasis: LEGAL_BASIS.gambling,
+    description:
+      "Pekerjaannya untuk situs judi online (operator, admin, atau CS situs judi/slot). Pekerjaan ini melanggar hukum dan sering dipakai sindikat luar negeri untuk menjerat pekerja.",
+    patterns: GAMBLING_JOB_PATTERNS,
+    negatable: "before",
+  },
+  {
+    id: "money_mule",
+    label: "Diminta menyerahkan atau menyewakan rekening, ATM, atau kartu SIM",
+    severity: "strong",
+    riskType: "sensitive_data",
+    floor: "tinggi",
+    floorReason: "Rekening atau kartu ATM yang diserahkan ke orang lain dipakai menampung uang hasil kejahatan, dan pemiliknya ikut terjerat.",
+    legalBasis: LEGAL_BASIS.mule,
+    description:
+      "Pelamar diminta menjual, menyewakan, atau menyerahkan rekening, kartu ATM, buku tabungan, atau kartu SIM. Rekening seperti ini dipakai menampung uang penipuan dan judi online.",
+    patterns: MONEY_MULE_PATTERNS,
+    negatable: "before",
+  },
+  {
+    // A ministerial circular, not a law with a sanction of its own, so it stops at "sedang"
+    id: "document_holding",
+    label: "Ijazah atau dokumen asli ditahan sebagai jaminan",
+    severity: "moderate",
+    riskType: "sensitive_data",
+    floor: "sedang",
+    floorReason: "Pemberi kerja dilarang menahan ijazah dan dokumen pribadi pekerja (SE Menaker M/5/HK.04.00/V/2025).",
+    description:
+      "Pelamar diminta menyerahkan ijazah, paspor, atau dokumen asli lain sebagai jaminan. Pemberi kerja dilarang menahannya, dan paspor yang ditahan membuat pekerja tidak bisa pergi.",
+    patterns: DOCUMENT_HOLDING_PATTERNS,
+    negatable: "before",
   },
 ];
 
@@ -319,25 +506,10 @@ const INSTITUTION_IMPERSONATION = {
   riskType: "suspicious_contact",
   floor: "tinggi",
   floorReason: "Instansi pemerintah, BUMN, dan perusahaan terbuka merekrut lewat kanal resmi, bukan email gratis atau nomor WhatsApp pribadi.",
+  legalBasis: LEGAL_BASIS.impersonation,
   description:
     "Materi mengatasnamakan instansi pemerintah, BUMN, atau perusahaan terbuka, tetapi kontaknya email gratis atau nomor WhatsApp pribadi yang bukan kanal resmi mereka.",
 } as const satisfies Omit<DetectedSignal, "evidence">;
-
-const MODERATE_COMBINATION = {
-  id: "moderate_combination",
-  label: "Gabungan kontak pribadi dan kanal pendaftaran tersembunyi",
-  severity: "strong",
-  riskType: "suspicious_contact",
-  floor: "tinggi",
-  floorReason: "Kontak pribadi dan kanal pendaftaran tersembunyi muncul bersamaan, sehingga tidak ada jalur resmi yang bisa diverifikasi.",
-  description:
-    "Kontak lewat email gratis atau chat pribadi muncul bersama link pendaftaran yang disamarkan atau tidak terlihat. Dua tanda ini saling menguatkan.",
-} as const satisfies Omit<DetectedSignal, "evidence">;
-
-// Two moderate signals of different kinds raise the floor; two of the same kind do not, since
-// a small business or licensed agency often lists both a WhatsApp number and a Gmail address.
-const CONTACT_SIGNALS: SignalId[] = ["personal_chat_contact", "free_email_domain"];
-const HIDDEN_CHANNEL_SIGNALS: SignalId[] = ["shortlink", "link_in_bio"];
 
 const LEVEL_RANK: Record<RiskLevel, number> = { rendah: 0, sedang: 1, tinggi: 2 };
 
@@ -353,7 +525,7 @@ const MAX_EVIDENCE_PER_SIGNAL = 2;
 // ("tidak dipungut biaya"), the clause right after it waives it ("biaya pelatihan ditanggung"),
 // or it sits in a question ("Apakah wajar recruiter meminta biaya administrasi?"), which asks
 // about a request rather than making one.
-function isNegated(text: string, start: number, end: number): boolean {
+function isNegated(text: string, start: number, end: number, beforeOnly = false): boolean {
   const before = text.slice(Math.max(0, start - 30), start);
   const clauseBefore = before.split(/[.!?\n,;:]/).pop() ?? "";
   if (NEGATION_BEFORE.test(clauseBefore)) {
@@ -368,7 +540,7 @@ function isNegated(text: string, start: number, end: number): boolean {
 
   const after = text.slice(end, end + 40);
   const clauseAfter = after.split(/[.!?\n]/)[0] ?? "";
-  return NEGATION_AFTER.test(clauseAfter);
+  return !beforeOnly && NEGATION_AFTER.test(clauseAfter);
 }
 
 function extractSnippet(text: string, start: number, end: number): string {
@@ -398,13 +570,13 @@ function isPayeeContext(text: string, start: number, end: number): boolean {
 }
 
 function hasVisibleUrl(text: string): boolean {
-  return VISIBLE_URL.test(text.replace(EMAIL, " "));
+  return VISIBLE_URL.test(text.replace(EMAIL, " ").replace(HANDLE, " "));
 }
 
 function collectEvidence(
   text: string,
   patterns: RegExp[],
-  { negatable = false, excluded }: { negatable?: boolean; excluded?: (start: number, end: number) => boolean } = {}
+  { negatable = false, excluded }: { negatable?: boolean | "before"; excluded?: (start: number, end: number) => boolean } = {}
 ): string[] {
   const evidence: string[] = [];
 
@@ -418,7 +590,7 @@ function collectEvidence(
       if (negatable) {
         const continuesNegatedList =
           lastNegatedEnd >= 0 && COORDINATED_GAP.test(text.slice(lastNegatedEnd, start));
-        if (continuesNegatedList || isNegated(text, start, end)) {
+        if (continuesNegatedList || isNegated(text, start, end, negatable === "before")) {
           lastNegatedEnd = end;
           continue;
         }
@@ -441,8 +613,8 @@ function collectEvidence(
 }
 
 function toSignal(rule: Omit<DetectedSignal, "evidence">, evidence: string[]): DetectedSignal {
-  const { id, label, severity, riskType, floor, floorReason, description } = rule;
-  return { id, label, severity, riskType, floor, floorReason, description, evidence };
+  const { id, label, severity, riskType, floor, floorReason, legalBasis, description } = rule;
+  return { id, label, severity, riskType, floor, floorReason, legalBasis, description, evidence };
 }
 
 /** A ministry/BUMN/listed-company claim whose only contact is a free email or a personal number. */
@@ -456,13 +628,68 @@ function detectInstitutionImpersonation(text: string): DetectedSignal | null {
   return claim.length && channel.length ? toSignal(INSTITUTION_IMPERSONATION, [...claim, ...channel]) : null;
 }
 
-function detectModerateCombination(signals: DetectedSignal[]): DetectedSignal | null {
-  const contact = signals.find((signal) => CONTACT_SIGNALS.includes(signal.id));
-  const hidden = signals.find((signal) => HIDDEN_CHANNEL_SIGNALS.includes(signal.id));
-  return contact && hidden ? toSignal(MODERATE_COMBINATION, [contact.evidence[0], hidden.evidence[0]]) : null;
+/** An applicant under 18 for work abroad or in nightlife, with both pieces as evidence. */
+function detectMinorRecruitment(text: string): DetectedSignal | null {
+  const age = collectEvidence(text, [UNDER_18], { negatable: "before" }).slice(0, 1);
+  const place = age.length ? collectEvidence(text, [ABROAD, NIGHTLIFE]).slice(0, 1) : [];
+  return age.length && place.length
+    ? {
+        id: "minor_recruitment",
+        label: "Merekrut pelamar di bawah 18 tahun untuk kerja ke luar negeri atau hiburan malam",
+        severity: "strong",
+        riskType: "tppo",
+        floor: "tinggi",
+        floorReason: "Anak di bawah 18 tahun tidak boleh ditempatkan bekerja ke luar negeri maupun di tempat hiburan.",
+        legalBasis: LEGAL_BASIS.minor,
+        description:
+          "Lowongan menerima pelamar di bawah 18 tahun untuk kerja ke luar negeri atau di tempat hiburan malam. Keduanya tertutup bagi anak menurut hukum, dan pola ini dipakai perekrut TPPO.",
+        evidence: [...age, ...place],
+      }
+    : null;
 }
 
-export function detectSignals(text: string): DetectedSignal[] {
+/**
+ * A program that registers on one portal only (Magang Nasional, CPNS, Rekrutmen Bersama BUMN),
+ * signed up for elsewhere: a sign-up link in the text, or a form or chat the trail reached.
+ */
+export function detectPortalMismatch(text: string, signUpUrls: string[] = []): DetectedSignal | null {
+  const program = OFFICIAL_PROGRAMS.find((item) => item.claim.test(text));
+  if (!program) {
+    return null;
+  }
+  const withoutEmails = text.replace(EMAIL, " ");
+  const presented = findLinks(withoutEmails).filter((url) => {
+    const at = withoutEmails.indexOf(url.replace(/^https:\/\//, ""));
+    const sentence = withoutEmails.slice(Math.max(0, at - 60), at).split(/[.!?]\s|\n/).pop() ?? "";
+    return at >= 0 && SIGN_UP_WORD.test(sentence);
+  });
+  const outside = [...presented, ...signUpUrls]
+    .map(hostOf)
+    .find((host) => host && !NOT_A_SIGN_UP_HOST.test(host) && !program.domains.some((domain) => host === domain || host.endsWith(`.${domain}`)));
+  return outside
+    ? {
+        id: "official_portal",
+        label: `Pendaftaran ${program.name} di luar portal resminya`,
+        severity: "strong",
+        riskType: "suspicious_contact",
+        floor: "tinggi",
+        floorReason: `Pendaftaran ${program.name} hanya dibuka di ${program.portal}; pendaftaran di alamat lain bukan bagian dari program itu.`,
+        legalBasis: LEGAL_BASIS.impersonation,
+        description: `Materi mengatasnamakan ${program.name}, tetapi pendaftarannya di ${outside}, padahal pendaftaran resminya hanya di ${program.portal}.`,
+        evidence: [outside],
+      }
+    : null;
+}
+
+function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.toLowerCase().replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+export function detectSignals(text: string, { signUpUrls = [] }: { signUpUrls?: string[] } = {}): DetectedSignal[] {
   if (!text.trim().length) {
     return [];
   }
@@ -488,9 +715,13 @@ export function detectSignals(text: string): DetectedSignal[] {
   if (impersonation) {
     signals.push(impersonation);
   }
-  const combination = detectModerateCombination(signals);
-  if (combination) {
-    signals.push(combination);
+  const minor = detectMinorRecruitment(text);
+  if (minor) {
+    signals.push(minor);
+  }
+  const portal = detectPortalMismatch(text, signUpUrls);
+  if (portal) {
+    signals.push(portal);
   }
   const lookalikes = findLookalikeDomains(text);
   if (lookalikes.length) {
@@ -509,6 +740,7 @@ function lookalikeDomainSignal(lookalikes: LookalikeDomain[]): DetectedSignal {
     riskType: "suspicious_contact",
     floor: "tinggi",
     floorReason: "Domainnya memakai nama perusahaan atau instansi besar, tetapi bukan domain resmi mereka.",
+    legalBasis: LEGAL_BASIS.domain,
     description: `Domain ${domain} memakai nama ${brand} dengan tambahan kata atau ejaan berbeda, padahal domain resmi ${brand} adalah ${official.join(" atau ")}. Penipu sering membuat domain seperti ini agar terlihat resmi.`,
     evidence: lookalikes.map((item) => item.domain).slice(0, MAX_EVIDENCE_PER_SIGNAL),
   };
@@ -525,6 +757,133 @@ export function newDomainSignal(domain: string, days: number): DetectedSignal {
     floorReason: "Situs rekrutmen yang baru dibuat beberapa minggu belum punya rekam jejak yang bisa diperiksa.",
     description: `Domain ${domain} baru didaftarkan ${days} hari lalu. Situs penipuan lowongan umumnya dibuat sesaat sebelum disebarkan, sedangkan situs perusahaan biasanya sudah berumur tahunan.`,
     evidence: [domain],
+  };
+}
+
+/**
+ * From Certificate Transparency logs rather than the text: the posting's domain also hosts other
+ * recruitment sites or rotating addresses. Posing as two or more employers under one domain is an
+ * operation, not a company.
+ */
+export function certClusterSignal(cluster: {
+  domain: string;
+  recruitmentHosts: string[];
+  rotationHosts: string[];
+  imitatedBrands: string[];
+}): DetectedSignal {
+  const { domain, recruitmentHosts, rotationHosts, imitatedBrands } = cluster;
+  const posesAsMany = imitatedBrands.length >= 2;
+  const rotates = !posesAsMany && rotationHosts.length > recruitmentHosts.length;
+  return {
+    id: "cert_cluster",
+    label: posesAsMany
+      ? "Satu domain dipakai meniru beberapa perusahaan"
+      : rotates
+        ? "Domain memakai banyak alamat acak yang bergiliran"
+        : "Domain memuat banyak situs rekrutmen lain",
+    // No law makes a row of sites a scam by itself, so even posing as many brands stops at "sedang"
+    severity: "moderate",
+    riskType: "suspicious_contact",
+    floor: "sedang",
+    floorReason: posesAsMany
+      ? "Domain yang sama dipakai untuk situs rekrutmen atas nama beberapa perusahaan berbeda."
+      : "Domain yang sama memuat deretan situs atau alamat lain, bukan situs satu perusahaan.",
+    description: posesAsMany
+      ? `Log sertifikat publik menunjukkan domain ${domain} memuat situs rekrutmen atas nama ${imitatedBrands.join(", ")}. Perusahaan sungguhan tidak merekrut lewat domain yang sama dengan perusahaan lain; ini pola jaringan situs penipuan.`
+      : rotates
+        ? `Log sertifikat publik menunjukkan domain ${domain} memakai ${rotationHosts.length} subdomain acak seperti ${rotationHosts.slice(0, 3).join(", ")}. Halaman yang sama dipindah-pindah ke alamat baru adalah cara menghindari pemblokiran link.`
+        : `Log sertifikat publik menunjukkan domain ${domain} memuat ${recruitmentHosts.length} situs bernama rekrutmen atau pendaftaran. Situs penipuan lowongan sering dibuat berderet di satu domain.`,
+    evidence: (rotates ? rotationHosts : recruitmentHosts).slice(0, MAX_EVIDENCE_PER_SIGNAL),
+  };
+}
+
+/**
+ * From the knowledge base rather than the text: a phone, account, domain, or spreading account in
+ * the posting already appears in a job scam a fact-checker debunked. Likely the same operation again,
+ * but a number can be recycled or reused by someone else, and no law makes a shared contact a scam by
+ * itself, so it is shown to the user to verify and lifts the verdict to "sedang" at most.
+ */
+export function knownScamSignal({ identifier, caseCount, entities }: { identifier: string; caseCount: number; entities: string[] }): DetectedSignal {
+  const impersonated = entities.length ? `, atas nama ${entities.slice(0, 4).join(", ")}` : "";
+  return {
+    id: "known_scam_identity",
+    label: "Identitas yang sama sudah dinyatakan penipuan oleh pemeriksa fakta",
+    severity: "moderate",
+    riskType: "suspicious_contact",
+    floor: "sedang",
+    floorReason: "Kontak atau akun di materi ini tercatat dalam lowongan palsu yang dibongkar pemeriksa fakta; cocokkan sendiri kasusnya.",
+    description: `${identifier[0].toUpperCase()}${identifier.slice(1)} di materi ini tercatat di ${caseCount} kasus penipuan lowongan yang sudah diverifikasi pemeriksa fakta${impersonated}. Penipu memakai ulang kontak dan akun yang sama untuk lowongan palsu berikutnya.`,
+    evidence: [identifier],
+  };
+}
+
+/**
+ * From the registration trail: the form the posting leads to asks for a verification code, a
+ * password, or a selfie with the ID card. Fact-checks of 2025-2026 describe this as the takeover of
+ * the applicant's Telegram account.
+ */
+export function formSecretSignal(url: string, asks: string[]): DetectedSignal {
+  return {
+    id: "form_secret",
+    label: "Formulir pendaftaran meminta kode verifikasi, kata sandi, atau foto KTP",
+    severity: "strong",
+    riskType: "sensitive_data",
+    floor: "tinggi",
+    floorReason: "Rekrutmen resmi tidak pernah meminta kode verifikasi atau kata sandi pelamar.",
+    legalBasis: LEGAL_BASIS.access,
+    description: `Formulir di ${url} meminta ${asks.join(", ")}. Kode verifikasi dan kata sandi membuka akun pelamar (misalnya Telegram) bagi pihak lain.`,
+    evidence: [url],
+  };
+}
+
+/** From the trail: the form asks for the applicant's Telegram number, the most common 2026 pattern. */
+export function telegramFormSignal(url: string): DetectedSignal {
+  return {
+    id: "form_telegram",
+    label: "Formulir pendaftaran meminta nomor Telegram",
+    severity: "moderate",
+    riskType: "sensitive_data",
+    floor: "sedang",
+    floorReason: "Formulir lowongan palsu 2025-2026 meminta nomor Telegram, lalu kode verifikasinya untuk mengambil alih akun.",
+    description: `Formulir di ${url} meminta nomor Telegram. Rekrutmen resmi memakai email atau nomor ponsel, bukan akun Telegram pelamar.`,
+    evidence: [url],
+  };
+}
+
+/**
+ * A recruitment site on a long made-up subdomain of an unknown domain
+ * ("rekrutmenbersamaskkmigasdankkks.piillly.com", "infolowonganbnn2024.iiaall.com"): the shape of
+ * the addresses written in job scams the fact-checkers recorded.
+ */
+export function throwawaySubdomainSignal(host: string): DetectedSignal {
+  return {
+    id: "throwaway_subdomain",
+    label: "Situs pendaftaran di subdomain panjang domain tak dikenal",
+    severity: "moderate",
+    riskType: "suspicious_contact",
+    floor: "sedang",
+    floorReason: "Perusahaan merekrut lewat domainnya sendiri, bukan subdomain buatan di domain lain.",
+    description: `Alamat ${host} berupa nama rekrutmen panjang di atas domain yang tidak terkait perusahaan mana pun, pola yang sering dipakai situs lowongan palsu.`,
+    evidence: [host],
+  };
+}
+
+/**
+ * From the company's own site: it states it never charges applicants or recruits over a channel the
+ * posting uses. The posting then speaks in a name that is not its own.
+ */
+export function officialDenialSignal({ company, url, quote, conflict, fee }: { company: string; url: string; quote: string; conflict: string; fee: boolean }): DetectedSignal {
+  return {
+    id: "official_denial",
+    label: `Pernyataan resmi ${company} membantah cara rekrutmen di materi`,
+    severity: "strong",
+    riskType: fee ? "payment_request" : "suspicious_contact",
+    floor: "tinggi",
+    floorReason: `Situs resmi ${company} menyatakan tidak pernah merekrut dengan cara yang dipakai materi ini.`,
+    // A denied fee is also the posting's fee_request, which carries the fee laws
+    legalBasis: LEGAL_BASIS.impersonation,
+    description: `Situs resmi ${company} menyatakan "${quote}", sedangkan materi ini ${conflict}. Lowongan ini memakai nama ${company} tanpa mengikuti cara rekrutmen resminya.`,
+    evidence: [url],
   };
 }
 
@@ -614,7 +973,8 @@ export function formatSignalsForPrompt(signals: DetectedSignal[]): string {
     .map((signal) => {
       const severity = signal.severity === "strong" ? "kuat" : "sedang";
       const evidence = signal.evidence.map((item) => `"${item}"`).join("; ");
-      return `- [${severity}] ${signal.label}. Bukti: ${evidence}`;
+      const law = signal.legalBasis ? ` Dasar hukum: ${signal.legalBasis}.` : "";
+      return `- [${severity}] ${signal.label}. Bukti: ${evidence}.${law}`;
     })
     .join("\n");
 }

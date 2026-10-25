@@ -1,0 +1,65 @@
+{
+  "analysisSteps": [
+    "Membaca lampiran: surat panggilan tes atas nama PT Wilmar Nabati Indonesia bertanggal 03 Oktober 2023, dengan watermark dan stempel di atasnya.",
+    "Memeriksa pola penipuan: tidak ada permintaan biaya, data sensitif, tugas berbayar, domain gratisan, atau shortlink yang terbaca.",
+    "Mencari PT Wilmar Nabati Indonesia di web: perusahaan dan lowongannya dikenal, tetapi tidak ada sumber yang mengaitkan surat ini dengan perusahaan.",
+    "Menilai kejanggalan isi surat: nomor surat berkode bulan VI (Juni) padahal tanggal surat Oktober, kolom hari dan tanggal tes tidak terisi, dan surat sudah berusia lebih dari tiga tahun.",
+    "Menentukan tingkat risiko: tanda bahaya pasti tidak ditemukan, tetapi keaslian surat tidak dapat diverifikasi sehingga dinilai sedang."
+  ],
+  "conversationText": "Halo, saya sudah menelaah surat panggilan tes yang Anda kirim. Berikut hasil telaahnya.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "sedang",
+    "text": "Tingkat Risiko Awal: Sedang. Isi surat tidak meminta biaya atau data sensitif, tetapi keasliannya belum bisa diverifikasi: surat bertanggal Oktober 2023 sudah lama, nomor suratnya berkode bulan Juni, dan tanggal tes tidak terisi.",
+    "confidence": 0.55
+  },
+  "risks": [
+    {
+      "type": "missing_context",
+      "description": "Nomor surat memuat kode bulan VI (Juni) sedangkan surat bertanggal Oktober 2023, dan kolom hari/tanggal tes tidak terisi. Hal ini perlu dicocokkan dengan HRD resmi.",
+      "evidence": "Nomor : 0579/HRD-WILMAR/VI/2023"
+    },
+    {
+      "type": "missing_context",
+      "description": "Surat bertanggal 03 Oktober 2023, sehingga jadwal tesnya sudah lewat jauh. Surat lama seperti ini tidak menunjukkan ada lowongan yang sedang dibuka sekarang dan bisa saja disebarkan ulang.",
+      "evidence": "Jakarta,03 Oktober 2023"
+    },
+    {
+      "type": "manipulation",
+      "description": "Pada gambar terdapat cap yang menyatakan surat ini hoaks dari pihak ketiga. Klaim ini tidak dapat diperiksa dari materi sehingga bukan bukti dan tidak mengubah penilaian; cek langsung di kanal resmi lembaga yang disebut.",
+      "evidence": "HOAX"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Surat tidak menyebut gaji maupun tunjangan.",
+    "highlights": [],
+    "hint": "Gaji dan benefit sebaiknya ditanyakan ke HRD resmi perusahaan sebelum menerima tawaran."
+  },
+  "summary": "Materi adalah surat panggilan tes untuk calon karyawan PT Wilmar Nabati Indonesia, yang disebut melalui seleksi administrasi dan kualifikasi. Perusahaan ini dikenal dan pernah membuka lowongan, namun tidak ada sumber yang menghubungkan surat ini dengan perusahaan, dan alamat email pengirim pada gambar tidak terbaca penuh sehingga tidak bisa diperiksa. Surat tidak meminta biaya atau data sensitif, tetapi tanggal surat Oktober 2023 sudah lama, nomor surat berkode bulan Juni, dan tanggal tes tidak terisi. Cap hoaks pada gambar adalah klaim pihak ketiga yang tidak dapat diperiksa dan tidak dipakai sebagai bukti; pengguna perlu mengeceknya langsung di kanal resmi lembaga tersebut. Pastikan lowongan dan panggilan tes ini benar lewat situs karier atau kanal resmi Wilmar, dan jangan membayar apa pun.",
+  "summarySources": [
+    {
+      "title": "Lowongan Kerja PT Wilmar Nabati Indonesia (Disnakerja)",
+      "url": "https://www.disnakerja.com/lowongan-kerja-pt-wilmar-nabati-indonesia/"
+    }
+  ],
+  "explanations": [
+    {
+      "title": "Mengapa risikonya sedang",
+      "explanation": "Tidak ada permintaan uang, data sensitif, atau kanal gratisan yang terbaca. Namun surat ini tidak dapat dibuktikan asli, dan beberapa detailnya janggal, sehingga belum bisa dinilai rendah."
+    },
+    {
+      "title": "Cara memastikan keaslian surat",
+      "explanation": "Hubungi HRD melalui nomor atau email yang tercantum di situs resmi Wilmar, bukan dari surat ini, dan tanyakan apakah nomor surat dan jadwal tes tersebut benar."
+    },
+    {
+      "title": "Perusahaan resmi tidak memungut biaya",
+      "explanation": "Panggilan tes yang meminta biaya pendaftaran, tes, atau transfer apa pun perlu dicurigai, meskipun memakai kop surat perusahaan besar."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara memastikan surat panggilan tes ini benar-benar dari Wilmar?",
+    "Apa arti kejanggalan nomor surat dan tanggal pada surat ini?",
+    "Apa yang sebaiknya saya lakukan jika surat ini ternyata palsu?"
+  ]
+}

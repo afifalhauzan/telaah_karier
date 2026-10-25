@@ -1,0 +1,78 @@
+{
+  "analysisSteps": [
+    "Membaca teks tempelan dan dua tangkapan layar grup Telegram \"INDO - KAMBOJA\" yang isinya sama dengan teks.",
+    "Mencocokkan isi dengan pola penipuan dan indikasi TPPO: kerja lintas negara ke Kamboja, gaji dalam dolar, tiket dan visa, serta kontak pribadi.",
+    "Memeriksa apakah ada nama perusahaan, situs, atau tautan yang bisa ditelusuri; tidak ada, sehingga tidak ada sumber web yang dapat dipakai.",
+    "Menentukan tingkat risiko berdasarkan tanda pasti kerja luar negeri di luar jalur penempatan resmi dengan gaji besar."
+  ],
+  "conversationText": "Halo, saya sudah menelaah lowongan ini. Ada beberapa hal serius yang perlu Anda perhatikan sebelum menghubungi siapa pun.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "tinggi",
+    "text": "Tingkat Risiko Awal: Tinggi. Lowongan ini menawarkan kerja ke kantor di Kamboja lewat grup Telegram dan kontak pribadi, tanpa nama perusahaan dan tanpa jalur penempatan resmi, dengan gaji besar untuk syarat yang ringan; ini sangat terindikasi sebagai perekrutan non-prosedural yang mengarah ke TPPO.",
+    "confidence": 0.93
+  },
+  "risks": [
+    {
+      "type": "tppo",
+      "description": "Pekerja diminta berangkat ke kantor di luar negeri (Kamboja) tanpa nama perusahaan, kontrak, atau agen penempatan berizin. Pola ini sering dipakai pada perekrutan yang berujung perdagangan orang.",
+      "evidence": "Bersedia bekerja lintas negara ke kantor kami"
+    },
+    {
+      "type": "tppo",
+      "description": "Pelamar tanpa paspor tetap boleh mengajukan, dan yang sudah di Kamboja diminta tetap direkrut. Ini menandakan keberangkatan di luar prosedur resmi dan kemungkinan memakai visa non-kerja.",
+      "evidence": "non paspor juga dapat mengajukan dengan pertimbangan kami"
+    },
+    {
+      "type": "tppo",
+      "description": "Perusahaan menawarkan imbalan kepada orang yang sudah berada di Kamboja untuk membawa pekerja lain, bahkan yang masih terikat kontrak dengan perusahaan lain. Ini menyerupai praktik jual-beli pekerja.",
+      "evidence": "kami siap membayar peifu bagi yang bisa mengantar ke company kami"
+    },
+    {
+      "type": "overclaim",
+      "description": "Gaji 700 hingga 1.200 dolar AS plus komisi dan bonus untuk pekerjaan mengetik chat dan penerjemahan dengan syarat ringan jauh di atas kewajaran.",
+      "evidence": "(TRANSLATOR) 1200$ + komisi omset"
+    },
+    {
+      "type": "suspicious_contact",
+      "description": "Pendaftaran hanya lewat Telegram dan WhatsApp pribadi, dan mengaku \"direct HR\" tanpa agen sehingga tidak ada lembaga penempatan berizin yang dapat dimintai pertanggungjawaban.",
+      "evidence": "DIRECT HR (TIDAK MELALUI PIHAK MANAPUN / AGENT ❌)"
+    },
+    {
+      "type": "missing_context",
+      "description": "Tidak ada nama perusahaan, alamat kantor, atau situs. Tulisan \"SCAM LOVE\" di judul dan penegasan \"tidak ada perdagangan manusia\" tidak membuktikan keamanan; kalimat seperti itu justru perlu dicurigai.",
+      "evidence": "TIDAK ADA KEKERASAN FISIK & PERDAGANGAN MANUSIA"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Wajar",
+    "summary": "Gaji 700 sampai 1.200 dolar AS per bulan ditambah komisi dan bonus kehadiran untuk posisi marketing, CS, dan translator dengan syarat yang ringan terlalu tinggi dan menjadi umpan khas perekrutan ke luar negeri non-prosedural.",
+    "highlights": [
+      "Marketing 700 dolar AS, CS 800 dolar AS, translator 1.200 dolar AS, ditambah komisi",
+      "Tiket, visa, makan 5 kali sehari, dan mess ditanggung",
+      "Tidak ada kontrak, nama perusahaan, atau jaminan perlindungan kerja yang disebutkan"
+    ],
+    "hint": "Tawaran kerja luar negeri yang sah melalui P3MI berizin disertai perjanjian kerja tertulis dan dapat dicek di kanal resmi pemerintah. Jangan berangkat sebelum hal itu dipastikan."
+  },
+  "summary": "Lowongan ini menawarkan kerja sebagai marketing, CS, dan translator di sebuah kantor di Kamboja, disebarkan lewat grup Telegram dan dihubungi lewat Telegram serta WhatsApp pribadi. Tidak ada nama perusahaan, alamat, atau situs yang bisa ditelusuri, sehingga jejak digital perusahaan belum dapat diverifikasi. Pelamar tanpa paspor tetap diterima, tiket dan visa ditanggung, gaji sangat besar, dan ada imbalan bagi yang membawa pekerja dari perusahaan lain; semua ini terindikasi kuat sebagai perekrutan non-prosedural yang mengarah ke TPPO atau kerja paksa di jaringan penipuan daring. Disarankan tidak menghubungi atau berangkat, dan bila sudah terlanjur berkomunikasi, tanyakan ke kanal resmi Kementerian Luar Negeri, BP2MI/KP2MI, atau kepolisian.",
+  "summarySources": [],
+  "explanations": [
+    {
+      "title": "Kenapa kerja ke Kamboja lewat kontak pribadi berbahaya",
+      "explanation": "Kerja luar negeri yang sah harus melalui perusahaan penempatan berizin dengan kontrak tertulis. Penawaran lewat grup chat dengan paspor atau visa diurus pihak perekrut sering dipakai untuk membawa orang ke kompleks penipuan daring, di sana paspor bisa ditahan dan pekerja sulit pulang."
+    },
+    {
+      "title": "Tanda yang perlu diwaspadai dari tawaran ini",
+      "explanation": "Gaji dolar yang besar untuk pekerjaan mengetik chat, boleh berangkat tanpa paspor, dan imbalan bagi yang mengajak orang lain adalah ciri yang sering muncul pada kasus perdagangan orang. Klaim \"legal\" dan \"tanpa kekerasan\" ditulis oleh pengunggah sendiri sehingga tidak bisa dijadikan bukti."
+    },
+    {
+      "title": "Apa yang bisa dilakukan",
+      "explanation": "Jangan mengirim dokumen pribadi, paspor, atau uang, dan jangan berangkat. Laporkan akun dan grup ini ke kepolisian atau kanal pengaduan resmi, dan bila ada kerabat yang sudah di lokasi, hubungi perwakilan RI setempat."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara mengecek apakah penempatan kerja ke luar negeri itu resmi?",
+    "Ke mana saya bisa melapor jika sudah menghubungi akun ini?",
+    "Apa tanda-tanda perekrutan yang mengarah ke TPPO selain ini?"
+  ]
+}

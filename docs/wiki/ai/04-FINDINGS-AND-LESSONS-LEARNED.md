@@ -143,7 +143,7 @@ Dokumen ini mendokumentasikan secara rinci penemuan teknis (findings), batasan A
   4. P027 (Unilever palsu yang mengarahkan ke "LinkedIn/JobStreet/Kalibrr") tetap *Rendah*; tidak ada tanda yang bisa ditunjuk di materinya.
 
 ### O. Finding 15: Iterasi 2 pada Set `test`
-- **Run**: `web/eval/results/2026-10-15T16-50-01` (commit `f758b4d`, Gemini 2.5 Flash), dibandingkan dengan iterasi 1 `web/eval/results/2026-10-15T09-11-08` (commit `11364d5`). Sebelum iterasi 2, jejak artikel cek fakta di 12 baris `test` dibersihkan (`05-DATASET-EVALUASI.md` bagian 6, "Iterasi 2"); label dan baris lain tidak berubah.
+- **Run**: `web/eval/results/arsip-iterasi1/2026-10-15T16-50-01` (commit `f758b4d`, Gemini 2.5 Flash), dibandingkan dengan iterasi 1 `web/eval/results/2026-10-15T09-11-08` (commit `11364d5`). Sebelum iterasi 2, jejak artikel cek fakta di 12 baris `test` dibersihkan (`05-DATASET-EVALUASI.md` bagian 6, "Iterasi 2"); label dan baris lain tidak berubah.
 - **Hasil varian `lengkap`** (n = 50 penipuan, 50 asli; IK 95% Wilson):
 
   | Metrik | Iterasi 1 | Iterasi 2 |

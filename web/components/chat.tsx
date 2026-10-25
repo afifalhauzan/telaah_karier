@@ -28,15 +28,16 @@ import { ContextPanel, collectSessionContext, countSessionContext } from "@/comp
 import toast from 'react-hot-toast';
 import React from "react";
 import Link from "next/link";
-import { SESSION_WARNING_SHARE, notifyBlocked, sessionShare, sessionsLeft, useQuotaStore } from "@/lib/quota-store";
+import { notifyBlocked, sessionShare, sessionsLeft, useQuotaStore } from "@/lib/quota-store";
 import { buildCompactSeed } from "@/lib/compact-session";
 import { persistLatestExchange } from "@/lib/chat-persistence";
 import { useStreaming } from "@/contexts/StreamingContext";
 import { HistoryPanel, SidePanel } from "@/components/sidebar/sidebar";
+import { SessionDonut } from "@/components/sidebar/usage-meter";
 import { type SidebarSourceItem } from "@/components/sidebar/SourceItem";
 import { AnalysisSchema } from "@/langchain/agents/analyzer/schema";
 import type { FileUIPart } from "ai";
-import type { AnalysisAction, UIActionId, UIActionPayload } from "@/types/ui-actions";
+import { DEFAULT_ANALYSIS_ACTIONS, type AnalysisAction, type UIActionId, type UIActionPayload } from "@/types/ui-actions";
 
 function mapReferencesToSidebarSources(
   references: Array<{ title?: string; url?: string; citations?: Array<{ id?: string }> }>
@@ -148,6 +149,20 @@ function filesOf(message: MetabotUIMessage | undefined) {
   );
 }
 
+// What the phone share sheet sends (app/manifest.ts, share_target)
+const SHARE_PARAMS = ["share_title", "share_text", "share_url"];
+
+/** The shared title, text, and link as one draft, without repeats (apps often put the link in the text too). */
+function takeSharedDraft(): string {
+  const url = new URL(window.location.href);
+  const parts = SHARE_PARAMS.map((name) => url.searchParams.get(name)?.trim() ?? "").filter(Boolean);
+  if (!parts.length) return "";
+  SHARE_PARAMS.forEach((name) => url.searchParams.delete(name));
+  window.history.replaceState(window.history.state, "", url);
+  const unique = parts.filter((part, index) => parts.indexOf(part) === index);
+  return unique.filter((part) => !unique.some((other) => other !== part && other.includes(part))).join("\n");
+}
+
 function textOf(message: MetabotUIMessage | undefined): string {
   return ((message?.parts || []) as MetabotUIMessagePart[])
     .map((part) => (part.type === "text" ? part.text : ""))
@@ -245,6 +260,11 @@ export function Chat() {
     const draft = readLandingChatDraft();
     hasHydratedLandingDraftRef.current = true;
 
+    const shared = takeSharedDraft();
+    if (shared) {
+      setInput(shared);
+      return;
+    }
     if (!draft) return;
 
     setPendingLandingDraft(draft);
@@ -403,15 +423,15 @@ export function Chat() {
         </>
       );
     }
-    if (share > 0) {
-      return (
-        <span className={share >= SESSION_WARNING_SHARE ? "text-amber-700" : undefined}>
-          Sesi ini terpakai {Math.round(share * 100)}%
-        </span>
-      );
-    }
+    if (share > 0) return <SessionDonut share={share} />;
     return null;
   })();
+
+  // An action is sent as a message with its label, so the ones asked in this session drop out of the chips
+  const usedActionIds = React.useMemo(() => {
+    const asked = new Set(messages.filter((message) => message.role === "user").map((message) => textOf(message)));
+    return new Set(DEFAULT_ANALYSIS_ACTIONS.filter((action) => asked.has(action.label)).map((action) => action.id));
+  }, [messages]);
 
   const completedStepSelections = React.useMemo(() => {
     const completed = new Map<string, string>();
@@ -604,7 +624,11 @@ export function Chat() {
 
     if (isLoading) return;
 
-    if (choice.kind === "self-analyze") {
+    if (choice.kind === "link-given") {
+      regenerateWith(choice.messageId, { given_links: [choice.url] });
+    } else if (choice.kind === "skip-link") {
+      regenerateWith(choice.messageId, { skip_link_request: true });
+    } else if (choice.kind === "self-analyze") {
       regenerateWith(choice.messageId, { skip_similar: true });
     } else if (choice.kind === "same-posting") {
       regenerateWith(choice.messageId, { same_posting: true });
@@ -693,6 +717,7 @@ export function Chat() {
         onSuggestionClick={handleSuggestionClick}
         onActionClick={handleActionClick}
         pendingActionId={pendingActionId}
+        usedActionIds={usedActionIds}
         isActionLoading={isLoading}
         onTelaahChoice={handleTelaahChoice}
         feedbackConversationId={user ? conversationId : null}
@@ -758,6 +783,7 @@ export function Chat() {
               ) : messages.length === 0 ? (
                 <ChatStart
                   onSuggestionClick={handleStarterClick}
+                  onAlurClick={handleSuggestionClick}
                   isLoading={isLoading || isInitializing || !isAuthReady}
                 />
               ) : (

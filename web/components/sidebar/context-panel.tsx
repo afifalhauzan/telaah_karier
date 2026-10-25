@@ -1,5 +1,5 @@
 /* eslint-disable @next/next/no-img-element */
-import { Building2, FileText, Link2, Mail, Paperclip, Phone } from "lucide-react";
+import { Building2, ExternalLink, FileText, Link2, Mail, Paperclip, Phone } from "lucide-react";
 import { AnalysisSchema } from "@/langchain/agents/analyzer/schema";
 import type { MetabotUIMessage, MetabotUIMessagePart } from "@/types/streaming";
 import { SourceItem, type SidebarSourceItem } from "@/components/sidebar/SourceItem";
@@ -92,11 +92,23 @@ function Section({ title, icon: Icon, children, isEmpty }: { title: string; icon
   );
 }
 
-function Chip({ icon: Icon, children }: { icon: typeof Link2; children: React.ReactNode }) {
+function Chip({ icon: Icon, children, href }: { icon: typeof Link2; children: React.ReactNode; href?: string }) {
   return (
     <li className="flex items-start gap-2 rounded-lg border border-border bg-card px-2.5 py-1.5 text-xs text-foreground">
       <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-      <span className="min-w-0 break-words">{children}</span>
+      <span className="min-w-0 flex-1 break-words">{children}</span>
+      {href && (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          aria-label="Buka di tab baru"
+          title="Buka di tab baru"
+          className="-my-0.5 shrink-0 rounded-md p-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <ExternalLink className="h-3.5 w-3.5" />
+        </a>
+      )}
     </li>
   );
 }
@@ -128,12 +140,12 @@ export function ContextPanel({ context, sources }: { context: SessionContext; so
       <Section title="Link" icon={Link2} isEmpty={context.links.length === 0}>
         <ul className="space-y-1.5">
           {context.links.map((link) => (
-            <Chip key={link} icon={Link2}>
+            <Chip key={link} icon={Link2} href={/^https?:\/\//i.test(link) ? link : `https://${link}`}>
               {link}
             </Chip>
           ))}
         </ul>
-        <p className="text-[11px] text-muted-foreground">Ditampilkan sebagai teks. Jangan membuka link yang mencurigakan.</p>
+        <p className="text-[11px] text-muted-foreground">Buka hanya untuk melihat. Jangan isi data atau unduh apa pun dari link yang mencurigakan.</p>
       </Section>
 
       <Section title="Kontak & entitas" icon={Building2} isEmpty={entityCount === 0}>

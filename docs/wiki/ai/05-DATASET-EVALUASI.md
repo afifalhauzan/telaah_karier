@@ -144,6 +144,8 @@ Aturan anotasi:
 
 Rubrik ini menjadi acuan prompt analisis (`prompts.ts`) dan aturan (`signals.ts`). Penyetelannya hanya memakai split `dev`; run `test` berikutnya dilaporkan sebagai iterasi kedua (finding 14 di `04-FINDINGS-AND-LESSONS-LEARNED.md`).
 
+> **Diganti 25 Okt 2026.** Tabel di bawah adalah rubrik iterasi 2 dan dibiarkan sebagai catatan. Sejak 25 Okt, `tinggi` hanya bersandar pada dasar hukum: `unofficial_domain`, `paid_task` tanpa deposit, dan `cert_cluster` turun ke `sedang`; `moderate_combination` (dua tanda lemah) dihapus; ada tanda baru (visa turis, negara non-penempatan, judi online, anak di bawah 18, rekening/ATM, portal resmi, pernyataan resmi perusahaan). Rubrik yang berlaku ada di `07-PENGUATAN-AGENT.md` bagian 2.4 dan dipakai iterasi 3 (bagian 11).
+
 | Tingkat | Syarat |
 |---|---|
 | `tinggi` | Minimal satu **tanda pasti**: (a) minta uang dalam bentuk apa pun, yaitu biaya, deposit, transfer ke rekening, termasuk yang dijanjikan "nanti diganti/direimburse" atau dana talangan potong gaji; (b) minta OTP/kode verifikasi/PIN/kata sandi/selfie KTP; (c) tugas like/follow/subscribe berbayar atau penghasilan harian yang dijamin dari tugas online; (d) mengaku perusahaan besar/BUMN/instansi tetapi kanalnya jelas bukan milik mereka (email gratis, WA pribadi, domain gratisan); (e) kerja luar negeri non-resmi bergaji fantastis. **Atau** dua tanda lemah berbeda jenis sekaligus. |
@@ -167,7 +169,7 @@ Kasus yang memang wajar tetap `sedang` dan tidak dikejar: hanya bit.ly, puskesma
 
 ### Iterasi 2 pada set `test`
 
-Iterasi 1 (15 Okt 2026, `eval/results/2026-10-15T09-11-08`) tetap menjadi angka utama yang dilaporkan. Iterasi 2 dijalankan sekali setelah perbaikan di atas dan dilaporkan **di sampingnya**, dengan tiga catatan:
+Iterasi 1 (15 Okt 2026, `eval/results/arsip-iterasi1/2026-10-15T09-11-08`) tetap menjadi angka utama yang dilaporkan. Iterasi 2 dijalankan sekali setelah perbaikan di atas dan dilaporkan **di sampingnya**, dengan tiga catatan:
 
 1. **Rubrik disusun setelah melihat kesalahan di `test`.** Penyetelan aturan memakai `dev`, tetapi pola yang dikejar berasal dari analisis kesalahan iterasi 1. Karena itu kenaikan pada iterasi 2 kemungkinan lebih besar daripada kinerja pada lowongan yang benar-benar baru.
 2. **Pembersihan jejak artikel di 12 baris.** Sebagian teks `test` masih membawa tulisan pemeriksa fakta, sesuatu yang tidak akan ditempel pengguna sungguhan. Sebelum iterasi 2, jejak itu dibersihkan secara mekanis tanpa melihat hasil model:
@@ -255,6 +257,7 @@ Skrip ada di `web/eval/` dan dijalankan dari folder `web/`. API key dibaca dari 
 | `--concurrency` | Jumlah kasus paralel (bawaan 2). |
 | `--resume <folder>` | Melanjutkan run yang terputus dengan pengaturan aslinya; kasus yang sudah ada dilewati. |
 | `--final` | Wajib untuk `--split test`, supaya set test tidak terjalankan tanpa sengaja. |
+| `--kb-before YYYY-MM-DD` | Basis kasus hanya berisi kasus yang terbit sebelum tanggal itu (bagian 11). Situs cek fakta selalu dikecualikan dari pencarian web saat evaluasi. |
 
 | Varian | Komponen |
 |---|---|
@@ -266,5 +269,75 @@ Skrip ada di `web/eval/` dan dijalankan dari folder `web/`. API key dibaca dari 
 | `tanpa_baca_dulu` | Lengkap, tetapi lampiran langsung dikirim ke analisis tanpa tahap baca dulu |
 
 Lampiran dibaca di semua varian kecuali `tanpa_baca_dulu`, sehingga perbedaan antarvarian hanya pada komponen penilainya.
+
+---
+
+## 11. Iterasi 3: Split Waktu (ditetapkan 25 Okt 2026)
+
+Set `test` lama (100 baris) sudah dilihat dua kali dan kini sebagian besar kasusnya ada di basis kasus, jadi iterasi 3 memakai set baru yang dibangun dari basis kasus itu sendiri, dibagi menurut waktu.
+
+**Pembagian.** Kasus penipuan terverifikasi di `scam_reports` (TurnBackHoax dan media mitra CekFakta) diurutkan menurut tanggal terbit. **20% terbaru menjadi `test`**; 80% yang lebih lama menjadi basis kasus. Tanggal kasus test pertama adalah *cutoff*, dan selama run basis kasus hanya berisi kasus yang terbit **sebelum** cutoff (`--kb-before`). Ini meniru pemakaian sebenarnya: agent menelaah lowongan baru dengan pengetahuan dari kasus-kasus lama.
+
+**Dua arm.** Setiap kasus test masuk dalam dua bentuk, sesuai cara lowongan sampai ke pengguna:
+- **teks** (`T…`): teks unggahan seperti dikutip artikel;
+- **poster** (`G…`): poster yang dipotong dari header artikel Mafindo (`MafindoHeader`), tanpa cap verdict, label, atau bingkai. Nomor `T` dan `G` yang sama berasal dari kasus yang sama.
+
+**Lowongan asli** (`A…`): dari `legit_postings` (KarirHub Kemnaker dan portal mitra berlisensi: Glints, Jobstreet, Kalibrr, dan lainnya), sebanyak arm teks. Baris `asli` di `dataset.csv` lama tidak dipakai.
+
+**Pencegahan kebocoran.**
+- Basis kasus dipotong di cutoff, dan artikel kasus itu sendiri tetap dikeluarkan lewat URL dan kemiripan ≥ 0,9.
+- Situs cek fakta tidak boleh sampai ke pencarian web: `turnbackhoax.id`, `cekfakta.com`, dan `mafindo.or.id` dikecualikan di Tavily, dan rubrik cek fakta media berita (`/cekfakta/`, `/cek-fakta/`, `/hoaks/`, `/klarifikasi/`) dibuang dari hasil (`isFactCheckUrl`).
+- Batasnya: lowongan asli dari portal belum tentu bebas tanda yang dinilai `sedang` (misalnya kontak WA), dan kasus penipuan yang dibongkar sebelum cutoff tetapi beredar lagi sesudahnya tetap dikenali lewat identitasnya. Yang kedua memang perilaku yang diinginkan, bukan kebocoran.
+
+**Menjalankan.**
+```bash
+docker compose exec api php artisan eval:export          # mencetak cutoff dan jumlah per arm
+cp -r api/storage/app/private/eval web/eval/dataset/v2
+cd web
+pnpm eval --dataset eval/dataset/v2/dataset.csv --images eval/dataset/v2/images --split test --final --kb-before <cutoff> --variants ablation
+pnpm eval:report eval/results/<waktu>
+```
+Laporkan arm teks dan arm poster **terpisah** (filter `input_type`), di samping iterasi 1 dan 2 pada set lama.
+
+### Hasil iterasi 3 (25 Okt 2026)
+
+Pipeline lengkap (produksi: aturan + basis kasus + pencarian web + `gemini-2.5-flash`, dipilih di doc 09), commit `5ab680a`, cutoff basis kasus 12 Juni 2026, situs cek fakta diblokir. Laporan lengkap: `web/eval/results/iterasi3/report.md`. Ablasi tidak dilaporkan: varian lain terhenti oleh batas kuota Gemini dan Tavily, dan diputuskan tidak diulang.
+
+**Set:** 265 kasus = 173 penipuan (92 teks, 81 poster) + 92 lowongan asli dari portal berlisensi.
+
+| Label \ Prediksi | rendah | sedang | tinggi | tanpa verdict |
+|---|---|---|---|---|
+| penipuan (173) | **1** | 59 | 110 | 3 |
+| asli (92) | 68 | 23 | **1** | 0 |
+
+| Metrik | Hasil (IK 95% Wilson) |
+|---|---|
+| **Lolos kritis** (penipuan → rendah) | **0,6%** (1/173; 0,1–3,2%) |
+| Penipuan diberi peringatan (sedang/tinggi) | **97,7%** (169/173) |
+| Deteksi tegas (penipuan → tinggi) | 63,6% (110/173; 56,2–70,4%) |
+| **Alarm palsu** (asli → tinggi) | **1,1%** (1/92; 0,2–5,9%) |
+| Presisi "tinggi" | 99,1% (110 dari 111 vonis tinggi memang penipuan) |
+| F1 ketat / longgar | 77,5% / 92,3% |
+| Latensi p50 / p95 | 8,3 / 12,1 dtk |
+| Biaya model per 1.000 telaah | ±$3,43 (5.012 token masuk, 770 keluar per telaah; tanpa Tavily) |
+
+| Arm | Deteksi tegas | Lolos kritis |
+|---|---|---|
+| Teks (92) | 70,7% (65/92) | 0/92 |
+| Poster (81) | 55,6% (45/81) | 1/81 |
+
+**Pembacaan.**
+- "Tinggi" sekarang hanya diberikan bila ada tanda pasti yang punya dasar hukum (doc 07 bagian 2.4). Karena itu deteksi tegas 63,6% tetapi presisinya 99,1%: hampir setiap vonis tinggi benar. Penipuan tanpa tanda pasti di materinya (misalnya hanya "link di bio") jatuh ke `sedang`, yang tetap menampilkan peringatan dan langkah verifikasi; hanya 4 dari 173 penipuan yang tidak diberi peringatan sama sekali.
+- Arm poster lebih sulit: poster hanya memuat sebagian materi, tanpa caption dan link.
+- **Satu-satunya lolos kritis (G083)** adalah poster resmi Kawasaki Motor Indonesia yang dipakai ulang penipu. Poster itu sendiri menautkan ke portal resmi `kmi-recruitment.kawasaki.co.id`; tautan palsunya (`daftargratissekarang-ten.vercel.app`) disebar di luar poster. Dari poster saja memang tidak ada tanda penipuan, dan sistem kini meminta link pendaftaran yang tersembunyi sebelum menelaah di chat.
+- **Satu-satunya alarm palsu (A090)** adalah lowongan kurir J&T Express yang dipasang mitra outsourcing lewat portal mitra; sistem membacanya sebagai pencatutan nama perusahaan besar.
+
+**Dibanding set lama.** Iterasi 1 (lolos kritis 6%, deteksi 30%, alarm palsu 0%) dan iterasi 2 (0%, 66%, 2%) memakai set 100 kasus yang lain. Angkanya tidak bisa dibandingkan langsung, tetapi arahnya sama: lolos kritis mendekati nol dengan alarm palsu rendah.
+
+**Keterbatasan.**
+- Komposisi mengikuti arsip cek fakta: 165 dari 173 penipuan bermodus pencatutan nama; modus biaya, tugas/deposit, dan TPPO tidak terwakili di set ini.
+- Alarm palsu hanya terukur di arm teks (lowongan asli tidak berbentuk poster).
+- Lowongan asli diambil dari portal berlisensi; lowongan asli yang beredar di media sosial (WA, gaji tidak ditulis) bisa lebih sering dinilai `sedang`.
+- Satu run; model berpikir dapat menggeser satu dua kasus antar-run.
 
 `web/eval/fixtures/smoke.csv` berisi 10 kasus **sintetis** untuk memastikan skrip berjalan (`pnpm eval --dataset eval/fixtures/smoke.csv --split dev,injeksi`). Hasilnya bukan angka evaluasi dan tidak boleh dilaporkan.

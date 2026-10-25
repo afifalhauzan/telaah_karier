@@ -45,7 +45,7 @@ const CHECK_LABELS: Record<string, string> = {
 };
 
 const DISCLAIMER =
-  "Ini analisis risiko awal, bukan vonis final. Selalu verifikasi ke kanal resmi sebelum mengirim data atau membayar biaya apa pun.";
+  "Ini analisis risiko awal, bukan vonis final. Selalu verifikasi ke kanal resmi sebelum mendaftarkan diri.";
 
 const MAX_SOURCE_TEXT = 1200;
 

@@ -1,0 +1,64 @@
+{
+  "analysisSteps": [
+    "Membaca poster PDF dua halaman dan mencatat posisi, lokasi, syarat, serta ketentuan pendaftaran.",
+    "Memeriksa pola biaya, data sensitif, kontak pribadi, dan domain tidak resmi: tidak ditemukan; poster justru menyatakan tidak memungut biaya.",
+    "Membuka shortlink s.id pada poster: mengarah ke subdomain valeindonesia.com (ptviforms), halaman formulir yang tidak menampilkan isi lowongan.",
+    "Mencari lowongan dan situs terkait di web: ada jejak lowongan serupa dari PT Vale Indonesia, tetapi tidak ada sumber independen yang mengaitkan valeindonesia.com dengan perusahaan.",
+    "Membandingkan batas pendaftaran dengan tanggal hari ini (25 Oktober 2026) dan menentukan tingkat risiko."
+  ],
+  "conversationText": "Halo, saya sudah menelaah poster lowongan PT Vale Indonesia Tbk ini. Berikut hasilnya.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "sedang",
+    "text": "Tingkat Risiko Awal: Sedang. Isi lowongan wajar dan tidak ada permintaan biaya, tetapi pendaftaran memakai shortlink yang mengarah ke domain yang belum bisa dipastikan sebagai milik resmi perusahaan.",
+    "confidence": 0.6
+  },
+  "risks": [
+    {
+      "type": "suspicious_contact",
+      "description": "Pendaftaran lewat shortlink s.id, bukan alamat resmi perusahaan. Shortlink mengarah ke ptviforms.valeindonesia.com, yang belum dapat dikaitkan dengan PT Vale Indonesia lewat sumber independen.",
+      "evidence": "Please submit your application to https://s.id/9nw15"
+    },
+    {
+      "type": "bias",
+      "description": "Batas pendaftaran pada poster sudah lewat, sehingga pengguna perlu memastikan lowongan masih dibuka. Ini bukan tanda penipuan dengan sendirinya.",
+      "evidence": "Closing date (inclusive) is on October 16, 2026."
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Poster tidak mencantumkan gaji maupun benefit.",
+    "highlights": [],
+    "hint": "Tanyakan kisaran gaji dan benefit melalui kanal resmi perusahaan setelah proses seleksi berjalan, tanpa membayar apa pun."
+  },
+  "summary": "Poster memuat posisi Senior Geotech & Hydrology Engineer di Pomalaa dengan syarat sarjana teknik, pengalaman minimal 7 tahun, dan tugas yang sesuai bidang tambang, sehingga deskripsi kerjanya tampak wajar. Poster tidak meminta biaya atau data sensitif, dan memuat peringatan bahwa perusahaan tidak memungut biaya serta mengirim undangan dari email berdomain vale.com; pernyataan ini tidak membuktikan keaslian poster karena penipu juga bisa menuliskannya. Pendaftaran dilakukan lewat shortlink yang mengarah ke ptviforms.valeindonesia.com, halaman formulir yang tidak menampilkan isi lowongan saat dibuka, dan tidak ada sumber independen yang mengaitkan domain itu dengan PT Vale Indonesia. Pencarian web menemukan lowongan serupa dari PT Vale Indonesia pada tahun 2023 dan peringatan perusahaan soal lowongan palsu, tetapi tidak menemukan pengumuman posisi ini. Batas pendaftaran 16 Oktober 2026 sudah lewat, jadi pastikan lowongan masih dibuka. Sebaiknya cek posisi ini langsung di halaman karier resmi perusahaan sebelum mengirim dokumen pribadi.",
+  "summarySources": [
+    {
+      "title": "Petromindo - Senior Geotechnical & Hydrology Engineer, PT Vale Indonesia (2023)",
+      "url": "https://www.petromindo.com/job-gallery/23598"
+    },
+    {
+      "title": "Republika - PT Vale waspada informasi lowongan kerja palsu",
+      "url": "https://ekonomi.republika.co.id/berita/s9tjdc502/pt-vale-waspada-informasi-lowongan-kerja-palsu"
+    }
+  ],
+  "explanations": [
+    {
+      "title": "Mengapa shortlink perlu diwaspadai",
+      "explanation": "Shortlink menyembunyikan alamat tujuan. Penipu sering menyalin poster resmi lalu mengganti tautan pendaftarannya. Alamat tujuan di sini adalah subdomain valeindonesia.com, tetapi kepemilikannya belum dapat dipastikan dari sumber independen."
+    },
+    {
+      "title": "Pernyataan tidak memungut biaya",
+      "explanation": "Kalimat bahwa perusahaan tidak memungut biaya bagus untuk diketahui, tetapi tidak membuktikan poster ini asli. Prinsipnya tetap: perusahaan resmi tidak meminta uang selama rekrutmen."
+    },
+    {
+      "title": "Batas pendaftaran sudah lewat",
+      "explanation": "Batas 16 Oktober 2026 telah terlewati per 25 Oktober 2026. Ini belum tentu mencurigakan, tetapi pastikan lowongan masih dibuka di kanal resmi sebelum mengirim berkas."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara memastikan link pendaftaran ini milik resmi PT Vale Indonesia?",
+    "Apa yang harus saya lakukan jika nanti diminta membayar atau mengirim data pribadi?",
+    "Apakah wajar lowongan ini meminta pengalaman minimal 7 tahun?"
+  ]
+}

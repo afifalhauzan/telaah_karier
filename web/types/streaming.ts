@@ -10,14 +10,18 @@ import type {
   Citation,
   Claim,
   ExplanationItem,
+  KnownCase,
+  SimilarCase,
   Reference,
   Reasoning,
   SalaryBenefitAssessment,
   Risk,
 } from '@/langchain/agents/analyzer/schema';
+import type { LinkRequest } from '@/langchain/agents/analyzer/checks';
 import type { ChartEmbedData } from '@/types/chart';
 import type { AnalysisAction, UIActionId } from "@/types/ui-actions";
 import type { QuotaBlock, QuotaState } from "@/lib/quota";
+import type { ReadFacts } from "@/lib/telaah-alur/questions";
 
 export interface InteractiveStepPart {
   stepId: string;
@@ -75,6 +79,12 @@ export interface SessionMovePartData {
   previousTitle: string;
 }
 
+/** The user said they are already in a recruitment process: the TelaahAlur check is offered. */
+export interface AlurCheckPartData {
+  // Core answers read from the message, confirmed in the card before anything is asked
+  readFacts: ReadFacts;
+}
+
 export type MetabotUIMessagePart =
   | { type: 'text'; text: string }
   | {
@@ -88,6 +98,9 @@ export type MetabotUIMessagePart =
   | { type: 'data-chart'; data: string | ChartEmbedData }
   | { type: 'data-summary'; data: string | SummaryPartData }
   | { type: 'data-claims'; data: Claim[] }
+  | { type: 'data-known-scam'; data: KnownCase[] }
+  | { type: 'data-similar-cases'; data: SimilarCase[] }
+  | { type: 'data-link-request'; data: LinkRequest }
   | { type: 'data-salary-benefit'; data: SalaryBenefitAssessment }
   | { type: 'data-risks'; data: Risk[] }
   | { type: 'data-checks'; data: Check[] }
@@ -100,6 +113,7 @@ export type MetabotUIMessagePart =
   | { type: 'data-telaah-share'; data: TelaahSharePartData }
   | { type: 'data-similar-telaah'; data: SimilarTelaahPartData }
   | { type: 'data-session-move'; data: SessionMovePartData }
+  | { type: 'data-alur-check'; data: AlurCheckPartData }
   | { type: 'data-session-title'; data: { title: string } }
   // A turn the quota did not let through (lib/quota.ts); the card offers the way on
   | { type: 'data-quota'; data: { reason: QuotaBlock; state: QuotaState | null } }

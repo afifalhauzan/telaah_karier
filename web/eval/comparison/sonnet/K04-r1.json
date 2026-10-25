@@ -1,0 +1,54 @@
+{
+  "analysisSteps": [
+    "Membaca teks pengguna dan poster lampiran yang memuat judul Lowongan Magang Nasional, Kementerian Ketenagakerjaan RI, Program Magang Nasional 2026 untuk lulusan SMA/SMK, D3/S1.",
+    "Memeriksa pola risiko: tidak ada permintaan biaya, data sensitif, atau kontak pribadi, tetapi kanal pendaftaran hanya berupa ajakan 'klik daftar' atau 'klik link' tanpa alamat web yang terlihat.",
+    "Memeriksa tautan dan domain: materi tidak memuat alamat web atau nama perusahaan yang bisa dibuka atau dicari, sehingga tidak ada tautan yang diverifikasi.",
+    "Menimbang klaim mengatasnamakan instansi pemerintah terhadap kanal pendaftaran yang tidak terlihat, sehingga keaslian lowongan belum dapat dipastikan."
+  ],
+  "conversationText": "Halo! Saya sudah menelaah poster dan teks lowongan magang ini. Berikut penilaian awalnya.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "sedang",
+    "text": "Tingkat Risiko Awal: Sedang. Lowongan mengatasnamakan Kementerian Ketenagakerjaan, tetapi kanal pendaftarannya hanya 'klik daftar/klik link' tanpa alamat web yang terlihat, sehingga keasliannya belum bisa diverifikasi.",
+    "confidence": 0.7
+  },
+  "risks": [
+    {
+      "type": "suspicious_contact",
+      "description": "Kanal pendaftaran tidak terlihat: hanya ada ajakan klik tanpa alamat web yang bisa diperiksa. Penipu sering menyalin poster resmi lalu mengganti tautannya.",
+      "evidence": "INFO PENDAFTARAN KLIK DAFTAR"
+    },
+    {
+      "type": "missing_context",
+      "description": "Materi tidak memuat alamat situs resmi, kontak resmi, jadwal pendaftaran, maupun rincian program (penempatan, uang saku, durasi), sehingga tidak bisa dicocokkan dengan pengumuman resmi instansi.",
+      "evidence": ""
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Materi tidak menyebut uang saku, tunjangan, atau benefit program magang.",
+    "highlights": [],
+    "hint": "Cek rincian uang saku dan benefit hanya di pengumuman resmi program."
+  },
+  "summary": "Poster menyebut Program Magang Nasional 2026 Kementerian Ketenagakerjaan RI untuk lulusan SMA/SMK, D3/S1, tetapi cara daftarnya hanya 'klik daftar' atau 'klik link' tanpa alamat web yang terlihat. Karena tautan tidak tampak, lowongan ini belum bisa dipastikan resmi, dan poster yang tampak meyakinkan bisa saja disalin lalu tautannya diganti. Tidak ada permintaan biaya atau data sensitif pada materi ini. Tidak ada tautan yang bisa dibuka, sehingga jejak digital program belum dapat diverifikasi dari materi ini. Sebaiknya jangan klik tautan dari unggahan tersebut, dan pastikan program serta alamat pendaftarannya langsung di kanal resmi Kemnaker (situs berakhiran .go.id dan akun resmi instansi).",
+  "summarySources": [],
+  "explanations": [
+    {
+      "title": "Mengapa risikonya sedang",
+      "explanation": "Tidak ada tanda pasti penipuan seperti permintaan biaya atau data sensitif. Namun kanal pendaftaran tidak terlihat dan keasliannya tidak bisa dibuktikan dari materi, sehingga perlu dicek ulang."
+    },
+    {
+      "title": "Cara memastikan keasliannya",
+      "explanation": "Instansi pemerintah hanya membuka pendaftaran lewat domain .go.id atau akun resmi mereka. Buka situs resmi Kemnaker secara langsung dan cari program yang sama, bukan lewat tautan dari unggahan ini."
+    },
+    {
+      "title": "Waspada jika diminta biaya atau data pribadi",
+      "explanation": "Program resmi tidak memungut biaya pendaftaran. Jika setelah klik Anda diminta bayar, transfer, atau mengirim OTP dan foto KTP, hentikan proses tersebut."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara memeriksa apakah program magang ini benar-benar milik Kemnaker?",
+    "Apa ciri alamat web pendaftaran instansi pemerintah yang asli?",
+    "Apa yang harus saya lakukan jika sudah terlanjur klik tautan di unggahan ini?"
+  ]
+}

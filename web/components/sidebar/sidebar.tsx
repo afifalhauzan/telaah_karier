@@ -9,6 +9,7 @@ import { ConfirmModal } from "@/components/ui/modal";
 import { useChatSessions, type ChatSession } from "@/hooks/use-chat-sessions";
 import { SessionList, openSession } from "@/components/sidebar/session-history";
 import { useConversationStore } from "@/lib/conversation-store";
+import { UsageMeter } from "@/components/sidebar/usage-meter";
 
 const RAIL_WIDTH = "w-14";
 
@@ -237,7 +238,7 @@ export function HistoryPanel({
 
   if (collapsed) {
     return (
-      <nav aria-label="Riwayat telaah" className="flex flex-col items-center gap-1">
+      <nav aria-label="Riwayat telaah" className="flex h-full flex-col items-center gap-1">
         <RailButton
           label="Cari telaah"
           onClick={() => {
@@ -258,6 +259,7 @@ export function HistoryPanel({
         <RailButton label="Riwayat telaah" onClick={onExpand}>
           <History className="h-4 w-4" />
         </RailButton>
+        <UsageMeter collapsed />
       </nav>
     );
   }
@@ -343,6 +345,8 @@ export function HistoryPanel({
           </>
         )}
       </div>
+
+      <UsageMeter collapsed={false} />
 
       <ConfirmModal
         isOpen={!!pendingDelete}

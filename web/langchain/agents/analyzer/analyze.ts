@@ -26,6 +26,7 @@ import {
 import {
   compareRiskLevels,
   describeFloorForProgress,
+  officialDenialSignal,
   describeSignalsForProgress,
   detectSignals,
   labelInSentence,
@@ -34,9 +35,22 @@ import {
   strongestFloor,
   type DetectedSignal,
 } from "./signals";
-import { buildChecks, newDomainSignals } from "./checks";
+import { buildChecks, certClusterSignals, knowledgeSignals, newDomainSignals, trailSignals } from "./checks";
+import {
+  describeKnowledgeForProgress,
+  formatCaseDate,
+  identifierLabel,
+  knowledgeSources,
+  lookupKnowledge,
+  type KnowledgeOptions,
+  type KnowledgeResult,
+} from "./tools/knowledge";
+import { describeCertClustersForProgress, lookupCertClusters, type CertCluster } from "./tools/ct-cluster";
+import { conflictText, describeStatementForProgress, lookupOfficialStatement, type Denial, type OfficialStatement } from "./tools/official-statement";
 import { describeDomainAgesForProgress, lookupDomainAges, type DomainAge } from "./tools/domain-age";
-import { checkLinks, describeLinksForProgress, pageBlock, shortlinkLines, type LinkChecks } from "./tools/link-checks";
+import { checkLinks, describeLinksForProgress, pageBlock, shortlinkLines, trailBlock, type LinkChecks, type TraceOutcome } from "./tools/link-checks";
+import { decodeQrLinks } from "./tools/qr";
+import { findContacts, findLinks } from "../telaah-bersama/identifiers";
 import {
   GUIDANCE_REFERENCES,
   buildVerificationQuery,
@@ -78,6 +92,10 @@ export interface AnalyzeOptions {
   // Material the session already sent about the same posting (an earlier poster, the first chat
   // with the recruiter). The new message is a later stage of it, so both are judged together.
   earlierMaterial?: string;
+  // The evaluation leaves each row's own fact-check out of the knowledge base
+  knowledge?: KnowledgeOptions;
+  // The evaluation keeps fact-check sites out of the web search (tools/tavily-search.ts)
+  excludeFactChecks?: boolean;
 }
 
 export interface AnalysisRunMeta {
@@ -95,8 +113,12 @@ export interface AnalysisRunMeta {
   signals: Array<Pick<DetectedSignal, "id" | "severity">>;
   search: { status: WebSearchStatus | "disabled"; retrievedCount: number; sourceCount: number };
   // Unset when the web checks are disabled. pageRead is null when there was no page to read.
-  links?: { shortlinks: number; resolved: number; pageRead: boolean | null };
+  links?: { shortlinks: number; resolved: number; pageRead: boolean | null; qr: number; trail: TraceOutcome[] };
   domainAges?: Array<{ domain: string; registeredAt: string | null }>;
+  certClusters?: Array<{ domain: string; status: CertCluster["status"]; recruitmentHosts: number; imitatedBrands: number }>;
+  // Unset when the web checks are disabled. similar holds the cases' similarity scores.
+  knowledge?: { status: KnowledgeResult["status"]; identity: number; shared: number; similar: number[] };
+  officialStatement?: { url: string; conflicts: Denial[] } | null;
   riskFloorApplied: boolean;
   // A "tinggi" verdict resting only on a manipulation attempt was lowered to "sedang".
   manipulationCapApplied: boolean;
@@ -469,11 +491,30 @@ function buildAttachmentNoticeResult(message: string): AnalysisResult {
   };
 }
 
+/**
+ * The contacts and names the material shows: what the attachment reading found, plus the user's own
+ * text (which no model reads for entities) and the company the web search looked up.
+ */
+function materialEntities(userText: string, material: ExtractedMaterial | undefined, company: string | undefined) {
+  const { contacts } = findContacts(userText);
+  const read = material?.entities;
+  const merge = (a: string[] = [], b: string[]) => [...new Set([...a, ...b])];
+  return {
+    companyNames: merge(read?.companyNames, company ? [company] : []),
+    salaries: read?.salaries ?? [],
+    locations: read?.locations ?? [],
+    phones: merge(read?.phones, contacts.filter((item) => item.kind === "phone").map((item) => item.value)),
+    emails: merge(read?.emails, contacts.filter((item) => item.kind === "email").map((item) => item.value)),
+    urls: merge(read?.urls, findLinks(userText)),
+  };
+}
+
 function describeMaterialRead(
   userText: string,
   attachmentCount: number,
   material: ExtractedMaterial | undefined,
-  linkEvidence: string
+  linkEvidence: string,
+  company: string | undefined
 ): AnalysisResult["material"] {
   let source: "text" | "attachment" | "text_and_attachment" = "text";
   if (attachmentCount > 0) {
@@ -486,7 +527,7 @@ function describeMaterialRead(
     legibility: material?.legibility,
     attachments: material?.attachments ?? [],
     visualCues: material?.visualCues ?? [],
-    entities: material?.entities,
+    entities: materialEntities(userText, material, company),
     linkEvidence: linkEvidence || undefined,
   };
 }
@@ -531,11 +572,13 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
 
   let material: ExtractedMaterial | undefined;
   let linkEvidence = "";
+  // The company the web search looked up, shown with the material's entities
+  let company: string | undefined;
   // Kept to the start of the earlier material: the first poster names the company and channels.
   const earlierMaterial = options.earlierMaterial?.trim().slice(0, MAX_EARLIER_MATERIAL_CHARS) ?? "";
   const finish =(result: AnalysisResult): AnalysisRun => {
     result.reasoning = [{ intent: PROGRESS_INTENT, steps: [...steps] }];
-    result.material = describeMaterialRead(userText, attachments.length, material, linkEvidence);
+    result.material = describeMaterialRead(userText, attachments.length, material, linkEvidence, company);
     if (earlierMaterial) {
       result.material!.earlierMaterial = earlierMaterial;
     }
@@ -602,9 +645,12 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
   let ownText = materialText;
   if (useSearch) {
     const linksStartedAt = Date.now();
-    links = await checkLinks(materialText);
-    ownText = [materialText, shortlinkLines(links)].filter(Boolean).join("\n\n");
-    linkEvidence = [shortlinkLines(links), pageBlock(links)].filter(Boolean).join("\n\n");
+    // A QR code on a poster is the posting's own link, as if it were written out
+    const qrLinks = await decodeQrLinks(attachments);
+    const qrBlock = qrLinks.length ? ["[Isi QR code di lampiran]", ...qrLinks].join("\n") : "";
+    links = await checkLinks(materialText, qrLinks);
+    ownText = [materialText, qrBlock, shortlinkLines(links)].filter(Boolean).join("\n\n");
+    linkEvidence = [qrBlock, shortlinkLines(links), trailBlock(links), pageBlock(links)].filter(Boolean).join("\n\n");
     if (linkEvidence) {
       materialText = `${materialText}\n\n${linkEvidence}`;
     }
@@ -613,6 +659,8 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       shortlinks: links.shortlinks.length,
       resolved: links.shortlinks.filter((item) => item.destination).length,
       pageRead: links.page ? !!links.page.text : null,
+      qr: qrLinks.length,
+      trail: links.trail.map((step) => step.outcome),
     };
     const linkStep = describeLinksForProgress(links);
     if (linkStep) {
@@ -620,13 +668,19 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
     }
   }
 
-  const signals = useRules ? detectSignals(materialText) : [];
+  // The forms the trail reached, which a program's official portal must host
+  const signUpUrls = links?.trail.filter((step) => step.outcome === "form").map((step) => step.url) ?? [];
+  const signals = useRules ? [...detectSignals(materialText, { signUpUrls }), ...(links ? trailSignals(links) : [])] : [];
   if (useRules) {
     addStep(describeSignalsForProgress(signals));
   }
 
   let search: WebSearchResult = { status: "skipped_no_query", retrievedCount: 0, sources: [] };
   let domainAges: DomainAge[] = [];
+  let certClusters: CertCluster[] = [];
+  let knowledge: KnowledgeResult | null = null;
+  // The web sources plus the knowledge base's cases, as the model sees and cites them
+  let evidence = search;
   if (useSearch) {
     const searchStartedAt = Date.now();
     const ownInput = preprocessJobInput(ownText);
@@ -634,18 +688,67 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
     const target =
       buildVerificationQuery(ownInput) ??
       (links?.page?.text ? buildVerificationQuery(preprocessJobInput(links.page.text.slice(0, PAGE_QUERY_CHARS))) : null);
-    [search, domainAges] = await Promise.all([searchWeb(target), lookupDomainAges(employerDomains(ownInput))]);
+    const domains = employerDomains(ownInput);
+    company = target?.entity.kind === "company" ? target.entity.name : undefined;
+    // The certificate logs and the knowledge base run beside the web search, adding no waiting of their own
+    let statement: OfficialStatement | null;
+    [search, domainAges, certClusters, knowledge, statement] = await Promise.all([
+      searchWeb(target, { excludeFactChecks: options.excludeFactChecks }),
+      lookupDomainAges(domains),
+      lookupCertClusters(domains),
+      lookupKnowledge({ ownText, materialText }, options.knowledge),
+      useRules ? lookupOfficialStatement(ownText, target?.entity, signals) : null,
+    ]);
+    const kbSources = knowledgeSources(knowledge, search.sources.length);
+    // The statement is cited like any source, so the model can quote the company's own words
+    const statementSource = statement
+      ? [{ id: `S${search.sources.length + kbSources.length + 1}`, title: `Pernyataan resmi ${statement.company}: ${statement.title}`, url: statement.url, snippet: statement.quote }]
+      : [];
+    evidence = { ...search, sources: [...search.sources, ...kbSources, ...statementSource] };
+    meta.officialStatement = statement ? { url: statement.url, conflicts: statement.conflicts } : null;
+    const statementStep = describeStatementForProgress(statement);
+    if (statementStep) {
+      addStep(statementStep);
+    }
+    if (statement && useRules) {
+      signals.push(
+        officialDenialSignal({
+          company: statement.company,
+          url: statement.url,
+          quote: statement.quote,
+          conflict: conflictText(statement),
+          fee: statement.conflicts.includes("biaya"),
+        })
+      );
+    }
     meta.timingsMs.search = Date.now() - searchStartedAt;
     meta.search = { status: search.status, retrievedCount: search.retrievedCount, sourceCount: search.sources.length };
+    meta.knowledge = {
+      status: knowledge.status,
+      identity: knowledge.identity.length,
+      shared: knowledge.identity.filter((item) => item.shared.length).length,
+      similar: knowledge.similar.map((item) => item.score),
+    };
     meta.domainAges = domainAges.map(({ domain, registeredAt }) => ({ domain, registeredAt }));
+    meta.certClusters = certClusters.map(({ domain, status, recruitmentHosts, imitatedBrands }) => ({
+      domain,
+      status,
+      recruitmentHosts: recruitmentHosts.length,
+      imitatedBrands: imitatedBrands.length,
+    }));
     addStep(describeSearchForProgress(search));
 
     const ageStep = describeDomainAgesForProgress(domainAges);
     if (ageStep) {
       addStep(ageStep);
     }
+    const clusterStep = describeCertClustersForProgress(certClusters);
+    if (clusterStep) {
+      addStep(clusterStep);
+    }
+    addStep(describeKnowledgeForProgress(knowledge));
     if (useRules) {
-      signals.push(...newDomainSignals(domainAges));
+      signals.push(...newDomainSignals(domainAges), ...certClusterSignals(certClusters), ...knowledgeSignals(knowledge));
     }
   }
   meta.signals = signals.map(({ id, severity }) => ({ id, severity }));
@@ -653,7 +756,6 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
   let result: AnalysisResult | null = null;
 
   if (useLLM) {
-    addStep("Menelaah materi dengan model AI");
     const llmStartedAt = Date.now();
     try {
       const { output, usage } = await invokeAnalyzer(
@@ -661,13 +763,13 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
         analysisAttachments,
         material?.visualCues ?? [],
         useRules ? signals : null,
-        search
+        evidence
       );
       meta.tokenUsage = usage;
       result = mapModelOutput(output, {
         text: materialText,
         hasImages: analysisAttachments.length > 0,
-        search,
+        search: evidence,
         meta,
       });
       steps.push(
@@ -689,7 +791,7 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
 
   if (!result) {
     meta.mode = "rule_fallback";
-    result = buildRuleBasedResult(materialText, signals, search);
+    result = buildRuleBasedResult(materialText, signals, evidence);
   }
 
   if (useRules) {
@@ -712,7 +814,38 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       links,
       search: useSearch ? search : null,
       domainAges,
+      certClusters,
+      knowledge,
     });
+    const known = knowledge?.identity.filter((item) => item.shared.length) ?? [];
+    if (known.length) {
+      result.knownCases = known.map((item) => ({
+        title: item.title,
+        url: item.url,
+        date: formatCaseDate(item.published_at),
+        shared: item.shared.map(identifierLabel),
+      }));
+    }
+    if (knowledge?.similar.length) {
+      result.similarCases = knowledge.similar.map((item) => ({
+        title: item.title,
+        url: item.url,
+        date: formatCaseDate(item.published_at),
+        entity: item.card?.entitas,
+        modus: item.card?.modus ?? [],
+        channels: item.card?.kanal ?? [],
+        traits: item.card?.ciri ?? [],
+        officialRoute: item.card?.jalurResmi,
+      }));
+    }
+  }
+  // The fact-checks have cards of their own (known scam, similar cases), so the source list keeps the web
+  if (knowledge) {
+    const caseUrls = new Set([...knowledge.identity, ...knowledge.similar].map((item) => item.url));
+    result.references = result.references.filter((reference) => !reference.url || !caseUrls.has(reference.url));
+    if (!result.references.length) {
+      result.references = GUIDANCE_REFERENCES;
+    }
   }
 
   return finish(result);

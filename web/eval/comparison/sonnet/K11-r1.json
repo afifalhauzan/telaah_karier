@@ -1,0 +1,69 @@
+{
+  "analysisSteps": [
+    "Membaca teks yang Anda kirim: pengumuman kelulusan seleksi berkas atas nama Tim Rekrutmen PLN, disertai instruksi pembayaran.",
+    "Mendeteksi pola: permintaan transfer sebesar Rp 3.920.887 ke rekening atas nama perorangan, batas waktu 45 menit, dan konfirmasi lewat nomor WhatsApp.",
+    "Membandingkan dengan praktik rekrutmen resmi: PLN sebagai BUMN tidak memungut biaya apa pun dari pelamar dan tidak meminta bukti transfer lewat WhatsApp.",
+    "Materi tidak memuat link, domain, atau nama badan usaha (PT/CV) yang bisa dicari di web, sehingga jejak digital tidak dapat diverifikasi lebih lanjut."
+  ],
+  "conversationText": "Halo, saya telaah materi pengumuman rekrutmen yang Anda kirim.",
+  "informationSufficient": true,
+  "riskAssessment": {
+    "riskLevel": "tinggi",
+    "text": "Tingkat Risiko Awal: Tinggi. Pengumuman ini mengatasnamakan PLN tetapi meminta transfer uang sebesar Rp 3.920.887 ke rekening perorangan dengan batas waktu 45 menit, ciri khas penipuan rekrutmen.",
+    "confidence": 0.95
+  },
+  "risks": [
+    {
+      "type": "payment_request",
+      "description": "Pelamar diminta membayar sejumlah uang untuk paket reservasi (tiket, hotel, pakaian, rapid test). Rekrutmen resmi tidak memungut biaya apa pun dari pelamar.",
+      "evidence": "Mohon selesaikan pembayaran melalui transfer (Atm/Internet Banking/M-Banking) Transfer ke:"
+    },
+    {
+      "type": "payment_request",
+      "description": "Nominal pembayaran disebutkan jelas dan diminta ditransfer ke rekening bank atas nama perorangan, bukan rekening resmi perusahaan.",
+      "evidence": "Total : Rp 3.920.887"
+    },
+    {
+      "type": "suspicious_contact",
+      "description": "Mengaku Tim Rekrutmen PLN (BUMN), tetapi bukti transfer diminta dikirim lewat WhatsApp ke nomor pribadi, bukan kanal resmi PLN.",
+      "evidence": "Bukti transfer.kirim via whatsapp ke nomor ini."
+    },
+    {
+      "type": "bias",
+      "description": "Batas pembayaran sangat singkat untuk menekan korban agar membayar tanpa sempat memeriksa kebenarannya.",
+      "evidence": "Batas waktu pembayaran 45 menit."
+    },
+    {
+      "type": "missing_context",
+      "description": "Pengumuman menyebut rekrutmen tahun 2022, padahal sekarang Oktober 2026, dan tidak memuat lokasi penempatan, posisi, ataupun tautan resmi. Pembayaran untuk tiket PP dan hotel juga janggal untuk seleksi berkas.",
+      "evidence": "rekrutmen PLN Group Tingkat SMA/SMK, D-III, D-IV dan S1 Tahun 2022"
+    }
+  ],
+  "salaryBenefit": {
+    "status": "Tidak Disebutkan",
+    "summary": "Materi tidak menyebut gaji. Yang disebut hanya paket reservasi (tiket, hotel, penjemputan, konsumsi, pakaian, rapid test) yang justru harus dibayar pelamar.",
+    "highlights": ["Tidak ada informasi gaji", "Paket fasilitas dibebankan ke pelamar sebesar Rp 3.920.887"],
+    "hint": "Perusahaan resmi menanggung biaya seleksi sendiri; fasilitas yang harus dibayar pelamar bukan benefit."
+  },
+  "summary": "Pengumuman ini mengatasnamakan Tim Rekrutmen PLN tetapi meminta pelamar membayar Rp 3.920.887 ke rekening bank atas nama perorangan, dengan batas 45 menit dan konfirmasi lewat WhatsApp. Pola ini terindikasi kuat sebagai penipuan rekrutmen, karena seleksi di BUMN tidak memungut biaya dari pelamar. Materi juga menyebut tahun 2022, sehingga tampak usang atau disalin dari pengumuman lama. Jejak digital pengirim tidak dapat diverifikasi karena tidak ada nama badan usaha, tautan, atau domain. Jangan transfer uang; periksa kebenaran pengumuman langsung di kanal resmi PLN.",
+  "summarySources": [],
+  "explanations": [
+    {
+      "title": "Mengapa pembayaran ini mencurigakan",
+      "explanation": "Rekrutmen BUMN seperti PLN tidak memungut biaya apa pun dari pelamar, termasuk tiket, hotel, pakaian, atau rapid test. Rekening atas nama perorangan juga bukan rekening perusahaan."
+    },
+    {
+      "title": "Desakan waktu 45 menit",
+      "explanation": "Batas waktu yang sangat singkat dipakai agar korban panik dan membayar sebelum sempat mengecek kebenarannya."
+    },
+    {
+      "title": "Cara memastikan",
+      "explanation": "Hubungi kanal resmi PLN yang Anda temukan sendiri, bukan nomor di pesan ini. Jika sudah telanjur transfer, segera hubungi bank Anda dan laporkan lewat kanal pengaduan resmi."
+    }
+  ],
+  "suggestedQuestions": [
+    "Bagaimana cara memeriksa pengumuman rekrutmen PLN yang asli?",
+    "Apa yang harus saya lakukan jika sudah telanjur transfer?",
+    "Apakah rekrutmen BUMN pernah meminta biaya dari pelamar?"
+  ]
+}

@@ -19,7 +19,7 @@ export function ChatFooter({ notice, ...props }: ComposerProps & { notice?: Reac
       {notice && <p className="mb-1.5 px-1 text-right text-xs text-muted-foreground">{notice}</p>}
       <Composer {...props} />
       <p className="mt-1.5 text-center text-[11px] leading-snug text-muted-foreground/70">
-        Ini analisis risiko awal, bukan vonis final. Selalu verifikasi ke kanal resmi sebelum kirim data atau membayar biaya.
+        Ini analisis risiko awal, bukan vonis final. Selalu verifikasi ke kanal resmi sebelum mendaftarkan diri.
       </p>
     </footer>
   );

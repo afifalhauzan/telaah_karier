@@ -11,6 +11,8 @@ import {
   type Citation,
   type Claim,
   type ExplanationItem,
+  type KnownCase,
+  type SimilarCase,
   type Reference,
   type Reasoning,
   type SalaryBenefitAssessment,
@@ -27,6 +29,11 @@ import { ReasoningComponent } from "@/components/cards/ReasoningComponent";
 import { AnalysisActions } from "@/components/cards/AnalysisActions";
 import { ActionInsightCard } from "@/components/cards/ActionInsightCard";
 import { SalaryBenefitCard } from "@/components/cards/SalaryBenefitCard";
+import { KnownScamCard } from "@/components/cards/KnownScamCard";
+import { SimilarCasesCard } from "@/components/cards/SimilarCasesCard";
+import { LinkRequestCard } from "@/components/cards/LinkRequestCard";
+import { ReportCard } from "@/components/cards/ReportCard";
+import { buildReportDraft, reportSourceFromAnalysis } from "@/lib/report-draft";
 import type { AnalysisAction, UIActionId } from "@/types/ui-actions";
 import { BuatPostPrompt, SessionMoveCard, SimilarTelaahCard } from "@/components/telaah-bersama/chat-cards";
 import { MessageFeedback } from "@/components/chat/message-feedback";
@@ -34,7 +41,8 @@ import { QuotaNotice } from "@/components/chat/quota-notice";
 import type { QuotaBlock } from "@/lib/quota";
 import { MessageActions } from "@/components/chat/MessageActions";
 import type { SourceFile } from "@/lib/analysis-export/build";
-import type { SimilarTelaahPartData, TelaahSharePartData } from "@/types/streaming";
+import type { AlurCheckPartData, SimilarTelaahPartData, TelaahSharePartData } from "@/types/streaming";
+import { AlurChatCard } from "@/components/telaah-alur/alur-chat-card";
 
 /** What the user picked on a TelaahBareng card in the chat; handled by components/chat.tsx. */
 export type TelaahChoice =
@@ -43,7 +51,10 @@ export type TelaahChoice =
   | { kind: "move-session"; messageId: string }
   | { kind: "same-posting"; messageId: string }
   // The session is full: carry its latest analysis into a new one (lib/compact-session.ts)
-  | { kind: "continue-session"; messageId: string };
+  | { kind: "continue-session"; messageId: string }
+  // The answer to the link request asked before the analysis: the link, or go on without one
+  | { kind: "link-given"; messageId: string; url: string }
+  | { kind: "skip-link"; messageId: string };
 
 interface AssistantMessageProps {
   message: MetabotUIMessage;
@@ -55,6 +66,8 @@ interface AssistantMessageProps {
   onSuggestionClick: (suggestion: string) => void;
   onActionClick: (action: AnalysisAction, sourceMessageId?: string) => void;
   pendingActionId?: UIActionId | null;
+  // Actions already asked in this session, left out of the chips
+  usedActionIds?: Set<UIActionId>;
   isActionLoading?: boolean;
   onTelaahChoice?: (choice: TelaahChoice) => void;
   // Set for saved (signed-in) sessions: answers there can be rated for evaluation.
@@ -89,6 +102,9 @@ type RenderItem =
   | { kind: "reasoning"; key: string; reasoning: Reasoning[] }
   | { kind: "summary"; key: string; summary: string; citations: Citation[] }
   | { kind: "claims"; key: string; claims: Claim[] }
+  | { kind: "known-scam"; key: string; cases: KnownCase[] }
+  | { kind: "similar-cases"; key: string; cases: SimilarCase[] }
+  | { kind: "link-request"; key: string }
   | { kind: "salary-benefit"; key: string; assessment: SalaryBenefitAssessment }
   | { kind: "risks"; key: string; risks: Risk[] }
   | { kind: "checks"; key: string; checks: AnalysisCheck[] }
@@ -108,7 +124,8 @@ type RenderItem =
   | { kind: "telaah-share"; key: string; share: TelaahSharePartData }
   | { kind: "similar-telaah"; key: string; data: SimilarTelaahPartData }
   | { kind: "session-move"; key: string; previousTitle: string }
-  | { kind: "quota"; key: string; reason: QuotaBlock };
+  | { kind: "quota"; key: string; reason: QuotaBlock }
+  | { kind: "alur-check"; key: string; data: AlurCheckPartData };
 
 function extractAnalysisFromParts(parts: MetabotUIMessagePart[]): AnalysisResult | null {
   const analysisPart = parts.find((part) => part.type === "data-analysis");
@@ -162,6 +179,9 @@ function hasInterleavableDataPart(part: MetabotUIMessagePart): boolean {
   return (
     part.type === "data-summary" ||
     part.type === "data-claims" ||
+    part.type === "data-known-scam" ||
+    part.type === "data-similar-cases" ||
+    part.type === "data-link-request" ||
     part.type === "data-salary-benefit" ||
     part.type === "data-risks" ||
     part.type === "data-checks" ||
@@ -174,7 +194,8 @@ function hasInterleavableDataPart(part: MetabotUIMessagePart): boolean {
     part.type === "data-telaah-share" ||
     part.type === "data-similar-telaah" ||
     part.type === "data-session-move" ||
-    part.type === "data-quota"
+    part.type === "data-quota" ||
+    part.type === "data-alur-check"
   );
 }
 
@@ -188,6 +209,7 @@ export function AssistantMessage({
   onSuggestionClick,
   onActionClick,
   pendingActionId = null,
+  usedActionIds,
   isActionLoading = false,
   onTelaahChoice,
   feedbackConversationId = null,
@@ -287,6 +309,16 @@ export function AssistantMessage({
           return;
         }
 
+        if (part.type === "data-known-scam" && part.data.length > 0) {
+          items.push({ kind: "known-scam", key, cases: part.data });
+          return;
+        }
+
+        if (part.type === "data-link-request") {
+          items.push({ kind: "link-request", key });
+          return;
+        }
+
         if (part.type === "data-salary-benefit") {
           items.push({ kind: "salary-benefit", key, assessment: part.data });
           return;
@@ -304,6 +336,11 @@ export function AssistantMessage({
 
         if (part.type === "data-explanation" && part.data.length > 0) {
           items.push({ kind: "explanations", key, explanations: part.data });
+          return;
+        }
+
+        if (part.type === "data-similar-cases" && part.data.length > 0) {
+          items.push({ kind: "similar-cases", key, cases: part.data });
           return;
         }
 
@@ -344,6 +381,10 @@ export function AssistantMessage({
         if (part.type === "data-quota") {
           items.push({ kind: "quota", key, reason: part.data.reason });
         }
+
+        if (part.type === "data-alur-check") {
+          items.push({ kind: "alur-check", key, data: part.data });
+        }
       });
 
       return items;
@@ -378,6 +419,10 @@ export function AssistantMessage({
       items.push({ kind: "claims", key: `${message.id}-analysis-claims`, claims: analysisData.claims });
     }
 
+    if (analysisData.knownCases?.length) {
+      items.push({ kind: "known-scam", key: `${message.id}-analysis-known-scam`, cases: analysisData.knownCases });
+    }
+
     if (analysisData.salaryBenefit) {
       items.push({
         kind: "salary-benefit",
@@ -400,6 +445,10 @@ export function AssistantMessage({
         key: `${message.id}-analysis-explanations`,
         explanations: analysisData.explanations,
       });
+    }
+
+    if (analysisData.similarCases?.length) {
+      items.push({ kind: "similar-cases", key: `${message.id}-analysis-similar-cases`, cases: analysisData.similarCases });
     }
 
     if (analysisData.references.length > 0) {
@@ -509,6 +558,35 @@ export function AssistantMessage({
       );
     }
 
+    if (item.kind === "similar-cases") {
+      return (
+        <motion.div key={item.key} {...fadeUp}>
+          <SimilarCasesCard cases={item.cases} />
+        </motion.div>
+      );
+    }
+
+    if (item.kind === "known-scam") {
+      return (
+        <motion.div key={item.key} {...fadeUp}>
+          <KnownScamCard cases={item.cases} />
+        </motion.div>
+      );
+    }
+
+    if (item.kind === "link-request") {
+      // Answered by regenerating this message, so only the latest one still asks
+      if (!isLastMessage || isStreaming || !onTelaahChoice) return null;
+      return (
+        <motion.div key={item.key} {...fadeUp}>
+          <LinkRequestCard
+            onSubmit={(url) => onTelaahChoice({ kind: "link-given", messageId: message.id, url })}
+            onSkip={() => onTelaahChoice({ kind: "skip-link", messageId: message.id })}
+          />
+        </motion.div>
+      );
+    }
+
     if (item.kind === "salary-benefit") {
       return (
         <motion.div key={item.key} {...fadeUp}>
@@ -568,7 +646,7 @@ export function AssistantMessage({
         <motion.div key={item.key} {...fadeUp}>
           <AnalysisActions
             messageId={message.id}
-            actions={item.actions}
+            actions={usedActionIds ? item.actions.filter((action) => !usedActionIds.has(action.id)) : item.actions}
             onActionClick={onActionClick}
             isLoading={isActionLoading}
             pendingActionId={pendingActionId}
@@ -589,6 +667,12 @@ export function AssistantMessage({
       return (
         <motion.div key={item.key} {...fadeUp}>
           <BuatPostPrompt share={item.share} onCreate={() => onTelaahChoice?.({ kind: "share", messageId: message.id, share: item.share })} />
+          {/* The share part comes only under a sedang or tinggi verdict, which is when reporting helps */}
+          {analysisData && (
+            <div className="mt-3">
+              <ReportCard draft={buildReportDraft(reportSourceFromAnalysis(analysisData, sourceText ?? ""))} />
+            </div>
+          )}
         </motion.div>
       );
     }
@@ -616,6 +700,14 @@ export function AssistantMessage({
             disabled={!canChoose}
             onContinue={() => onTelaahChoice?.({ kind: "continue-session", messageId: message.id })}
           />
+        </motion.div>
+      );
+    }
+
+    if (item.kind === "alur-check") {
+      return (
+        <motion.div key={item.key} {...fadeUp}>
+          <AlurChatCard messageId={message.id} readFacts={item.data.readFacts} />
         </motion.div>
       );
     }
