@@ -45,6 +45,8 @@ env/
 # ⚛️ FRONTEND (Next.js / Node / PNPM)
 # =========================
 node_modules/
+# pnpm's store, when an install inside the dev container puts it in the bind-mounted project
+.pnpm-store/
 .next/
 out/
 build/
