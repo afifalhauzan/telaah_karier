@@ -48,6 +48,8 @@ class ScamReportsTest extends TestCase
         $report = ScamReport::where('external_id', 102)->firstOrFail();
         $this->assertSame('tiktok', $report->platform);
         $this->assertSame('scam-reports/102/0.png', $report->images[0]['path']);
+        // Not Mafindo's header template (the fake is no picture), so no poster is cut
+        $this->assertNull($report->images[0]['poster']);
         Storage::disk('local')->assertExists('scam-reports/102/0.png');
         $this->artisan('scam-reports:sync')->expectsOutput('Added 0 new reports.');
     }

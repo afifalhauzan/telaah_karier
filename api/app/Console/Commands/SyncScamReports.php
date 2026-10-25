@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\ScamReport;
 use App\Support\CekFakta;
+use App\Support\MafindoHeader;
 use App\Support\TurnBackHoax;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -162,8 +163,10 @@ class SyncScamReports extends Command
     }
 
     /**
+     * The images, stored as they are, with the poster cut out of a Mafindo header as well.
+     *
      * @param  list<array{url: string, stamped: bool}>  $images
-     * @return list<array{url: string, stamped: bool, path: ?string}>
+     * @return list<array{url: string, stamped: bool, path: ?string, poster: ?string}>
      */
     private function downloadImages(int $id, array $images): array
     {
@@ -178,7 +181,7 @@ class SyncScamReports extends Command
                 $path = Storage::disk('local')->put($path, $response->body()) ? $path : null;
             }
 
-            return [...$image, 'path' => $path];
+            return [...$image, 'path' => $path, 'poster' => $path ? MafindoHeader::storePoster($path) : null];
         }, $images, array_keys($images));
     }
 
