@@ -51,11 +51,6 @@ return [
         'request_delay_ms' => (int) env('SCAM_REPORTS_REQUEST_DELAY_MS', 1000),
     ],
 
-    // The classifier service (ml/), reached over the compose network
-    'ml' => [
-        'url' => env('ML_URL', 'http://ml:8100'),
-    ],
-
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
