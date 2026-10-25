@@ -6,7 +6,6 @@
 import type { UIMessage } from 'ai';
 import type {
   AnalysisResult,
-  BioLink,
   Check,
   Citation,
   Claim,
@@ -17,6 +16,7 @@ import type {
   SalaryBenefitAssessment,
   Risk,
 } from '@/langchain/agents/analyzer/schema';
+import type { LinkRequest } from '@/langchain/agents/analyzer/checks';
 import type { ChartEmbedData } from '@/types/chart';
 import type { AnalysisAction, UIActionId } from "@/types/ui-actions";
 import type { QuotaBlock, QuotaState } from "@/lib/quota";
@@ -98,7 +98,7 @@ export type MetabotUIMessagePart =
   | { type: 'data-summary'; data: string | SummaryPartData }
   | { type: 'data-claims'; data: Claim[] }
   | { type: 'data-known-scam'; data: KnownCase[] }
-  | { type: 'data-bio-link'; data: BioLink }
+  | { type: 'data-link-request'; data: LinkRequest }
   | { type: 'data-salary-benefit'; data: SalaryBenefitAssessment }
   | { type: 'data-risks'; data: Risk[] }
   | { type: 'data-checks'; data: Check[] }

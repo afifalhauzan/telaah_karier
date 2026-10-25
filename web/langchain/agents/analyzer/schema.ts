@@ -252,8 +252,6 @@ export const AnalysisSchema = z.object({
   knownCases: z
     .array(z.object({ title: z.string(), url: z.string(), date: z.string(), shared: z.array(z.string()) }))
     .optional(),
-  // The registration link sits in a bio only the applicant can open; the chat asks them to copy it
-  bioLink: z.object({ platform: z.enum(["instagram", "tiktok", "facebook"]).optional(), handle: z.string().optional() }).optional(),
 });
 
 /**
@@ -396,7 +394,6 @@ export type ExplanationItem = z.infer<typeof ExplanationItemSchema>;
 export type SalaryBenefitAssessment = z.infer<typeof SalaryBenefitAssessmentSchema>;
 export type AnalysisResult = z.infer<typeof AnalysisSchema>;
 export type KnownCase = NonNullable<AnalysisResult["knownCases"]>[number];
-export type BioLink = NonNullable<AnalysisResult["bioLink"]>;
 export type LLMAnalysisOutput = z.infer<typeof LLMAnalysisOutputSchema>;
 export type LLMActionOutput = z.infer<typeof LLMActionOutputSchema>;
 export type LLMFollowUpOutput = z.infer<typeof LLMFollowUpOutputSchema>;

@@ -20,6 +20,9 @@ import {
   type ExtractionRun,
 } from "@/langchain/agents/analyzer/extraction";
 import { preprocessJobInput } from "@/langchain/agents/analyzer/preprocessor";
+import { linkRequest, type LinkRequest } from "@/langchain/agents/analyzer/checks";
+import { decodeQrLinks } from "@/langchain/agents/analyzer/tools/qr";
+import { findLinks } from "@/langchain/agents/telaah-bersama/identifiers";
 import { buildSharePayload, signSharePayload } from "@/langchain/agents/telaah-bersama/share-payload";
 import {
   findSimilarTelaah,
@@ -150,6 +153,26 @@ const QUOTA_MESSAGES: Record<QuotaBlock, string> = {
 };
 const SESSION_MOVE_MESSAGE =
   "Sepertinya ini lowongan lain dari yang sedang dibahas. Supaya konteksnya tidak tercampur, pindahkan ke sesi baru? Pesanmu belum dianalisis.";
+
+const LINK_PLACE_TEXT: Record<LinkRequest["place"], string> = {
+  bio: "di bio",
+  komentar: "di kolom komentar",
+  dm: "lewat DM",
+};
+const GIVEN_LINKS_HEADER = "[Link pendaftaran yang disalin pengguna]";
+const MAX_GIVEN_LINKS = 3;
+
+function linkRequestText({ place, handle }: LinkRequest): string {
+  const account = handle ? ` akun @${handle}` : "";
+  return `Link pendaftaran lowongan ini ada ${LINK_PLACE_TEXT[place]}${account}. Tempel link-nya di bawah supaya saya telusuri dulu sampai ke tujuannya, baru saya telaah.`;
+}
+
+/** The links pasted into the link request card; anything that is no link is dropped. */
+function parseGivenLinks(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  const links = value.filter((item): item is string => typeof item === "string" && item.length <= 2000).flatMap((item) => findLinks(item).slice(0, 1));
+  return [...new Set(links)].slice(0, MAX_GIVEN_LINKS);
+}
 
 const SESSION_NAME_LENGTH = 60;
 
@@ -367,10 +390,28 @@ export async function POST(req: NextRequest) {
           }
         }
 
+        // A link only the applicant can open (bio, comments, DM) is asked for before the analysis,
+        // which then runs once with it; "Lewati" or a link given ends the question
+        const givenLinks = parseGivenLinks(body?.given_links);
+        if (!givenLinks.length && body?.skip_link_request !== true) {
+          if (attachments.length && !extraction) {
+            extraction = await extractAttachments(limitAttachments(attachments).usable);
+            materialText = composeMaterialText(input, extraction.material?.transcript);
+            usages.push(extraction.tokenUsage);
+          }
+          const request = linkRequest(materialText, await decodeQrLinks(attachments));
+          if (request) {
+            await streamTextBlock({ writer, text: linkRequestText(request), id: `link-request-${Date.now()}` });
+            writer.write({ type: "data-link-request", data: request });
+            return;
+          }
+        }
+        const analysisInput = givenLinks.length ? `${input}\n\n${GIVEN_LINKS_HEADER}\n${givenLinks.join("\n")}` : input;
+
         // Each pipeline stage reports as it actually finishes, so the "thinking" panel shows real
         // progress (rules, web search, model) instead of a replay after the fact.
         const { result: analysis, meta } = await runAnalysis(
-          { input, images: attachments },
+          { input: analysisInput, images: attachments },
           {
             onProgress: (reasoning) => writer.write({ type: "data-reasoning", id: reasoningPartId, data: reasoning }),
             extraction,
@@ -413,10 +454,6 @@ export async function POST(req: NextRequest) {
           await sleep(SECTION_STEP_DELAY_MS);
           if (analysis.knownCases?.length) {
             writer.write({ type: "data-known-scam", data: analysis.knownCases });
-            await sleep(SECTION_STEP_DELAY_MS);
-          }
-          if (analysis.bioLink) {
-            writer.write({ type: "data-bio-link", data: analysis.bioLink });
             await sleep(SECTION_STEP_DELAY_MS);
           }
         } else {

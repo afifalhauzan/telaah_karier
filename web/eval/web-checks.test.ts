@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { bioLinkRequest, buildChecks, certClusterSignals, isThrowawaySubdomain, knowledgeSignals, legalChecks, newDomainSignals, trailSignals } from "../langchain/agents/analyzer/checks";
+import { buildChecks, certClusterSignals, isThrowawaySubdomain, knowledgeSignals, legalChecks, linkRequest, newDomainSignals, trailSignals } from "../langchain/agents/analyzer/checks";
 import { summarizeCertEntries } from "../langchain/agents/analyzer/tools/ct-cluster";
 import {
   asksOf,
@@ -325,21 +325,15 @@ test("each law behind a tinggi verdict is listed once, with the signals it backs
   assert.deepEqual(legalChecks(detectSignals("Formulir di lowongan-kerja.vercel.app")), []);
 });
 
-test("the applicant is asked for the bio link only when the trail found nothing to read", () => {
-  const ask = (text: string, trail: LinkChecks["trail"] = []) => bioLinkRequest(text, detectSignals(text), { shortlinks: [], page: null, trail });
-
-  assert.deepEqual(ask("Lowongan admin, daftar lewat link di bio IG @loker.bumn.id."), { platform: "instagram", handle: "loker.bumn.id" });
-  assert.deepEqual(ask("Info lengkap cek link di bio TikTok kami"), { platform: "tiktok" });
+test("the link is asked for before the analysis when only the applicant can open it", () => {
+  assert.deepEqual(linkRequest("Lowongan admin, daftar lewat link di bio IG @loker.bumn.id."), { place: "bio", handle: "loker.bumn.id" });
+  assert.deepEqual(linkRequest("Info pendaftaran cek kolom komentar ya"), { place: "komentar" });
+  assert.deepEqual(linkRequest("Minat? Info lebih lanjut DM admin"), { place: "dm" });
   // An email's "@" is no account
-  assert.deepEqual(ask("Kirim CV ke hrd.loker@gmail.com atau klik link di bio"), {});
+  assert.deepEqual(linkRequest("Kirim CV ke hrd.loker@gmail.com atau klik link di bio"), { place: "bio" });
 
-  const profile = "https://www.instagram.com/infoloker.resmi";
-  assert.deepEqual(ask(`Lowongan terbaru di ${profile}`, [{ url: profile, from: null, outcome: "login", title: null, asks: [], fields: [] }]), {
-    platform: "instagram",
-    handle: "infoloker.resmi",
-  });
-
-  const form = { url: "https://docs.google.com/forms/d/e/x/viewform", from: null, outcome: "form" as const, title: null, asks: [], fields: [] };
-  assert.equal(ask("Daftar lewat link di bio IG @loker.bumn.id", [form]), null);
-  assert.equal(ask("Kirim CV ke hrd@contoh.co.id"), null);
+  // The link is there to trace: written out, or in a QR code on the poster
+  assert.equal(linkRequest("Daftar di https://karir.contoh.co.id atau link di bio"), null);
+  assert.equal(linkRequest("Daftar lewat link di bio", ["https://forms.gle/abc"]), null);
+  assert.equal(linkRequest("Kirim CV ke hrd@contoh.co.id"), null);
 });

@@ -1,7 +1,8 @@
-import type { BioLink, Check } from "./schema";
+import type { Check } from "./schema";
 import { isOfficialHost } from "./lookalike";
 import {
   certClusterSignal,
+  detectSignals,
   formSecretSignal,
   knownScamSignal,
   labelInSentence,
@@ -104,29 +105,27 @@ function linkChecks(links: LinkChecks, signals: DetectedSignal[] | null): Check[
   return checks;
 }
 
-// The platforms whose profiles hide the bio link behind a login (probed Oct 2026: neither Tavily nor
-// the search index nor TikTok oEmbed returns it), so only the applicant can copy it
-const SOCIAL_PLATFORMS = [
-  { platform: "instagram", word: /\b(?:ig|instagram|insta)\b/i, profile: /instagram\.com\/(?!p\/|reel\/|reels\/|stories\/|explore\/)([A-Za-z0-9_.]{2,30})/i },
-  { platform: "tiktok", word: /\btik\s?tok\b/i, profile: /tiktok\.com\/@([A-Za-z0-9_.]{2,30})/i },
-  { platform: "facebook", word: /\b(?:fb|facebook)\b/i, profile: /facebook\.com\/(?!share|groups|story\.php|permalink\.php|profile\.php|photo|watch)([A-Za-z0-9.]{2,50})/i },
-] as const;
+// Only the applicant can open a bio, a comment thread, or a DM (probed Oct 2026: neither Tavily nor
+// the search index nor TikTok oEmbed returns a bio link), so the chat asks for the link first
+const PROFILE =
+  /(?:instagram\.com\/(?!p\/|reels?\/|stories\/|explore\/)|tiktok\.com\/@|facebook\.com\/(?!share|groups|story\.php|permalink\.php|profile\.php|photo|watch))([A-Za-z0-9_.]{2,50})/i;
 // "@loker.bumn", not the "@" of an email address
 const MENTION = /(?:^|[\s(:])@([A-Za-z0-9_.]{3,30})/;
 
-/**
- * The applicant must copy the registration link themselves: the material sends them to a bio or a
- * login-walled profile, and the trail reached no page, form, or chat. Null when nothing is hidden.
- */
-export function bioLinkRequest(text: string, signals: DetectedSignal[], links: LinkChecks | null): BioLink | null {
-  const trail = links?.trail ?? [];
-  if (trail.some((step) => step.outcome === "form" || step.outcome === "page" || step.outcome === "chat")) return null;
-  const walledProfile = trail.some((step) => step.outcome === "login" && SOCIAL_PLATFORMS.some((item) => item.profile.test(step.url)));
-  if (!walledProfile && !signals.some((signal) => signal.id === "link_in_bio")) return null;
+export interface LinkRequest {
+  place: "bio" | "komentar" | "dm";
+  handle?: string;
+}
 
-  const named = SOCIAL_PLATFORMS.find((item) => item.profile.test(text)) ?? SOCIAL_PLATFORMS.find((item) => item.word.test(text));
-  const handle = (named?.profile.exec(text)?.[1] ?? MENTION.exec(text)?.[1])?.replace(/\.+$/, "");
-  return { ...(named ? { platform: named.platform } : {}), ...(handle ? { handle } : {}) };
+/**
+ * Asked before the analysis: the material sends applicants to a link it does not show, and no QR
+ * code on the poster holds it. Null when the link is there to trace.
+ */
+export function linkRequest(text: string, qrLinks: string[] = []): LinkRequest | null {
+  if (qrLinks.length || !detectSignals(text).some((signal) => signal.id === "link_in_bio")) return null;
+  const place = /\b(?:komen(?:tar)?|comments?)\b/i.test(text) ? "komentar" : /\b(?:dm|inbox|direct\s+message)\b/i.test(text) ? "dm" : "bio";
+  const handle = (PROFILE.exec(text)?.[1] ?? MENTION.exec(text)?.[1])?.replace(/\.+$/, "");
+  return handle ? { place, handle } : { place };
 }
 
 /** Rule signals from the registration trail: what the form asks, and the shape of its address. */
