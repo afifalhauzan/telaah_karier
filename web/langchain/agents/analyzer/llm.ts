@@ -22,7 +22,8 @@ export function readTokenUsage(raw: unknown): TokenUsage | undefined {
   }
   return {
     input: usage.input_tokens ?? 0,
-    output: usage.output_tokens ?? 0,
+    // LangChain counts only the answer; thinking tokens are billed as output and are in the total
+    output: Math.max(usage.output_tokens ?? 0, (usage.total_tokens ?? 0) - (usage.input_tokens ?? 0)),
     total: usage.total_tokens ?? 0,
   };
 }
