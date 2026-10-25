@@ -299,4 +299,45 @@ pnpm eval:report eval/results/<waktu>
 ```
 Laporkan arm teks dan arm poster **terpisah** (filter `input_type`), di samping iterasi 1 dan 2 pada set lama.
 
+### Hasil iterasi 3 (25 Okt 2026)
+
+Pipeline lengkap (produksi: aturan + basis kasus + pencarian web + `gemini-2.5-flash`, dipilih di doc 09), commit `5ab680a`, cutoff basis kasus 12 Juni 2026, situs cek fakta diblokir. Laporan lengkap: `web/eval/results/iterasi3/report.md`. Ablasi tidak dilaporkan: varian lain terhenti oleh batas kuota Gemini dan Tavily, dan diputuskan tidak diulang.
+
+**Set:** 265 kasus = 173 penipuan (92 teks, 81 poster) + 92 lowongan asli dari portal berlisensi.
+
+| Label \ Prediksi | rendah | sedang | tinggi | tanpa verdict |
+|---|---|---|---|---|
+| penipuan (173) | **1** | 59 | 110 | 3 |
+| asli (92) | 68 | 23 | **1** | 0 |
+
+| Metrik | Hasil (IK 95% Wilson) |
+|---|---|
+| **Lolos kritis** (penipuan → rendah) | **0,6%** (1/173; 0,1–3,2%) |
+| Penipuan diberi peringatan (sedang/tinggi) | **97,7%** (169/173) |
+| Deteksi tegas (penipuan → tinggi) | 63,6% (110/173; 56,2–70,4%) |
+| **Alarm palsu** (asli → tinggi) | **1,1%** (1/92; 0,2–5,9%) |
+| Presisi "tinggi" | 99,1% (110 dari 111 vonis tinggi memang penipuan) |
+| F1 ketat / longgar | 77,5% / 92,3% |
+| Latensi p50 / p95 | 8,3 / 12,1 dtk |
+| Biaya model per 1.000 telaah | ±$3,43 (5.012 token masuk, 770 keluar per telaah; tanpa Tavily) |
+
+| Arm | Deteksi tegas | Lolos kritis |
+|---|---|---|
+| Teks (92) | 70,7% (65/92) | 0/92 |
+| Poster (81) | 55,6% (45/81) | 1/81 |
+
+**Pembacaan.**
+- "Tinggi" sekarang hanya diberikan bila ada tanda pasti yang punya dasar hukum (doc 07 bagian 2.4). Karena itu deteksi tegas 63,6% tetapi presisinya 99,1%: hampir setiap vonis tinggi benar. Penipuan tanpa tanda pasti di materinya (misalnya hanya "link di bio") jatuh ke `sedang`, yang tetap menampilkan peringatan dan langkah verifikasi; hanya 4 dari 173 penipuan yang tidak diberi peringatan sama sekali.
+- Arm poster lebih sulit: poster hanya memuat sebagian materi, tanpa caption dan link.
+- **Satu-satunya lolos kritis (G083)** adalah poster resmi Kawasaki Motor Indonesia yang dipakai ulang penipu. Poster itu sendiri menautkan ke portal resmi `kmi-recruitment.kawasaki.co.id`; tautan palsunya (`daftargratissekarang-ten.vercel.app`) disebar di luar poster. Dari poster saja memang tidak ada tanda penipuan, dan sistem kini meminta link pendaftaran yang tersembunyi sebelum menelaah di chat.
+- **Satu-satunya alarm palsu (A090)** adalah lowongan kurir J&T Express yang dipasang mitra outsourcing lewat portal mitra; sistem membacanya sebagai pencatutan nama perusahaan besar.
+
+**Dibanding set lama.** Iterasi 1 (lolos kritis 6%, deteksi 30%, alarm palsu 0%) dan iterasi 2 (0%, 66%, 2%) memakai set 100 kasus yang lain. Angkanya tidak bisa dibandingkan langsung, tetapi arahnya sama: lolos kritis mendekati nol dengan alarm palsu rendah.
+
+**Keterbatasan.**
+- Komposisi mengikuti arsip cek fakta: 165 dari 173 penipuan bermodus pencatutan nama; modus biaya, tugas/deposit, dan TPPO tidak terwakili di set ini.
+- Alarm palsu hanya terukur di arm teks (lowongan asli tidak berbentuk poster).
+- Lowongan asli diambil dari portal berlisensi; lowongan asli yang beredar di media sosial (WA, gaji tidak ditulis) bisa lebih sering dinilai `sedang`.
+- Satu run; model berpikir dapat menggeser satu dua kasus antar-run.
+
 `web/eval/fixtures/smoke.csv` berisi 10 kasus **sintetis** untuk memastikan skrip berjalan (`pnpm eval --dataset eval/fixtures/smoke.csv --split dev,injeksi`). Hasilnya bukan angka evaluasi dan tidak boleh dilaporkan.
