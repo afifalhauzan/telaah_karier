@@ -2,6 +2,18 @@
 
 // Synthetic pages in TurnBackHoax's markup (as of Oct 2026), for the parser and sync tests
 
+/** cekfakta.com's search page, which embeds its results as JSON (as of Oct 2026) */
+function cekfakta_search(array $ids): string
+{
+    $results = json_encode(array_map(fn ($id) => [
+        'id' => (string) $id, 'authors' => 'Liputan 6', 'status' => 'Salah', 'classification' => 'CekFakta',
+        'title' => 'Cek Fakta: Tidak Benar Link Pendaftaran Lowongan Kerja Contoh', 'content' => '<p>Liputan6.com, Jakarta</p>',
+        'claim_review' => [], 'media' => [[]],
+    ], $ids));
+
+    return "<html><body><div id=\"results\"></div><script>const responseData = {$results};\nrender(responseData);</script></body></html>";
+}
+
 function turnbackhoax_listing(array $ids): string
 {
     $cards = implode('', array_map(

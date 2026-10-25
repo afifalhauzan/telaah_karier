@@ -101,6 +101,31 @@ class ScamReportsTest extends TestCase
         $this->assertCount(3, Http::recorded(fn ($request) => preg_match('~/articles/\d+$~', $request->url())));
     }
 
+    public function test_partner_fact_checks_found_on_cekfakta_are_read_through_turnbackhoax(): void
+    {
+        Http::fake([
+            'cekfakta.com/api-search*' => Http::response(cekfakta_search([401, 402])),
+            'turnbackhoax.id/articles/401' => Http::response(turnbackhoax_article('Cek Fakta: Tidak Benar Link Pendaftaran Lowongan Kerja Ombudsman')),
+            'turnbackhoax.id/articles/402' => Http::response(turnbackhoax_article('Cek Fakta: Hoaks Video Menkeu Umumkan Bantuan Dana')),
+            '*' => Http::response(''),
+        ]);
+
+        $this->artisan('scam-reports:sync')->expectsOutput('Added 1 new reports.')->assertSuccessful();
+        $this->assertSame([401], ScamReport::pluck('external_id')->all());
+    }
+
+    public function test_a_failing_cekfakta_search_does_not_stop_the_sync(): void
+    {
+        Http::fake([
+            'cekfakta.com/api-search*' => Http::response('<html>502 Server Error</html>', 502),
+            'turnbackhoax.id/articles?category=lowongan&page=1' => Http::response(turnbackhoax_listing([501])),
+            'turnbackhoax.id/articles/501-*' => Http::response(turnbackhoax_article()),
+            '*' => Http::response(''),
+        ]);
+
+        $this->artisan('scam-reports:sync')->expectsOutput('Added 1 new reports.')->assertSuccessful();
+    }
+
     public function test_a_refresh_reads_stored_articles_again_and_keeps_their_review_status(): void
     {
         ScamReport::create([

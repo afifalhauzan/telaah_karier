@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\ScamReport;
+use App\Support\CekFakta;
 use App\Support\TurnBackHoax;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -27,6 +28,9 @@ class SyncScamReports extends Command
     private const SCAN_CURSOR = 'scam-reports:scanned-id';
 
     private const MAX_SCAN = 200;
+
+    // cekfakta.com's search took 12-67 s when tried (Oct 2026)
+    private const CEKFAKTA_TIMEOUT = 120;
 
     public function handle(): int
     {
@@ -63,6 +67,7 @@ class SyncScamReports extends Command
                 }
             }
         }
+        $added += $this->fromCekFakta($known);
         $added += $this->scanNewIds($known);
 
         $this->info("Added {$added} new reports.");
@@ -71,10 +76,29 @@ class SyncScamReports extends Command
     }
 
     /**
+     * The latest job fact-checks on cekfakta.com, partner media's among them, read through
+     * TurnBackHoax by their shared id. The search is slow and sometimes down; that only skips it.
+     *
+     * @param  list<int>  $known
+     */
+    private function fromCekFakta(array &$known): int
+    {
+        $added = 0;
+        foreach (CekFakta::searchArticleIds($this->get(CekFakta::SEARCH_URL, self::CEKFAKTA_TIMEOUT) ?? '') as $id) {
+            if (! in_array($id, $known, true)) {
+                $added += $this->store($id, TurnBackHoax::BASE_URL.TurnBackHoax::ARTICLE_PATH.$id, true) ? 1 : 0;
+                $known[] = $id;
+            }
+        }
+
+        return $added;
+    }
+
+    /**
      * Partner media's fact-checks (CekFakta) share TurnBackHoax's ids but appear in no listing, so
      * every id after the last one read is opened once and kept when it is about a job.
      * shortcut: only ids published from the first run on; older partner fact-checks need the
-     * Yudistira API (or cekfakta.com's search, when it answers).
+     * Yudistira API (cekfakta.com's search gives only the latest 50).
      *
      * @param  list<int>  $known
      */
@@ -158,18 +182,18 @@ class SyncScamReports extends Command
         }, $images, array_keys($images));
     }
 
-    private function get(string $url): ?string
+    private function get(string $url, int $timeout = 45): ?string
     {
-        return $this->fetch($url)?->body();
+        return $this->fetch($url, $timeout)?->body();
     }
 
-    private function fetch(string $url): ?Response
+    private function fetch(string $url, int $timeout = 45): ?Response
     {
         // One request at a time with a pause: a polite reader of a volunteer-run site
         usleep((int) config('services.scam_reports.request_delay_ms') * 1000);
         try {
             // The site sometimes takes 20 s or more for one page
-            $response = Http::withUserAgent(self::USER_AGENT)->timeout(45)->get($url);
+            $response = Http::withUserAgent(self::USER_AGENT)->timeout($timeout)->get($url);
 
             return $response->successful() ? $response : null;
         } catch (Throwable $error) {
