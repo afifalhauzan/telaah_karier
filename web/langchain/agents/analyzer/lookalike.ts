@@ -131,7 +131,12 @@ function dressesUp(label: string, brand: Brand): boolean {
   return tokens.some((token) => token.length >= 6 && withinOneEdit(bare, token));
 }
 
-function lookalikeFor(host: string): LookalikeDomain | null {
+/** Whether a host is on a domain one of the listed brands (or the government) recruits from. */
+export function isOfficialHost(host: string): boolean {
+  return [...BRANDS, GOVERNMENT].some((brand) => isOfficial(host, brand));
+}
+
+export function lookalikeFor(host: string): LookalikeDomain | null {
   for (const brand of [...BRANDS, GOVERNMENT]) {
     if (isOfficial(host, brand)) continue;
     if (ownedLabels(host).some((label) => dressesUp(label, brand))) {

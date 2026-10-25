@@ -25,7 +25,8 @@ export type SignalId =
   | "institution_impersonation"
   | "moderate_combination"
   | "new_domain"
-  | "lookalike_domain";
+  | "lookalike_domain"
+  | "cert_cluster";
 
 export type SignalSeverity = "strong" | "moderate";
 
@@ -525,6 +526,42 @@ export function newDomainSignal(domain: string, days: number): DetectedSignal {
     floorReason: "Situs rekrutmen yang baru dibuat beberapa minggu belum punya rekam jejak yang bisa diperiksa.",
     description: `Domain ${domain} baru didaftarkan ${days} hari lalu. Situs penipuan lowongan umumnya dibuat sesaat sebelum disebarkan, sedangkan situs perusahaan biasanya sudah berumur tahunan.`,
     evidence: [domain],
+  };
+}
+
+/**
+ * From Certificate Transparency logs rather than the text: the posting's domain also hosts other
+ * recruitment sites or rotating addresses. Posing as two or more employers under one domain is an
+ * operation, not a company.
+ */
+export function certClusterSignal(cluster: {
+  domain: string;
+  recruitmentHosts: string[];
+  rotationHosts: string[];
+  imitatedBrands: string[];
+}): DetectedSignal {
+  const { domain, recruitmentHosts, rotationHosts, imitatedBrands } = cluster;
+  const posesAsMany = imitatedBrands.length >= 2;
+  const rotates = !posesAsMany && rotationHosts.length > recruitmentHosts.length;
+  return {
+    id: "cert_cluster",
+    label: posesAsMany
+      ? "Satu domain dipakai meniru beberapa perusahaan"
+      : rotates
+        ? "Domain memakai banyak alamat acak yang bergiliran"
+        : "Domain memuat banyak situs rekrutmen lain",
+    severity: posesAsMany ? "strong" : "moderate",
+    riskType: "suspicious_contact",
+    floor: posesAsMany ? "tinggi" : "sedang",
+    floorReason: posesAsMany
+      ? "Domain yang sama dipakai untuk situs rekrutmen atas nama beberapa perusahaan berbeda."
+      : "Domain yang sama memuat deretan situs atau alamat lain, bukan situs satu perusahaan.",
+    description: posesAsMany
+      ? `Log sertifikat publik menunjukkan domain ${domain} memuat situs rekrutmen atas nama ${imitatedBrands.join(", ")}. Perusahaan sungguhan tidak merekrut lewat domain yang sama dengan perusahaan lain; ini pola jaringan situs penipuan.`
+      : rotates
+        ? `Log sertifikat publik menunjukkan domain ${domain} memakai ${rotationHosts.length} subdomain acak seperti ${rotationHosts.slice(0, 3).join(", ")}. Halaman yang sama dipindah-pindah ke alamat baru adalah cara menghindari pemblokiran link.`
+        : `Log sertifikat publik menunjukkan domain ${domain} memuat ${recruitmentHosts.length} situs bernama rekrutmen atau pendaftaran. Situs penipuan lowongan sering dibuat berderet di satu domain.`,
+    evidence: (rotates ? rotationHosts : recruitmentHosts).slice(0, MAX_EVIDENCE_PER_SIGNAL),
   };
 }
 
