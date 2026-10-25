@@ -35,7 +35,6 @@ import {
   type DetectedSignal,
 } from "./signals";
 import { buildChecks, certClusterSignals, newDomainSignals } from "./checks";
-import { classifyPosting } from "./tools/classifier";
 import { describeCertClustersForProgress, lookupCertClusters, type CertCluster } from "./tools/ct-cluster";
 import { describeDomainAgesForProgress, lookupDomainAges, type DomainAge } from "./tools/domain-age";
 import { checkLinks, describeLinksForProgress, pageBlock, shortlinkLines, type LinkChecks } from "./tools/link-checks";
@@ -100,8 +99,6 @@ export interface AnalysisRunMeta {
   links?: { shortlinks: number; resolved: number; pageRead: boolean | null };
   domainAges?: Array<{ domain: string; registeredAt: string | null }>;
   certClusters?: Array<{ domain: string; status: CertCluster["status"]; recruitmentHosts: number; imitatedBrands: number }>;
-  // Unset when the classifier service did not answer
-  classifier?: { probability: number; modelVersion: string };
   riskFloorApplied: boolean;
   // A "tinggi" verdict resting only on a manipulation attempt was lowered to "sedang".
   manipulationCapApplied: boolean;
@@ -629,8 +626,6 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
   if (useRules) {
     addStep(describeSignalsForProgress(signals));
   }
-  // Runs beside the web checks and the model; only its checklist line waits for it
-  const classifierPromise = useRules ? classifyPosting(ownText) : Promise.resolve(null);
 
   let search: WebSearchResult = { status: "skipped_no_query", retrievedCount: 0, sources: [] };
   let domainAges: DomainAge[] = [];
@@ -725,10 +720,6 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
     }
   }
 
-  const classifier = await classifierPromise;
-  if (classifier) {
-    meta.classifier = { probability: classifier.probability, modelVersion: classifier.modelVersion };
-  }
   // Only under a verdict: without a posting to judge, the list would describe nothing
   if (result.claims.length) {
     result.checks = buildChecks({
@@ -737,7 +728,6 @@ export async function runAnalysis({ input, images = [] }: AnalyzeInput, options:
       search: useSearch ? search : null,
       domainAges,
       certClusters,
-      classifier,
     });
   }
 

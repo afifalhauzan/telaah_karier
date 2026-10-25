@@ -1,6 +1,5 @@
 import type { Check } from "./schema";
 import { certClusterSignal, labelInSentence, newDomainSignal, type DetectedSignal } from "./signals";
-import { CLASSIFIER_WARNING, type ClassifierResult } from "./tools/classifier";
 import { clusterExamples, isSuspiciousCluster, type CertCluster } from "./tools/ct-cluster";
 import { domainAgeDays, NEW_DOMAIN_DAYS, type DomainAge } from "./tools/domain-age";
 import type { LinkChecks } from "./tools/link-checks";
@@ -115,25 +114,12 @@ function certClusterCheck(cluster: CertCluster): Check {
   return { label, status: "ok", detail: "Log sertifikat tidak memuat deretan situs rekrutmen lain di domain ini." };
 }
 
-function classifierCheck({ probability, trainedOn, topTerms }: ClassifierResult): Check {
-  const basis = trainedOn
-    ? `model yang dilatih dari ${trainedOn.penipuan} kasus penipuan terverifikasi dan ${trainedOn.asli} lowongan resmi`
-    : "model TelaahKarier";
-  const score = `Skor ${Math.round(probability * 100)}% menurut ${basis}`;
-  if (probability >= CLASSIFIER_WARNING) {
-    const terms = topTerms.length ? `, terutama karena "${topTerms.slice(0, 3).join('", "')}"` : "";
-    return { label: "Kemiripan dengan kasus penipuan", status: "warning", detail: `${score}${terms}.` };
-  }
-  return { label: "Kemiripan dengan kasus penipuan", status: "info", detail: `${score}.` };
-}
-
 export function buildChecks({
   signals,
   links,
   search,
   domainAges,
   certClusters = [],
-  classifier = null,
   now = new Date(),
 }: {
   // null when the rules did not run (evaluation ablation); the same for the web checks below.
@@ -142,8 +128,6 @@ export function buildChecks({
   search: WebSearchResult | null;
   domainAges: DomainAge[];
   certClusters?: CertCluster[];
-  // Null when the classifier service did not answer
-  classifier?: ClassifierResult | null;
   now?: Date;
 }): Check[] {
   return [
@@ -152,7 +136,6 @@ export function buildChecks({
     ...(search ? [searchCheck(search)] : []),
     ...domainAges.map((age) => domainAgeCheck(age, now)),
     ...certClusters.map(certClusterCheck),
-    ...(classifier ? [classifierCheck(classifier)] : []),
   ];
 }
 
