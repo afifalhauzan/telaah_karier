@@ -8,6 +8,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { buildChecks, certClusterSignals, newDomainSignals } from "../langchain/agents/analyzer/checks";
 import { summarizeCertEntries } from "../langchain/agents/analyzer/tools/ct-cluster";
+import { pageText } from "../langchain/agents/analyzer/tools/link-checks";
 import { detectSignals } from "../langchain/agents/analyzer/signals";
 import { registrableDomain } from "../langchain/agents/analyzer/tools/domain-age";
 import type { WebSearchResult } from "../langchain/agents/analyzer/tools/tavily-search";
@@ -154,4 +155,20 @@ test("the classifier adds one line under the verdict, warning only on a high sco
   });
   assert.equal(low.status, "info");
   assert.equal(buildChecks({ signals: [], links: null, search: null, domainAges: [], classifier: null }).length, 1);
+});
+
+test("a linked page keeps the addresses written in it and drops button links and images", () => {
+  // Recorded from Tavily (markdown): an Interfell post on LinkedIn whose apply link is in a comment
+  const page = pageText(
+    [
+      "🔗Interested? We'll leave the link to the vacancy in the comments!",
+      "",
+      "![text]()",
+      "[Like](https://www.linkedin.com/signup/cold-join?trk=public_post_like-cta)",
+      "[Interfell](https://www.linkedin.com/company/interfell?trk=public_post_comment_actor-name)",
+      "APPLY HERE: [https://interfell.simera.io/jobs/10826](https://interfell.simera.io/jobs/10826?trk=public_post_comment-text)",
+    ].join("\n")
+  );
+  assert.match(page, /APPLY HERE: https:\/\/interfell\.simera\.io\/jobs\/10826$/);
+  assert.doesNotMatch(page, /signup|trk=|!\[/);
 });

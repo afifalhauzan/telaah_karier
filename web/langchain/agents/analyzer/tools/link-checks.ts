@@ -73,6 +73,20 @@ async function followRedirects(link: string): Promise<string | null> {
   return null;
 }
 
+/**
+ * A page read as markdown, flattened to text. Links keep their label only, so an address written out
+ * in the page (an "APPLY HERE: https://…" comment) survives while button links ("Like", "Reply",
+ * sign-in redirects) do not fill the page budget.
+ */
+export function pageText(markdown: string): string {
+  return markdown
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/[ \t]+/g, " ")
+    .replace(/\n\s*\n+/g, "\n")
+    .trim();
+}
+
 async function readPage(url: string): Promise<PageRead | null> {
   const apiKey = process.env.TAVILY_API_KEY;
   if (!apiKey) return null;
@@ -81,13 +95,14 @@ async function readPage(url: string): Promise<PageRead | null> {
     const response = await fetch("https://api.tavily.com/extract", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({ urls: [url], extract_depth: "basic", format: "text" }),
+      // Markdown, not text: the text format drops every link address, including the posting's own
+      body: JSON.stringify({ urls: [url], extract_depth: "basic", format: "markdown" }),
       signal: AbortSignal.timeout(EXTRACT_TIMEOUT_MS),
     });
     if (!response.ok) throw new Error(`Tavily extract HTTP ${response.status}`);
 
     const raw: unknown = (await response.json())?.results?.[0]?.raw_content;
-    const text = typeof raw === "string" ? raw.replace(/!\[[^\]]*\]\([^)]*\)/g, " ").replace(/\n\s*\n+/g, "\n").trim() : "";
+    const text = typeof raw === "string" ? pageText(raw) : "";
     return { url, text: text ? text.slice(0, MAX_PAGE_CHARS) : null };
   } catch (error) {
     console.error("[LinkChecks] Page read failed:", error instanceof Error ? error.message : error);
