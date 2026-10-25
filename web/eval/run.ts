@@ -6,6 +6,8 @@
  *   pnpm eval --split dev --env GEMINI_ANALYSIS_MODEL=gemini-2.5-flash-lite
  *   pnpm eval --split test --final            (only for the single final run)
  *   pnpm eval --resume eval/results/<run>      (continue an interrupted run)
+ *   pnpm eval --dataset eval/dataset/v2/dataset.csv --images eval/dataset/v2/images --split test --kb-before 2026-06-12
+ *                                              (the time-split set: knowledge base only from before the test cases)
  *
  * See docs/wiki/ai/05-DATASET-EVALUASI.md for the dataset format and the metric protocol.
  */
@@ -30,6 +32,8 @@ interface RunConfig {
   variants: string[];
   models: Record<string, string>;
   envOverrides: string[];
+  // Knowledge base cutoff, when the test cases are the newest fact-checks (time split)
+  kbBefore?: string;
   caseCount: number;
 }
 
@@ -46,6 +50,7 @@ function parseArgs(argv: string[]) {
     out: "",
     resume: "",
     final: false,
+    kbBefore: "",
   };
 
   for (let i = 0; i < argv.length; i++) {
@@ -71,6 +76,11 @@ function parseArgs(argv: string[]) {
       case "--out": args.out = value(); break;
       case "--resume": args.resume = value(); break;
       case "--final": args.final = true; break;
+      case "--kb-before": {
+        args.kbBefore = value();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(args.kbBefore)) throw new Error("--kb-before butuh tanggal YYYY-MM-DD");
+        break;
+      }
       default: throw new Error(`argumen tidak dikenal: ${flag}`);
     }
   }
@@ -185,6 +195,7 @@ async function main() {
     variants: args.variants,
     models: Object.fromEntries(STAGES.map((stage) => [stage, geminiModelFor(stage)])),
     envOverrides: args.env,
+    ...(args.kbBefore ? { kbBefore: args.kbBefore } : {}),
     caseCount: cases.length,
   };
   if (previous && previous.dataset.sha256 !== createHash("sha256").update(readFileSync(datasetPath)).digest("hex")) {
@@ -214,7 +225,16 @@ async function main() {
           { input: row.text, images: loadAttachments(row, imagesDir) },
           // The row's own fact-check stays out of the knowledge base: by its URL, and by near-identical
           // text for a copy filed under another article
-          { ...VARIANTS[variant].options, knowledge: { excludeUrls: row.labelSource ? [row.labelSource] : [], excludeAbove: KNOWLEDGE_EXCLUDE_ABOVE } }
+          // Fact-check sites never reach the web search: they would hand the agent its answer
+          {
+            ...VARIANTS[variant].options,
+            excludeFactChecks: true,
+            knowledge: {
+              excludeUrls: row.labelSource ? [row.labelSource] : [],
+              excludeAbove: KNOWLEDGE_EXCLUDE_ABOVE,
+              ...(config.kbBefore ? { before: config.kbBefore } : {}),
+            },
+          }
         );
         record = {
           ...base,
