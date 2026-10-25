@@ -149,6 +149,20 @@ function filesOf(message: MetabotUIMessage | undefined) {
   );
 }
 
+// What the phone share sheet sends (app/manifest.ts, share_target)
+const SHARE_PARAMS = ["share_title", "share_text", "share_url"];
+
+/** The shared title, text, and link as one draft, without repeats (apps often put the link in the text too). */
+function takeSharedDraft(): string {
+  const url = new URL(window.location.href);
+  const parts = SHARE_PARAMS.map((name) => url.searchParams.get(name)?.trim() ?? "").filter(Boolean);
+  if (!parts.length) return "";
+  SHARE_PARAMS.forEach((name) => url.searchParams.delete(name));
+  window.history.replaceState(window.history.state, "", url);
+  const unique = parts.filter((part, index) => parts.indexOf(part) === index);
+  return unique.filter((part) => !unique.some((other) => other !== part && other.includes(part))).join("\n");
+}
+
 function textOf(message: MetabotUIMessage | undefined): string {
   return ((message?.parts || []) as MetabotUIMessagePart[])
     .map((part) => (part.type === "text" ? part.text : ""))
@@ -246,6 +260,11 @@ export function Chat() {
     const draft = readLandingChatDraft();
     hasHydratedLandingDraftRef.current = true;
 
+    const shared = takeSharedDraft();
+    if (shared) {
+      setInput(shared);
+      return;
+    }
     if (!draft) return;
 
     setPendingLandingDraft(draft);
