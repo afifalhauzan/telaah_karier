@@ -1,16 +1,16 @@
 <!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css">
 <style>
-#chat{left:180px;top:250px;width:1000px;height:620px;padding:0;overflow:visible}
-#msg{position:absolute;right:50px;top:60px;width:820px;background:var(--blue);color:#fff;border-radius:30px 30px 8px 30px;padding:34px 40px;font-size:34px;line-height:1.6;transform-origin:center}
+#chat{left:330px;top:330px;width:900px;height:420px;padding:0;overflow:visible}
+#msg{position:absolute;right:50px;top:44px;width:760px;background:var(--blue);color:#fff;border-radius:30px 30px 8px 30px;padding:34px 40px;font-size:34px;line-height:1.6;transform-origin:center}
 .sens{position:relative;display:inline-block;white-space:nowrap;vertical-align:bottom}
 .sens .raw{font-weight:700;display:inline-block;overflow:hidden;white-space:nowrap;vertical-align:bottom}
 .sens .cov{position:absolute;left:-4px;top:4px;bottom:4px;border-radius:10px;background:#08090c;width:0;overflow:hidden;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:24px;font-weight:700;color:#fff;white-space:nowrap}
 #composer{position:absolute;left:50px;right:50px;bottom:40px;height:80px;border:2px solid var(--line);border-radius:40px;display:flex;align-items:center;padding:0 30px;color:#9ca0a6;font-size:26px}
 #send{position:absolute;right:12px;top:10px;width:56px;height:56px;border-radius:50%;background:var(--blue);display:flex;align-items:center;justify-content:center}
 #scan{width:6px;background:linear-gradient(transparent,#059669,transparent);box-shadow:0 0 22px #059669;border-radius:3px}
-#hub{left:1560px;top:560px;width:200px;height:200px;border-radius:50%;background:var(--blue);transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center}
-#hubl{left:1460px;top:680px;width:200px;text-align:center;font-size:28px;font-weight:700;color:var(--muted)}
-#shield{left:1120px;top:180px;width:120px;height:120px}
+#hub{left:1490px;top:540px;width:200px;height:200px;border-radius:50%;background:var(--blue);transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center}
+#hubl{left:1390px;top:660px;width:200px;text-align:center;font-size:28px;font-weight:700;color:var(--muted)}
+#shield{left:1170px;top:270px;width:120px;height:120px}
 </style></head><body><div id="stage">
 <div id="chat" class="abs card">
  <div id="msg">Saya sudah daftar di PT Maju Jaya. Mereka minta NIK <span class="sens" id="x0"><span class="raw">3507 1234 5678 0001</span><span class="cov"></span></span> dan kode OTP <span class="sens" id="x1"><span class="raw">482913</span><span class="cov"></span></span>. Aman nggak?</div>
@@ -33,9 +33,9 @@ const DUR=7;
 window.render=function(t){
  frameRender(t,DUR);
  set($('chat'),{opacity:eo(p(t,.1,.6))});
- const mi=back(p(t,.5,1.0)); const f=eio(p(t,4.6,5.6)); const m=$('msg'); const cx=180+m.offsetLeft+m.offsetWidth/2, cy=250+m.offsetTop+m.offsetHeight/2;
- set($('msg'),{opacity:p(t,.5,.7)*(1-p(t,5.4,5.6)),transform:`translate(${f*(1560-cx)}px,${f*(560-cy)}px) scale(${mi*(1-.9*f)})`});
- const s=p(t,1.6,2.8); set($('scan'),{opacity:(t>1.6&&t<2.9)?1:0,left:lerp(400,1150,eio(s))+'px',top:'300px',height:'260px'});
+ const mi=back(p(t,.5,1.0)); const f=eio(p(t,4.6,5.6)); const m=$('msg'); const cx=330+m.offsetLeft+m.offsetWidth/2, cy=330+m.offsetTop+m.offsetHeight/2;
+ set($('msg'),{opacity:p(t,.5,.7)*(1-p(t,5.4,5.6)),transform:`translate(${f*(1490-cx)}px,${f*(540-cy)}px) scale(${mi*(1-.9*f)})`});
+ const s=p(t,1.6,2.8); set($('scan'),{opacity:(t>1.6&&t<2.9)?1:0,left:lerp(390,1170,eio(s))+'px',top:'370px',height:'230px'});
  [0,1].forEach(i=>{const el=$('x'+i),cov=el.querySelector('.cov'),raw=el.querySelector('.raw');
    const k=eio(p(t,1.9+i*.55,2.4+i*.55)); const g=eio(p(t,2.7+i*.35,3.1+i*.35));
    const w=lerp(RAWW[i],TGT[i],g); raw.style.width=w+'px'; raw.style.color=g>0?'transparent':'#fff';

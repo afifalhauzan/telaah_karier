@@ -2,10 +2,10 @@
 <style>
 .node{position:absolute;display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06);transform:translate(-50%,-50%)}
 #hub{width:200px;height:200px;border-radius:50%;background:var(--blue)}
-.dest{width:150px;height:150px;border-radius:36px}
-.dl{position:absolute;font-size:28px;font-weight:600;color:var(--muted);transform:translateY(-50%);white-space:nowrap}
+.dest{width:140px;height:140px;border-radius:36px}
+.dl{position:absolute;font-size:26px;font-weight:600;color:var(--muted);transform:translateX(-50%);white-space:nowrap;text-align:center}
 svg#paths{position:absolute;left:0;top:0}
-.inp{position:absolute;left:330px;top:560px;transform:translate(-50%,-50%);transform-origin:center}
+.inp{position:absolute;left:400px;top:540px;transform:translate(-50%,-50%);transform-origin:center}
 #poster{width:330px;height:430px;border-radius:18px;background:linear-gradient(160deg,#ffcc3d,#ff8a3d);padding:30px 28px;color:#2b1a00;box-shadow:0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06)}
 #poster .h{font-size:40px;font-weight:900;line-height:1.05;letter-spacing:-1px}
 #poster .co{font-size:22px;font-weight:700;margin-top:14px;background:#2b1a00;color:#ffcc3d;display:inline-block;padding:4px 10px;border-radius:6px}
@@ -26,12 +26,12 @@ svg#paths{position:absolute;left:0;top:0}
 <script>
 frame(2,'Router');
 $('poster').querySelector('.wa').innerHTML=icon('phone',24,'#059669',2.4)+'0812 3456 7890';
-const HUB=[960,560],D=[[1430,320],[1430,560],[1430,800]];
+const HUB=[960,540],D=[[1520,290],[1520,540],[1520,790]];
 const place=(id,[x,y])=>set($(id),{left:x+'px',top:y+'px'});
-place('hub',HUB);D.forEach((d,i)=>{place('d'+i,d);set($('l'+i),{left:(d[0]+100)+'px',top:d[1]+'px'})});
+place('hub',HUB);D.forEach((d,i)=>{place('d'+i,d);set($('l'+i),{left:d[0]+'px',top:(d[1]+88)+'px'})});
 $('hub').innerHTML=icon('router',110,'#fff',1.8);
 ['brief','flow','question'].forEach((n,i)=>$('d'+i).innerHTML=icon(n,76,'#0a7f80',1.8));
-$('paths').innerHTML=`<path d="M560 560 L${HUB[0]} ${HUB[1]}" stroke="#e1e2e4" stroke-width="6" fill="none"/>`+D.map((d,i)=>`<path d="M${HUB[0]} ${HUB[1]} C${HUB[0]+220} ${HUB[1]} ${d[0]-220} ${d[1]} ${d[0]} ${d[1]}" stroke="#e1e2e4" stroke-width="6" fill="none"/><path id="pp${i}" d="M${HUB[0]} ${HUB[1]} C${HUB[0]+220} ${HUB[1]} ${d[0]-220} ${d[1]} ${d[0]} ${d[1]}" stroke="#e1e2e4" stroke-width="6" fill="none"/>`).join('');
+$('paths').innerHTML=`<path d="M565 540 L${HUB[0]} ${HUB[1]}" stroke="#e1e2e4" stroke-width="6" fill="none"/>`+D.map((d,i)=>`<path d="M${HUB[0]} ${HUB[1]} C${HUB[0]+220} ${HUB[1]} ${d[0]-220} ${d[1]} ${d[0]} ${d[1]}" stroke="#e1e2e4" stroke-width="6" fill="none"/><path id="pp${i}" d="M${HUB[0]} ${HUB[1]} C${HUB[0]+220} ${HUB[1]} ${d[0]-220} ${d[1]} ${d[0]} ${d[1]}" stroke="#e1e2e4" stroke-width="6" fill="none"/>`).join('');
 const DUR=10.5; const SEG=[[0.6,3.8],[3.8,7.0],[7.0,10.2]];
 window.render=function(t){
  frameRender(t,DUR);
@@ -41,7 +41,7 @@ window.render=function(t){
  [0,1,2].forEach(i=>{const [a,b]=SEG[i];const L=b-a;const el=$('i'+i);
    const appear=back(p(t,a,a+.5));
    const go=eio(p(t,a+1.3,a+2.0)); // to hub
-   const x=lerp(330,HUB[0],go), y=HUB[1];
+   const x=lerp(400,HUB[0],go), y=HUB[1];
    const sc=appear*lerp(1,.12,go);
    set(el,{left:x+'px',top:y+'px',opacity:p(t,a,a+.15)*(1-p(t,a+1.9,a+2.0)),transform:`translate(-50%,-50%) scale(${sc})`});
    // route

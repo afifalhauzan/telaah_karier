@@ -1,12 +1,12 @@
 <!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css">
 <style>
 .it{position:absolute;height:72px;background:#fff;border-radius:999px;box-shadow:0 0 0 2px #e1e2e4;display:flex;align-items:center;gap:12px;padding:0 24px;font-size:26px;font-weight:600}
-#blk{left:400px;top:300px;width:400px;height:480px;padding:34px 30px}
+#blk{left:615px;top:300px;width:380px;height:480px;padding:34px 30px}
 .br{font-family:'Geist Mono';font-size:60px;color:#87cfcf;font-weight:700;line-height:1}
 .row{display:flex;gap:14px;align-items:center;margin:16px 0 0 26px}
 .row i{display:block;height:14px;border-radius:7px}
-#llm{left:1000px;top:540px;width:200px;height:200px;border-radius:50%;background:#0e9e9e;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center}
-#cw{left:1140px;top:390px}
+#llm{left:1205px;top:540px;width:200px;height:200px;border-radius:50%;background:#0e9e9e;transform:translate(-50%,-50%);display:flex;align-items:center;justify-content:center}
+#cw{left:745px;top:405px}
 </style></head><body><div id="stage">
 <div id="blk" class="abs card"><div class="br">{</div><div id="rows"></div><div class="br" style="margin-top:14px">}</div></div>
 <div id="llm" class="abs"></div>
@@ -17,7 +17,7 @@
 const R='#dc2626',P='#0a7f80';
 const IT=[['flag','Biaya',R],['flag','Selfie KTP',R],['globe','12 hari',P],['db','87% mirip',P],['search','0 hasil resmi',P],['megaphone','Bantahan',P]];
 const items=IT.map((x,i)=>{const d=document.createElement('div');d.className='it';d.innerHTML=icon(x[0],30,x[2],2.2)+`<span style="color:${x[2]}">${x[1]}</span>`;$('stage').appendChild(d);return d});
-const START=[[80,250],[80,350],[80,450],[80,550],[80,650],[80,750]];
+const START=items.map((d,i)=>[805-d.offsetWidth/2,254+i*100]);
 $('rows').innerHTML=IT.map((x,i)=>`<div class="row" id="r${i}">${icon(x[0],28,x[2],2.2)}<i style="width:${[120,150,110,140,160,120][i]}px;background:${x[2]==R?'#fecaca':'#cfeceb'}"></i></div>`).join('');
 $('llm').innerHTML=icon('spark',100,'#fff',1.8);
 $('cw').innerHTML=claimHTML('cc');setClaim('cc','tinggi');
@@ -30,9 +30,9 @@ window.render=function(t){
  const bk=eo(p(t,1.0,1.4)); const go=eio(p(t,2.9,3.6));
  set($('blk'),{opacity:bk*(1-p(t,3.4,3.6)),transform:`translate(${go*400}px,0) scale(${1-.75*go})`});
  const lk=back(p(t,.6,1.1)); const pulse=t>3.5?Math.abs(Math.sin((t-3.5)*6))*Math.exp(-(t-3.5)*1.2):0;
- set($('llm'),{opacity:p(t,.6,.8),transform:`translate(-50%,-50%) scale(${lk*(1+.08*pulse)})`,boxShadow:`0 0 0 ${pulse*40}px rgba(14,158,158,.18)`});
+ const mv=eio(p(t,3.9,4.5)); set($('llm'),{left:lerp(1205,535,mv)+'px',opacity:p(t,.6,.8),transform:`translate(-50%,-50%) scale(${lk*(1+.08*pulse)})`,boxShadow:`0 0 0 ${pulse*40}px rgba(14,158,158,.18)`});
  $('llm').querySelector('svg').style.transform=`rotate(${t>3.5?(t-3.5)*120:0}deg)`;
- const ck=eo(p(t,4.1,4.6)); set($('cw'),{opacity:ck,transform:`translateX(${(1-ck)*40}px)`});
+ const ck=eo(p(t,4.2,4.8)); set($('cw'),{opacity:ck,transform:`translateX(${(1-ck)*80}px)`});
  $('cc').querySelectorAll('.sg').forEach((s,k)=>{s.style.transform=`scaleX(${eo(p(t,4.5+k*.15,4.8+k*.15))})`;s.style.transformOrigin='left'});
 };
 render(0);

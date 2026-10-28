@@ -9,14 +9,14 @@
 .tool .pb i{display:block;height:100%;width:0;background:var(--blue);border-radius:6px}
 .tool .v{white-space:nowrap;font-size:32px;font-weight:800;color:var(--red);margin-top:6px;display:inline-block;transform-origin:left center}
 .dot{position:absolute;width:14px;height:14px;border-radius:50%;background:var(--blue);transform:translate(-50%,-50%)}
-.ring{position:absolute;left:960px;top:560px;border:4px solid var(--blue);border-radius:50%;transform:translate(-50%,-50%)}
+.ring{position:absolute;left:960px;top:540px;border:4px solid var(--blue);border-radius:50%;transform:translate(-50%,-50%)}
 svg#ln{position:absolute;left:0;top:0}
-#done{left:960px;top:670px;transform:translateX(-50%);font-size:26px;font-weight:700;color:#059669;display:flex;gap:10px;align-items:center}
+#done{left:960px;top:650px;transform:translateX(-50%);font-size:26px;font-weight:700;color:#059669;display:flex;gap:10px;align-items:center}
 </style></head><body><div id="stage">
 <svg id="ln" width="1920" height="1080"></svg>
 <div id="dots"></div>
 <div class="ring" id="rg"></div>
-<div id="ent" class="abs card" style="left:960px;top:560px"></div>
+<div id="ent" class="abs card" style="left:960px;top:540px"></div>
 <div id="done" class="abs"></div>
 <div class="tool" id="T0"></div><div class="tool" id="T1"></div><div class="tool" id="T2"></div><div class="tool" id="T3"></div>
 </div>
@@ -24,7 +24,7 @@ svg#ln{position:absolute;left:0;top:0}
 <script>
 frame(6,'Cek bukti & fakta paralel');
 $('ent').innerHTML=icon('building',56,'#0a7f80',1.8)+'<span>PT Maju Jaya</span>';
-const C=[960,560];const POS=[[420,320],[1500,320],[420,800],[1500,800]];
+const C=[960,540];const POS=[[420,300],[1500,300],[420,780],[1500,780]];
 // name, icon, result, finish time
 const T=[['Web search','search','0 hasil resmi',3.6],['Umur domain','globe','12 hari',2.8],['Knowledge base','db','87% mirip',4.2],['Pernyataan resmi','megaphone','Ada bantahan',3.3]];
 const START=1.5;

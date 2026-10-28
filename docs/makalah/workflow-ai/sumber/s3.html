@@ -1,10 +1,10 @@
 <!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css">
 <style>
-#post{left:150px;top:230px;width:780px;padding:46px 50px;font-size:34px;line-height:1.75;color:#3b4459}
+#post{left:180px;top:230px;width:760px;padding:46px 50px;font-size:34px;line-height:1.75;color:#3b4459}
 .tk{position:relative;border-radius:8px;padding:2px 4px;margin:0 -4px;white-space:nowrap}
 .tk .hl{position:absolute;left:0;top:4px;bottom:4px;width:0;border-radius:8px;background:rgba(14,158,158,.22);z-index:0}
 .tk b{position:relative;z-index:1;font-weight:600;color:var(--ink)}
-#slots{left:1080px;top:200px;width:690px}
+#slots{left:1100px;top:200px;width:640px}
 .slot{display:flex;align-items:center;gap:22px;height:96px;margin-bottom:16px;background:#fff;border-radius:20px;padding:0 26px;box-shadow:0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06)}
 .slot .ib{width:56px;height:56px;border-radius:14px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
 .slot .v{font-size:30px;font-weight:700;color:var(--ink)}
@@ -20,6 +20,7 @@
 frame(3,'Susun informasi penting');
 const IC=['building','brief','phone','cal','link','money'];
 $('slots').innerHTML=IC.map((n,i)=>`<div class="slot" id="s${i}"><div class="ib">${icon(n,32,'#0a7f80')}</div><div class="v" id="v${i}"></div></div>`).join('');
+$('post').style.top=(540-$('post').offsetHeight/2)+'px';$('slots').style.top=(540-($('slots').offsetHeight-16)/2)+'px';
 const VAL=[...Array(6)].map((_,i)=>$('t'+i).querySelector('b').textContent);
 const flies=VAL.map((v,i)=>{const d=document.createElement('div');d.className='fly'+(i==4?' mono':'');d.textContent=v;$('stage').appendChild(d);return d});
 const R=el=>{const r=el.getBoundingClientRect();return r};
