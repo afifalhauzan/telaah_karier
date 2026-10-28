@@ -17,7 +17,7 @@ svg#ln{position:absolute;left:0;top:0}
 </style></head><body><div id="stage">
 <svg id="ln" width="1920" height="1080"></svg>
 <div id="sub" class="abs"><span class="pill" id="sp">a</span><span id="st"></span></div>
-<div id="out" class="abs card">
+<div id="out" class="abs card"><div id="aib" style="position:absolute;right:-22px;top:-22px;width:64px;height:64px;border-radius:50%;background:#6b4fd8;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 20px rgba(107,79,216,.35)"><svg width="34" height="34" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M6 6l12 12M6 18 18 6" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg></div>
  <div class="bar" style="width:92%"></div><div class="bar" style="width:78%"></div><div class="bar" style="width:85%"></div>
  <div id="srcs"><span class="src" id="c0"></span><span class="src" id="c1"></span><span class="src" id="c2"></span></div>
 </div>
@@ -32,7 +32,17 @@ frame(8,'Guardrail');
 const SR=[['kemnaker.go.id',1],['majujaya.co.id',1],['berita-palsu.xyz/123',0]];
 SR.forEach((s,i)=>$('c'+i).innerHTML=icon('link',28,'#184f95')+`<span class="mono" style="font-size:24px">${s[0]}</span><span class="ck"></span>`);
 $('guard').innerHTML=`<svg width="170" height="170" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" fill="#2e9e5b"/><path id="gk" d="m8 12 3 3 5-6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-$('g').innerHTML=gaugeSVG('gg',380);
+$('g').innerHTML=`<svg width="420" height="300" viewBox="0 0 200 142">
+ <path d="M20 110 A80 80 0 0 1 66 38" fill="none" stroke="#2e9e5b" stroke-width="18"/>
+ <path d="M70 36 A80 80 0 0 1 130 36" fill="none" stroke="#e0a526" stroke-width="18"/>
+ <path d="M134 38 A80 80 0 0 1 180 110" fill="none" stroke="#c9372c" stroke-width="18"/>
+ <g id="ghost"><path d="M100 110 L100 40" stroke="#6b4fd8" stroke-width="4" stroke-dasharray="6 5" stroke-linecap="round"/><circle cx="100" cy="28" r="12" fill="#6b4fd8"/><path d="M100 20v16M92 28h16M94.5 22.5l11 11M94.5 33.5l11-11" stroke="#fff" stroke-width="2" stroke-linecap="round"/></g>
+ <g id="gg-n"><path d="M100 110 L100 42" stroke="#14213d" stroke-width="6" stroke-linecap="round"/><path id="gtip" d="M100 24 91 28v6c0 5 4 8 9 9 5-1 9-4 9-9v-6z" fill="#2e9e5b" stroke="#fff" stroke-width="1.5" opacity="0"/></g>
+ <circle cx="100" cy="110" r="10" fill="#14213d"/></svg>
+ <div id="leg" style="display:flex;gap:26px;justify-content:center;font-size:22px;font-weight:600;color:#5b6478;margin-top:4px">
+  <span style="display:flex;align-items:center;gap:8px"><svg width="26" height="26" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11" fill="#6b4fd8"/><path d="M12 5v14M5 12h14M7 7l10 10M7 17 17 7" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>Penilaian awal AI</span>
+  <span style="display:flex;align-items:center;gap:8px"><svg width="26" height="26" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" fill="#2e9e5b"/></svg>Setelah guardrail</span></div>`;
+function setGhost(v,s){const g=$('ghost');g.setAttribute('transform',`rotate(${-90+180*v} 100 110)`);g.style.opacity=s}
 const RR=[['chat','Prompt'],['flag','Sinyal'],['search','Bukti']];
 RR.forEach((r,i)=>{const e=$('R'+i);e.innerHTML=`<div class="ib">${icon(r[0],40,'#184f95',2)}</div><span>${r[1]}</span><span class="cnt"></span>`;set(e,{top:(300+i*160)+'px'})});
 $('ln').innerHTML=[0,1,2].map(i=>`<path id="w${i}" d="M760 ${360+i*160} C980 ${360+i*160} 1050 515 1200 515" stroke="#d6dbe6" stroke-width="5" fill="none"/>`).join('')+`<path id="w3" d="M1370 515 L1440 515" stroke="#d6dbe6" stroke-width="5" fill="none"/>`;
@@ -65,6 +75,10 @@ window.render=function(t){
  // gauge value
  let v=0; if(beat==1){v=lerp(.85,.5,eio(p(t,5.0,6.0)))} else if(beat==2){v=lerp(.15,.85,back(p(t,8.6,9.6)))}
  if(t>=3.6) setGauge('gg',v);
+ const gv0=beat==1?.85:.15; const gs=back(p(t,[0,3.9,7.5][beat],[0,4.3,7.9][beat]));
+ if(t>=3.6) setGhost(gv0, beat==0?0:1);
+ $('gtip').setAttribute('opacity', (beat==1&&t>6.0)||(beat==2&&t>9.6)?1:0);
+ set($('aib'),{transform:`scale(${back(p(t,.6,1.0))})`});
  // guard pulse when acting
  const act=[2.0,5.0,8.6]; const g=Math.max(...act.map(a=>t>a&&t<a+1.2?Math.sin((t-a)/1.2*Math.PI):0));
  $('guard').style.filter=`drop-shadow(0 0 ${g*30}px rgba(46,158,91,.8))`;
