@@ -24,7 +24,7 @@
 <script>
 frame(1,'Sensor data sensitif');
 $('send').innerHTML='<svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M3 20 21 12 3 4v6l12 2-12 2z"/></svg>';
-['NIK disensor',''].forEach((l,i)=>$('x'+i).querySelector('.cov').innerHTML=`<span class="lbl" style="display:flex;align-items:center;gap:8px">${icon('lock',24,'#fff',2.2)}${l}</span>`);
+['',''].forEach((l,i)=>$('x'+i).querySelector('.cov').innerHTML=`<span class="lbl" style="display:flex;align-items:center;gap:8px">${icon('lock',24,'#fff',2.2)}${l}</span>`);
 $('hub').innerHTML=icon('router',110,'#fff',1.8);
 $('shield').innerHTML=`<svg width="120" height="120" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" fill="#059669"/><path d="m8 12 3 3 5-6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const RAWW=[0,1].map(i=>$('x'+i).querySelector('.raw').offsetWidth);

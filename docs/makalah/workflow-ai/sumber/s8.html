@@ -17,7 +17,7 @@ svg#ln{position:absolute;left:0;top:0}
 #unusedleg{left:1025px;top:725px;justify-content:center;width:660px;display:flex;gap:30px;font-size:23px;font-weight:500;color:#60646c}
 #leg span{display:flex;align-items:center;gap:10px}
 .fd{position:absolute;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%)}
-#arw{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);box-shadow:0 0 0 6px #f5f9fc}
+#arw{z-index:20;width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);box-shadow:0 0 0 6px #f5f9fc}
 </style></head><body><div id="stage">
 <svg id="ln" width="1920" height="1080"></svg>
 <div id="out" class="abs card">
@@ -43,7 +43,7 @@ const GX=840,GY=540;$('out').style.top=(540-$('out').offsetHeight/2)+'px';const 
 $('ln').innerHTML=[0,1,2].map(i=>`<path id="w${i}" d="M655 ${390+i*150} C760 ${390+i*150} 700 ${GY} ${GX-75} ${GY}" stroke="#e1e2e4" stroke-width="5" fill="none"/>`).join('')+`<path id="w3" d="M${GX+75} ${GY} L1025 ${GY}" stroke="#e1e2e4" stroke-width="5" fill="none"/>`;
 let dh='';for(let i=0;i<4;i++)for(let j=0;j<4;j++)dh+=`<div class="fd" id="p${i}_${j}"></div>`;$('dots').innerHTML=dh;
 const WL=[0,1,2,3].map(i=>$('w'+i).getTotalLength());
-const DUR=11;
+const DUR=14;
 // segment + colour morph between two levels
 function morph(from,to,k){const e=$('cc'),A=LV[from],B=LV[to];const h=k>=.5?B:A;
  e.style.borderColor=h.card;e.querySelector('.hd').style.background=h.header;
@@ -56,7 +56,7 @@ function morph(from,to,k){const e=$('cc'),A=LV[from],B=LV[to];const h=k>=.5?B:A;
    const order=B.i>A.i?i:(2-i); const kk=cl(k*1.6-order*.3);
    const fill=lerp(a,b2,eio(kk)); sg.style.background=`linear-gradient(90deg,${(k>=.5?B:A).seg} ${fill*100}%,rgba(0,0,0,.1) ${fill*100}%)`});}
 window.render=function(t){
- const beat=t<3.6?0:t<7.2?1:2;
+ const beat=t<3.6?0:t<8.6?1:2;
  const gm=eio(p(t,3.4,3.9)); const gx=lerp(1450,GX,gm), gy=GY;
  set($('guard'),{left:gx+'px',top:gy+'px',opacity:p(t,.3,.5),transform:`translate(-50%,-50%) scale(${back(p(t,.3,.8))})`});
  // beat a
@@ -66,8 +66,8 @@ window.render=function(t){
    if(t>when){ck.innerHTML=icon(x[1]?'check':'x',28,x[1]?'#059669':'#dc2626',3);c.style.borderColor=x[1]?'#a7f3d0':'#fecaca';c.style.background=x[1]?'#ecfdf5':'#fef2f2'}else{ck.innerHTML='';c.style.borderColor='#e1e2e4';c.style.background='#fff'}
    if(i==2){const r=eio(p(t,2.6,3.1));set(c,{opacity:1-r,transform:`translateX(${r*80}px)`,maxHeight:(70*(1-r))+'px',padding:`${12*(1-r)}px 22px`})}});
  // beats b,c timeline (relative): rows .1-.5, card .2-.6, lines draw .8-1.6, guard check 1.6-2.2, pulse to card 2.2-2.6, morph 2.6-3.2
- const bt=beat==1?3.6:7.2; const q=t-bt;
- const fadeOut=beat==1?1-p(t,6.95,7.2):1;
+ const bt=beat==1?3.6:8.6; const q=t-bt;
+ const fadeOut=beat==1?1-p(t,8.3,8.6):1;
  const rv=beat==0?0:eo(p(q,.1,.5))*fadeOut;
  const CNT=beat==1?['!','0','0']:['','3','2']; const LIT=beat==1?[1,0,0]:[0,1,1];
  [0,1,2].forEach(i=>{const e=$('R'+i);set(e,{opacity:rv,transform:`translateX(${(1-rv)*-40}px)`});
@@ -87,11 +87,11 @@ window.render=function(t){
  if(beat>0){const mk=p(q,2.6,3.3); morph(from,to,mk); $('cc').querySelector('.kk').textContent=mk>=.5?'Tingkat risiko akhir':'Tingkat risiko awal';
    const bump=mk>0?Math.exp(-(q-2.6)*3)*Math.sin(cl((q-2.6)/.7)*Math.PI):0; $('cc').style.transform=`translateX(${(1-cv)*40}px) scale(${1+.03*bump})`;
    // arrow badge
-   const ak=p(q,2.55,2.9),ao=p(q,3.4,3.6)*(beat==1?1:0); const up=beat==2;
+   const ak=p(q,2.55,2.9),ao=0; const up=beat==2;
    $('arw').innerHTML=icon('x',0)+`<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${up?'<path d="M12 19V5M5 12l7-7 7 7"/>':'<path d="M12 5v14M5 12l7 7 7-7"/>'}</svg>`;
    set($('arw'),{left:'1765px',top:'390px',background:up?'#dc2626':'#f59e0b',opacity:ak*(1-ao)*fadeOut,transform:`translate(-50%,-50%) scale(${back(ak)}) translateY(${(up?-1:1)*Math.sin(cl((q-2.6)/.8)*Math.PI)*-10}px)`});
  } else set($('arw'),{opacity:0});
- const g=Math.max(...[2.0,5.2,8.8].map(a=>t>a&&t<a+1.0?Math.sin((t-a)/1.0*Math.PI):0));
+ const g=Math.max(...[2.0,5.2,10.2].map(a=>t>a&&t<a+1.0?Math.sin((t-a)/1.0*Math.PI):0));
  $('guard').style.filter=`drop-shadow(0 0 ${g*30}px rgba(5,150,105,.8))`;
  $('guard').style.transform+=` scale(${1+.08*g})`;
 };
