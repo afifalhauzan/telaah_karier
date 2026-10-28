@@ -13,65 +13,87 @@
 .srcrow .ib{width:68px;height:68px;border-radius:16px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
 .srcrow .cnt{margin-left:auto;font-size:38px;font-weight:700}
 svg#ln{position:absolute;left:0;top:0}
-#cw{left:1025px;top:375px}
-#leg{left:1025px;top:725px;justify-content:center;width:660px;display:flex;gap:30px;font-size:23px;font-weight:500;color:#60646c}
+#cw{left:1025px;top:390px}
+#unusedleg{left:1025px;top:725px;justify-content:center;width:660px;display:flex;gap:30px;font-size:23px;font-weight:500;color:#60646c}
 #leg span{display:flex;align-items:center;gap:10px}
+.fd{position:absolute;width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%)}
+#arw{width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-50%);box-shadow:0 0 0 6px #f5f9fc}
 </style></head><body><div id="stage">
 <svg id="ln" width="1920" height="1080"></svg>
-<div id="sub" class="abs"><span class="pill" id="sp">a</span><span id="st"></span></div>
-<div id="out" class="abs card"><div id="aib"></div>
+<div id="out" class="abs card">
  <div class="bar" style="width:92%"></div><div class="bar" style="width:78%"></div><div class="bar" style="width:85%"></div>
  <div id="srcs"><span class="src" id="c0"></span><span class="src" id="c1"></span><span class="src" id="c2"></span></div>
 </div>
 <div id="scan" class="abs"></div>
 <div class="srcrow" id="R0"></div><div class="srcrow" id="R1"></div><div class="srcrow" id="R2"></div>
 <div id="guard" class="abs"></div>
+<div id="dots"></div>
+<div id="arw" class="abs"></div>
 <div id="cw" class="abs"></div>
-<div id="leg" class="abs"></div>
 </div>
 <script src="common.js"></script>
 <script>
-$('aib').innerHTML=icon('spark',34,'#fff',2.6);
 const SR=[['kemnaker.go.id',1],['majujaya.co.id',1],['berita-palsu.xyz/123',0]];
 SR.forEach((s,i)=>$('c'+i).innerHTML=icon('link',26,'#60646c')+`<span class="mono">${s[0]}</span><span class="ck"></span>`);
 $('guard').innerHTML=`<svg width="150" height="150" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" fill="#059669"/><path d="m8.5 12 2.5 2.5 4.5-5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 $('cw').innerHTML=claimHTML('cc');
-$('leg').innerHTML=`<span><span style="width:34px;height:34px;border-radius:50%;background:#8b5cf6;display:flex;align-items:center;justify-content:center">${icon('spark',20,'#fff',2.6)}</span>Penilaian awal AI</span><span>${icon('shieldCheck',34,'#059669',2.2)}Setelah guardrail</span>`;
 const RR=[['chat','Prompt'],['flag','Sinyal aturan'],['search','Bukti & fakta']];
 RR.forEach((r,i)=>{const e=$('R'+i);e.innerHTML=`<div class="ib">${icon(r[0],36,'#0a7f80',2)}</div><span>${r[1]}</span><span class="cnt"></span>`;set(e,{top:(332+i*150)+'px'})});
 const GX=840,GY=540;$('out').style.top=(540-$('out').offsetHeight/2)+'px';const OT=$('out').offsetTop;
 $('ln').innerHTML=[0,1,2].map(i=>`<path id="w${i}" d="M655 ${390+i*150} C760 ${390+i*150} 700 ${GY} ${GX-75} ${GY}" stroke="#e1e2e4" stroke-width="5" fill="none"/>`).join('')+`<path id="w3" d="M${GX+75} ${GY} L1025 ${GY}" stroke="#e1e2e4" stroke-width="5" fill="none"/>`;
-const SUB=['Hapus sumber palsu','Vonis dari prompt → diturunkan','Sinyal dan bukti kuat → dinaikkan'];
+let dh='';for(let i=0;i<4;i++)for(let j=0;j<4;j++)dh+=`<div class="fd" id="p${i}_${j}"></div>`;$('dots').innerHTML=dh;
+const WL=[0,1,2,3].map(i=>$('w'+i).getTotalLength());
 const DUR=11;
+// segment + colour morph between two levels
+function morph(from,to,k){const e=$('cc'),A=LV[from],B=LV[to];const h=k>=.5?B:A;
+ e.style.borderColor=h.card;e.querySelector('.hd').style.background=h.header;
+ const bd=e.querySelector('.bd');bd.style.background=h.badge;if(bd.dataset.lv!==(k>=.5?to:from)){bd.innerHTML=icon(h.icon,48,'#fff',2);bd.dataset.lv=k>=.5?to:from}
+ const flip=Math.abs(Math.cos(k*Math.PI));bd.style.transform=`scaleX(${k>0&&k<1?Math.max(flip,.05):1})`;
+ const tt=e.querySelector('.tt');tt.textContent=h.label;tt.style.color=h.title;tt.style.opacity=k>0&&k<1?Math.max(Math.abs(1-2*k),.0):1;
+ const ad=e.querySelector('.ad');ad.textContent=h.advice;ad.style.color=h.title;ad.style.opacity=tt.style.opacity;
+ e.querySelectorAll('.sg').forEach((sg,i)=>{const a=i<=A.i?1:0,b2=i<=B.i?1:0;
+   // fill grows left→right when rising, drains right→left when falling
+   const order=B.i>A.i?i:(2-i); const kk=cl(k*1.6-order*.3);
+   const fill=lerp(a,b2,eio(kk)); sg.style.background=`linear-gradient(90deg,${(k>=.5?B:A).seg} ${fill*100}%,rgba(0,0,0,.1) ${fill*100}%)`});}
 window.render=function(t){
- const beat=t<3.6?0:t<7.2?1:2; $('sp').textContent='abc'[beat]; $('st').textContent=SUB[beat];
- const bt=[0,3.6,7.2][beat]; const sk=eo(p(t,bt+.1,bt+.5)); set($('sub'),{opacity:sk*(beat==2?1:1-p(t,bt+3.3,bt+3.6)),transform:`translate(-50%,${(1-sk)*10}px)`});
- // guard: right of card in beat a, between rows and claim card after
+ const beat=t<3.6?0:t<7.2?1:2;
  const gm=eio(p(t,3.4,3.9)); const gx=lerp(1450,GX,gm), gy=GY;
  set($('guard'),{left:gx+'px',top:gy+'px',opacity:p(t,.3,.5),transform:`translate(-50%,-50%) scale(${back(p(t,.3,.8))})`});
  // beat a
  const oa=eo(p(t,.2,.7))*(1-p(t,3.3,3.6)); set($('out'),{opacity:oa,transform:`translateY(${(1-eo(p(t,.2,.7)))*30}px)`});
- set($('aib'),{transform:`scale(${back(p(t,.6,1.0))})`});
  const s=p(t,1.0,2.2); set($('scan'),{opacity:(t>1&&t<2.3)?1:0,left:lerp(395,1255,eio(s))+'px',top:OT+'px',height:$('out').offsetHeight+'px'});
  SR.forEach((x,i)=>{const c=$('c'+i);const when=1.0+(i==2?.95:.35+i*.2);const ck=c.querySelector('.ck');
    if(t>when){ck.innerHTML=icon(x[1]?'check':'x',28,x[1]?'#059669':'#dc2626',3);c.style.borderColor=x[1]?'#a7f3d0':'#fecaca';c.style.background=x[1]?'#ecfdf5':'#fef2f2'}else{ck.innerHTML='';c.style.borderColor='#e1e2e4';c.style.background='#fff'}
    if(i==2){const r=eio(p(t,2.6,3.1));set(c,{opacity:1-r,transform:`translateX(${r*80}px)`,maxHeight:(70*(1-r))+'px',padding:`${12*(1-r)}px 22px`})}});
- // beats b,c
- const rv=t<3.6?0:(t<7.2?eo(p(t,3.7,4.1))*(1-p(t,6.9,7.2)):eo(p(t,7.3,7.7)));
+ // beats b,c timeline (relative): rows .1-.5, card .2-.6, lines draw .8-1.6, guard check 1.6-2.2, pulse to card 2.2-2.6, morph 2.6-3.2
+ const bt=beat==1?3.6:7.2; const q=t-bt;
+ const fadeOut=beat==1?1-p(t,6.95,7.2):1;
+ const rv=beat==0?0:eo(p(q,.1,.5))*fadeOut;
  const CNT=beat==1?['!','0','0']:['','3','2']; const LIT=beat==1?[1,0,0]:[0,1,1];
  [0,1,2].forEach(i=>{const e=$('R'+i);set(e,{opacity:rv,transform:`translateX(${(1-rv)*-40}px)`});
-   e.querySelector('.cnt').textContent=CNT[i];e.querySelector('.cnt').style.color=LIT[i]?'#dc2626':'#9ca0a6';
-   e.style.boxShadow=LIT[i]?'0 0 0 3px #fca5a5':'0 0 0 2px #e1e2e4'; e.style.background=LIT[i]?'#fef2f2':'#fff';
-   const w=$('w'+i);w.style.opacity=rv;w.setAttribute('stroke',LIT[i]?'#ef4444':'#eceef1');w.setAttribute('stroke-width',LIT[i]?7:4)});
- const cv=t<3.6?0:(t<7.2?eo(p(t,3.8,4.2))*(1-p(t,6.9,7.2)):eo(p(t,7.4,7.8)));
- $('w3').style.opacity=cv; set($('cw'),{opacity:cv,transform:`translateX(${(1-cv)*40}px)`}); $('leg').style.opacity=cv;
- // levels
- const ACT=[0,5.0,8.6]; const ai=beat==1?'tinggi':'rendah'; const fin=beat==1?'sedang':'tinggi';
- const acted=beat>0&&t>=ACT[beat];
- if(beat>0){setClaim('cc',acted?fin:ai,acted?'Tingkat risiko akhir':'Tingkat risiko awal'); setMarker('cc',ai,true)}
- const pk=acted?Math.exp(-(t-ACT[beat])*4):0; $('cc').style.transform=`scale(${1+.04*pk})`;
- const g=Math.max(...[2.0,4.4,8.0].map(a=>t>a&&t<a+1.2?Math.sin((t-a)/1.2*Math.PI):0));
+   const on=LIT[i]&&q>.4; e.querySelector('.cnt').textContent=CNT[i];e.querySelector('.cnt').style.color=LIT[i]?'#dc2626':'#9ca0a6';
+   e.style.boxShadow=on?'0 0 0 3px #fca5a5':'0 0 0 2px #e1e2e4'; e.style.background=on?'#fef2f2':'#fff';
+   const w=$('w'+i),L=WL[i]; const dk=eio(p(q,.8+i*.08,1.5+i*.08));
+   w.style.opacity=beat==0?0:fadeOut; w.setAttribute('stroke',LIT[i]?'#ef4444':'#e1e2e4'); w.setAttribute('stroke-width',LIT[i]?7:4);
+   w.style.strokeDasharray=LIT[i]?L:'2 12'; w.style.strokeDashoffset=LIT[i]?L*(1-dk):0; if(!LIT[i]) w.style.opacity=(beat==0?0:fadeOut)*dk;
+   for(let j=0;j<4;j++){const d=$(`p${i}_${j}`);const u=((q-1.2)*.9+j/4)%1; const act=beat>0&&LIT[i]&&q>1.2&&q<2.5;
+     if(act&&u>0){const pt=w.getPointAtLength(L*u);set(d,{left:pt.x+'px',top:pt.y+'px',opacity:Math.sin(u*Math.PI)*fadeOut,background:'#dc2626'})}else d.style.opacity=0}});
+ // guard -> card pulse
+ const w3=$('w3'),L3=WL[3]; w3.style.opacity=beat==0?0:fadeOut;
+ const pk=p(q,2.2,2.6); const mid=$('p3_0'); if(beat>0&&pk>0&&pk<1){const pt=w3.getPointAtLength(L3*eio(pk));set(mid,{left:pt.x+'px',top:pt.y+'px',opacity:fadeOut,background:'#059669',width:'22px',height:'22px'})}else mid.style.opacity=0;
+ w3.setAttribute('stroke',beat>0&&q>2.2?'#6ee7b7':'#e1e2e4');
+ const cv=beat==0?0:eo(p(q,.2,.6))*fadeOut; set($('cw'),{opacity:cv});
+ const from=beat==1?'tinggi':'rendah', to=beat==1?'sedang':'tinggi';
+ if(beat>0){const mk=p(q,2.6,3.3); morph(from,to,mk); $('cc').querySelector('.kk').textContent=mk>=.5?'Tingkat risiko akhir':'Tingkat risiko awal';
+   const bump=mk>0?Math.exp(-(q-2.6)*3)*Math.sin(cl((q-2.6)/.7)*Math.PI):0; $('cc').style.transform=`translateX(${(1-cv)*40}px) scale(${1+.03*bump})`;
+   // arrow badge
+   const ak=p(q,2.55,2.9),ao=p(q,3.4,3.6)*(beat==1?1:0); const up=beat==2;
+   $('arw').innerHTML=icon('x',0)+`<svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${up?'<path d="M12 19V5M5 12l7-7 7 7"/>':'<path d="M12 5v14M5 12l7 7 7-7"/>'}</svg>`;
+   set($('arw'),{left:'1765px',top:'390px',background:up?'#dc2626':'#f59e0b',opacity:ak*(1-ao)*fadeOut,transform:`translate(-50%,-50%) scale(${back(ak)}) translateY(${(up?-1:1)*Math.sin(cl((q-2.6)/.8)*Math.PI)*-10}px)`});
+ } else set($('arw'),{opacity:0});
+ const g=Math.max(...[2.0,5.2,8.8].map(a=>t>a&&t<a+1.0?Math.sin((t-a)/1.0*Math.PI):0));
  $('guard').style.filter=`drop-shadow(0 0 ${g*30}px rgba(5,150,105,.8))`;
+ $('guard').style.transform+=` scale(${1+.08*g})`;
 };
 render(0);
 </script></body></html>
