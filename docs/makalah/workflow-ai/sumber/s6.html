@@ -1,0 +1,43 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css">
+<style>
+#ent{width:300px;height:170px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:30px;font-weight:700}
+.tool{position:absolute;width:330px;height:150px;transform:translate(-50%,-50%);background:#fff;border-radius:24px;box-shadow:0 14px 36px rgba(20,33,61,.10);display:flex;align-items:center;gap:20px;padding:0 26px}
+.tool .ib{width:84px;height:84px;border-radius:22px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none;position:relative}
+.ring{position:absolute;inset:-8px;border-radius:26px;border:5px solid transparent;border-top-color:var(--blue)}
+.res{font-size:30px;font-weight:800}
+.res small{display:block;font-size:19px;font-weight:500;color:var(--muted);margin-top:2px}
+.pulse{position:absolute;width:22px;height:22px;border-radius:50%;background:var(--blue);box-shadow:0 0 16px var(--blue);transform:translate(-50%,-50%)}
+svg#ln{position:absolute;left:0;top:0}
+</style></head><body><div id="stage">
+<svg id="ln" width="1920" height="1080"></svg>
+<div id="ent" class="abs card" style="left:960px;top:560px"></div>
+<div class="tool" id="T0"></div><div class="tool" id="T1"></div><div class="tool" id="T2"></div><div class="tool" id="T3"></div>
+<div class="pulse" id="p0"></div><div class="pulse" id="p1"></div><div class="pulse" id="p2"></div><div class="pulse" id="p3"></div>
+</div>
+<script src="common.js"></script>
+<script>
+frame(6,'Cek bukti & fakta paralel');
+$('ent').innerHTML=icon('building',56,'#184f95',1.8)+'<span>PT Maju Jaya</span>';
+const C=[960,560];const POS=[[470,330],[1450,330],[470,800],[1450,800]];
+const T=[['search','0','lowongan di situs resmi'],['globe','12 hari','umur domain'],['db','87%','mirip kasus lama'],['megaphone','Ada','bantahan perusahaan']];
+T.forEach((x,i)=>{const e=$('T'+i);e.innerHTML=`<div class="ib">${icon(x[0],48,'#184f95',1.8)}<div class="ring"></div></div><div class="res"><span class="v"></span><small>${x[2]}</small></div>`;set(e,{left:POS[i][0]+'px',top:POS[i][1]+'px'})});
+$('ln').innerHTML=POS.map((q,i)=>`<path id="l${i}" d="M${C[0]} ${C[1]} L${q[0]} ${q[1]}" stroke="#d6dbe6" stroke-width="5" fill="none"/>`).join('');
+const DUR=6;
+window.render=function(t){
+ frameRender(t,DUR);
+ const ek=back(p(t,.3,.8)); set($('ent'),{opacity:p(t,.3,.5),transform:`translate(-50%,-50%) scale(${ek})`});
+ T.forEach((x,i)=>{const k=eo(p(t,.6,1.1));set($('T'+i),{opacity:k,transform:`translate(-50%,-50%) scale(${.85+.15*k})`});
+   const l=$('l'+i);
+   // parallel pulses 1.3-2.3 out
+   const q=p(t,1.3,2.2);const pt=[lerp(C[0],POS[i][0],eio(q)),lerp(C[1],POS[i][1],eio(q))];
+   set($('p'+i),{left:pt[0]+'px',top:pt[1]+'px',opacity:(q>0&&q<1)?1:0});
+   l.setAttribute('stroke',t>1.3?'#86b6ef':'#d6dbe6');
+   // spinner 2.2-3.4 (staggered finish)
+   const fin=3.0+i*.3; const spin=t>2.2&&t<fin; const ring=$('T'+i).querySelector('.ring');
+   ring.style.opacity=spin?1:0; ring.style.transform=`rotate(${t*540}deg)`;
+   const v=$('T'+i).querySelector('.v'); v.textContent=t>=fin?x[1]:''; v.style.color=['#c9372c','#c9372c','#c9372c','#c9372c'][i];
+   const rk=t>=fin?back(p(t,fin,fin+.35)):0; v.style.display='inline-block'; v.style.transform=`scale(${rk})`;
+   const g=t>=fin?Math.exp(-(t-fin)*3):0; $('T'+i).style.boxShadow=`0 0 0 ${g*22}px rgba(42,120,214,.2),0 14px 36px rgba(20,33,61,.10)`});
+};
+render(0);
+</script></body></html>

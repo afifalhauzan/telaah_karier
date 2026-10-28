@@ -1,0 +1,75 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css">
+<style>
+#sub{left:210px;top:160px;font-size:30px;font-weight:600;color:var(--muted);display:flex;gap:16px;align-items:center}
+#sub .pill{width:40px;height:40px;border-radius:50%;background:var(--soft);color:var(--deep);font-weight:800;display:flex;align-items:center;justify-content:center;font-size:22px}
+#out{left:240px;top:300px;width:860px;padding:44px 50px}
+.bar{height:16px;border-radius:8px;background:#e6e9f0;margin-bottom:18px}
+#srcs{display:flex;flex-direction:column;gap:16px;margin-top:30px}
+.src{display:inline-flex;align-self:flex-start;align-items:center;gap:14px;font-size:26px;font-weight:600;background:var(--soft);color:var(--deep);border-radius:999px;padding:12px 22px;border:3px solid transparent;overflow:hidden;white-space:nowrap}
+#scan{width:6px;height:520px;background:linear-gradient(transparent,#2e9e5b,transparent);box-shadow:0 0 22px #2e9e5b;border-radius:3px}
+#guard{left:1200px;top:430px;width:170px;height:170px}
+#gwrap{left:1420px;top:400px;text-align:center}
+.srcrow{position:absolute;left:240px;width:520px;height:120px;background:#fff;border-radius:22px;box-shadow:0 12px 30px rgba(20,33,61,.08);display:flex;align-items:center;gap:22px;padding:0 28px;font-size:28px;font-weight:700}
+.srcrow .ib{width:72px;height:72px;border-radius:18px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
+.srcrow .cnt{margin-left:auto;font-size:40px;font-weight:800}
+svg#ln{position:absolute;left:0;top:0}
+#arrow{left:1610px;top:640px;font-size:0}
+</style></head><body><div id="stage">
+<svg id="ln" width="1920" height="1080"></svg>
+<div id="sub" class="abs"><span class="pill" id="sp">a</span><span id="st"></span></div>
+<div id="out" class="abs card">
+ <div class="bar" style="width:92%"></div><div class="bar" style="width:78%"></div><div class="bar" style="width:85%"></div>
+ <div id="srcs"><span class="src" id="c0"></span><span class="src" id="c1"></span><span class="src" id="c2"></span></div>
+</div>
+<div id="scan" class="abs"></div>
+<div class="srcrow" id="R0"></div><div class="srcrow" id="R1"></div><div class="srcrow" id="R2"></div>
+<div id="guard" class="abs"></div>
+<div id="gwrap" class="abs"><div id="g"></div></div>
+</div>
+<script src="common.js"></script>
+<script>
+frame(8,'Guardrail');
+const SR=[['kemnaker.go.id',1],['majujaya.co.id',1],['berita-palsu.xyz/123',0]];
+SR.forEach((s,i)=>$('c'+i).innerHTML=icon('link',28,'#184f95')+`<span class="mono" style="font-size:24px">${s[0]}</span><span class="ck"></span>`);
+$('guard').innerHTML=`<svg width="170" height="170" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z" fill="#2e9e5b"/><path id="gk" d="m8 12 3 3 5-6" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+$('g').innerHTML=gaugeSVG('gg',380);
+const RR=[['chat','Prompt'],['flag','Sinyal'],['search','Bukti']];
+RR.forEach((r,i)=>{const e=$('R'+i);e.innerHTML=`<div class="ib">${icon(r[0],40,'#184f95',2)}</div><span>${r[1]}</span><span class="cnt"></span>`;set(e,{top:(300+i*160)+'px'})});
+$('ln').innerHTML=[0,1,2].map(i=>`<path id="w${i}" d="M760 ${360+i*160} C980 ${360+i*160} 1050 515 1200 515" stroke="#d6dbe6" stroke-width="5" fill="none"/>`).join('')+`<path id="w3" d="M1370 515 L1440 515" stroke="#d6dbe6" stroke-width="5" fill="none"/>`;
+const SUB=['Hapus sumber palsu','Vonis dari prompt → turunkan','Bukti kuat → naikkan'];
+const DUR=11;
+window.render=function(t){
+ frameRender(t,DUR);
+ const beat=t<3.6?0:t<7.2?1:2; $('sp').textContent='abc'[beat]; $('st').textContent=SUB[beat];
+ const bt=[0,3.6,7.2][beat]; const sk=eo(p(t,bt+.1,bt+.5)); set($('sub'),{opacity:sk*(beat==2?1:1-p(t,bt+3.4,bt+3.6)),transform:`translateY(${(1-sk)*10}px)`});
+ // guard always visible
+ const gk2=back(p(t,.3,.8)); set($('guard'),{opacity:p(t,.3,.5),transform:`scale(${gk2})`});
+ // beat a
+ const oa=eo(p(t,.2,.7))*(1-p(t,3.3,3.6)); set($('out'),{opacity:oa,transform:`translateY(${(1-eo(p(t,.2,.7)))*30}px)`});
+ const s=p(t,1.0,2.2); set($('scan'),{opacity:(t>1&&t<2.3)?1:0,left:lerp(240,1100,eio(s))+'px',top:'300px'});
+ SR.forEach((x,i)=>{const c=$('c'+i);const when=1.0+ (i==2?.95:.35+i*.2);const ck=c.querySelector('.ck');
+   if(t>when){ck.innerHTML=icon(x[1]?'check':'x',30,x[1]?'#2e9e5b':'#c9372c',3);c.style.borderColor=x[1]?'transparent':'#c9372c';c.style.background=x[1]?'#e8f1fd':'#fdecea';c.style.color=x[1]?'#184f95':'#c9372c'}else{ck.innerHTML='';c.style.borderColor='transparent';c.style.background='#e8f1fd'}
+   if(i==2){const r=eio(p(t,2.6,3.1));set(c,{opacity:1-r,transform:`translateX(${r*80}px)`,maxHeight:(70*(1-r))+'px',padding:`${12*(1-r)}px 22px`})}});
+ // gauge visible in b,c
+ const gv=eo(p(t,3.7,4.1)); set($('gwrap'),{opacity:gv});
+ // beat b and c rows
+ const rv=t<3.6?0:(t<7.2?eo(p(t,3.7,4.1))*(1-p(t,6.9,7.2)):eo(p(t,7.3,7.7)));
+ const prompt=beat==2?'normal':'manip';
+ const CNT=beat==1?['!','0','0']:['','3','2'];
+ const LIT=beat==1?[1,0,0]:[0,1,1];
+ [0,1,2].forEach(i=>{const e=$('R'+i);set(e,{opacity:rv,transform:`translateX(${(1-rv)*-40}px)`});
+   e.querySelector('.cnt').textContent=CNT[i];e.querySelector('.cnt').style.color=LIT[i]?'#c9372c':'#9aa3b5';
+   e.style.border=LIT[i]?'3px solid #c9372c':'3px solid transparent';
+   const w=$('w'+i);w.style.opacity=rv;w.setAttribute('stroke',LIT[i]?'#c9372c':'#e1e5ee');w.setAttribute('stroke-width',LIT[i]?7:4)});
+ $('w3').style.opacity=t>3.6?gv:0;
+ // gauge value
+ let v=0; if(beat==1){v=lerp(.85,.5,eio(p(t,5.0,6.0)))} else if(beat==2){v=lerp(.15,.85,back(p(t,8.6,9.6)))}
+ if(t>=3.6) setGauge('gg',v);
+ // guard pulse when acting
+ const act=[2.0,5.0,8.6]; const g=Math.max(...act.map(a=>t>a&&t<a+1.2?Math.sin((t-a)/1.2*Math.PI):0));
+ $('guard').style.filter=`drop-shadow(0 0 ${g*30}px rgba(46,158,91,.8))`;
+ set($('guard'),{left:(t<3.6?1200:1200)+'px'});
+ $('ln').style.opacity=t<3.6?0:1;
+};
+render(0);
+</script></body></html>

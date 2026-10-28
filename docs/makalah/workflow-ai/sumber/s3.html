@@ -1,0 +1,42 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css">
+<style>
+#post{left:150px;top:230px;width:780px;padding:46px 50px;font-size:34px;line-height:1.75;color:#3b4459}
+.tk{position:relative;border-radius:8px;padding:2px 4px;margin:0 -4px;white-space:nowrap}
+.tk .hl{position:absolute;left:0;top:4px;bottom:4px;width:0;border-radius:8px;background:rgba(57,135,229,.28);z-index:0}
+.tk b{position:relative;z-index:1;font-weight:600;color:var(--ink)}
+#slots{left:1080px;top:200px;width:690px}
+.slot{display:flex;align-items:center;gap:22px;height:96px;margin-bottom:16px;background:#fff;border-radius:20px;padding:0 26px;box-shadow:0 10px 30px rgba(20,33,61,.07)}
+.slot .ib{width:56px;height:56px;border-radius:14px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
+.slot .v{font-size:30px;font-weight:700;color:var(--ink)}
+.fly{position:absolute;font-size:30px;font-weight:700;color:var(--deep);background:#cde2fb;border-radius:10px;padding:4px 12px;white-space:nowrap}
+</style></head><body><div id="stage">
+<div id="post" class="abs card">
+<span class="tk" id="t0"><span class="hl"></span><b>PT Maju Jaya</b></span> membuka lowongan <span class="tk" id="t1"><span class="hl"></span><b>Admin Gudang</b></span>. Gaji <span class="tk" id="t5"><span class="hl"></span><b>Rp6 juta</b></span>/bulan. Daftar sebelum <span class="tk" id="t3"><span class="hl"></span><b>30 Okt</b></span> lewat <span class="tk mono" id="t4"><span class="hl"></span><b>bit.ly/daftar-mj</b></span> atau WA <span class="tk" id="t2"><span class="hl"></span><b>0812 xxxx</b></span>
+</div>
+<div id="slots" class="abs"></div>
+</div>
+<script src="common.js"></script>
+<script>
+frame(3,'Susun informasi penting');
+const IC=['building','brief','phone','cal','link','money'];
+$('slots').innerHTML=IC.map((n,i)=>`<div class="slot" id="s${i}"><div class="ib">${icon(n,32,'#184f95')}</div><div class="v" id="v${i}"></div></div>`).join('');
+const VAL=[...Array(6)].map((_,i)=>$('t'+i).querySelector('b').textContent);
+const flies=VAL.map((v,i)=>{const d=document.createElement('div');d.className='fly'+(i==4?' mono':'');d.textContent=v;$('stage').appendChild(d);return d});
+const R=el=>{const r=el.getBoundingClientRect();return r};
+const ORDER=[0,1,2,3,4,5];const T0=1.0,STEP=.55;
+const DUR=5.5;
+window.render=function(t){
+ frameRender(t,DUR);
+ const pi=eo(p(t,.2,.8)); set($('post'),{opacity:pi,transform:`translateX(${(1-pi)*-40}px)`});
+ IC.forEach((_,i)=>{const k=eo(p(t,.4+i*.07,.9+i*.07));set($('s'+i),{opacity:k,transform:`translateX(${(1-k)*40}px)`})});
+ ORDER.forEach((ti,j)=>{const st=T0+j*STEP;const tk=$('t'+ti);
+   tk.querySelector('.hl').style.width=(tk.offsetWidth*eio(p(t,st,st+.3)))+'px';
+   const f=flies[ti];const k=p(t,st+.3,st+.9);const e=eio(k);
+   const a=R(tk),b=R($('v'+ti));
+   const x=lerp(a.left,b.left-12,e),y=lerp(a.top-4,b.top-4,e)-Math.sin(e*Math.PI)*60;
+   set(f,{left:x+'px',top:y+'px',opacity:(k>0&&k<1)?1:0});
+   $('v'+ti).textContent=k>=1?VAL[ti]:'';$('v'+ti).className='v'+(ti==4?' mono':'');
+   const g=k>=1?Math.exp(-(t-st-.9)*4):0; $('s'+ti).style.boxShadow=`0 0 0 ${g*10}px rgba(42,120,214,.25),0 10px 30px rgba(20,33,61,.07)`});
+};
+render(0);
+</script></body></html>

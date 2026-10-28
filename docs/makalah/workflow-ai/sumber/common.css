@@ -1,0 +1,15 @@
+:root{--ink:#14213d;--muted:#5b6478;--line:#dfe3ec;--blue:#2a78d6;--deep:#184f95;--soft:#e8f1fd;--bg:#f5f7fb;--red:#c9372c;--redsoft:#fdecea;--green:#2e9e5b;--amber:#e0a526}
+*{box-sizing:border-box;margin:0;padding:0}
+body{width:1920px;height:1080px;overflow:hidden;background:var(--bg);font-family:Inter,sans-serif;color:var(--ink)}
+#stage{position:relative;width:1920px;height:1080px}
+.abs{position:absolute}
+#hdr{left:120px;top:72px;display:flex;align-items:center;gap:22px}
+#hdr .n{width:72px;height:72px;border-radius:20px;background:var(--blue);color:#fff;font-size:40px;font-weight:800;display:flex;align-items:center;justify-content:center}
+#hdr .l{font-size:44px;font-weight:700;letter-spacing:-.5px}
+#prog{left:50%;transform:translateX(-50%);bottom:56px;display:flex;gap:14px}
+#prog i{display:block;width:44px;height:8px;border-radius:4px;background:#d6dbe6}
+#prog i.on{background:var(--blue)} #prog i.done{background:#9ec5f4}
+.card{background:#fff;border-radius:22px;box-shadow:0 20px 50px rgba(20,33,61,.10)}
+.chip{display:inline-flex;align-items:center;gap:10px;font-size:24px;font-weight:600;background:var(--soft);color:var(--deep);border-radius:999px;padding:10px 20px;white-space:nowrap}
+.mono{font-family:'JetBrains Mono',monospace}
+.ico{width:28px;height:28px;flex:none}

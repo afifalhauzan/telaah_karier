@@ -1,0 +1,49 @@
+<!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css">
+<style>
+.node{position:absolute;width:150px;height:150px;border-radius:36px;display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 16px 40px rgba(20,33,61,.10);transform:translate(-50%,-50%)}
+#hub{width:200px;height:200px;border-radius:50%;background:var(--blue)}
+.dest{width:170px;height:170px}
+.dl{position:absolute;font-size:28px;font-weight:600;color:var(--muted);transform:translateY(-50%);white-space:nowrap}
+.dot{position:absolute;width:30px;height:30px;border-radius:50%;background:var(--blue);box-shadow:0 0 18px var(--blue);transform:translate(-50%,-50%)}
+svg#paths{position:absolute;left:0;top:0}
+</style></head><body><div id="stage">
+<svg id="paths" width="1920" height="1080"></svg>
+<div id="in" class="node"></div>
+<div id="hub" class="node"></div>
+<div id="d0" class="node dest"></div><div id="d1" class="node dest"></div><div id="d2" class="node dest"></div>
+<div id="l0" class="dl">Risiko lowongan</div><div id="l1" class="dl">Alur rekrutmen</div><div id="l2" class="dl">Pertanyaan lanjutan</div>
+<div id="dot" class="dot"></div>
+</div>
+<script src="common.js"></script>
+<script>
+frame(2,'Router');
+const IN=[360,560],HUB=[860,560],D=[[1360,330],[1360,560],[1360,790]];
+const place=(id,[x,y])=>set($(id),{left:x+'px',top:y+'px'});
+place('in',IN);place('hub',HUB);D.forEach((d,i)=>{place('d'+i,d);set($('l'+i),{left:(d[0]+110)+'px',top:d[1]+'px'})});
+$('hub').innerHTML=icon('router',110,'#fff',1.8);
+['brief','flow','question'].forEach((n,i)=>$('d'+i).innerHTML=icon(n,80,'#184f95',1.8));
+const INS=['image','flow','question'];
+let svg='';svg+=`<path d="M${IN[0]} ${IN[1]} L${HUB[0]} ${HUB[1]}" stroke="#d6dbe6" stroke-width="6" fill="none"/>`;
+D.forEach((d,i)=>{svg+=`<path id="pp${i}" d="M${HUB[0]} ${HUB[1]} C${HUB[0]+250} ${HUB[1]} ${d[0]-250} ${d[1]} ${d[0]} ${d[1]}" stroke="#d6dbe6" stroke-width="6" fill="none"/>`});
+$('paths').innerHTML=svg;
+const DUR=5.5;const SEG=[[0.9,2.3],[2.3,3.7],[3.7,5.1]];
+window.render=function(t){
+ frameRender(t,DUR);
+ const k=eo(p(t,.2,.8));['in','hub','d0','d1','d2'].forEach((id,i)=>set($(id),{opacity:eo(p(t,.2+i*.08,.7+i*.08)),transform:`translate(-50%,-50%) scale(${.8+.2*eo(p(t,.2+i*.08,.7+i*.08))})`}));
+ [0,1,2].forEach(i=>set($('l'+i),{opacity:eo(p(t,.6+i*.1,1.1+i*.1))}));
+ let cur=SEG.findIndex(([a,b])=>t>=a&&t<b); if(t>=SEG[2][1]) cur=-1;
+ const ii=cur<0?2:cur; $('in').innerHTML=icon(INS[ii],80,'#5b6478',1.8);
+ const dot=$('dot');
+ [0,1,2].forEach(i=>{const pp=$('pp'+i);const done=t>=SEG[i][0]+.9;pp.setAttribute('stroke',(cur===i&&t>=SEG[i][0]+.55)||(t>=SEG[2][1])?'#2a78d6':'#d6dbe6')});
+ if(cur>=0){const [a,b]=SEG[cur];const q=(t-a)/(b-a);
+   if(q<.38){const e=eio(q/.38);set(dot,{opacity:1,left:lerp(IN[0]+80,HUB[0],e)+'px',top:IN[1]+'px'})}
+   else if(q<.5){set(dot,{opacity:0})}
+   else{const e=eio(cl((q-.5)/.4));const L=$('pp'+cur).getTotalLength();const pt=$('pp'+cur).getPointAtLength(L*e);set(dot,{opacity:e<1?1:0,left:pt.x+'px',top:pt.y+'px'})}
+   const hp=Math.exp(-Math.abs(q-.44)*14); set($('hub'),{boxShadow:`0 0 0 ${hp*26}px rgba(42,120,214,.18),0 16px 40px rgba(20,33,61,.10)`});
+   $('hub').querySelector('svg').style.transform=`rotate(${q*180}deg)`;
+ } else set(dot,{opacity:0});
+ [0,1,2].forEach(i=>{const hit=t-(SEG[i][0]+(SEG[i][1]-SEG[i][0])*.9);const g=hit>0?Math.exp(-hit*3):0;const lit=t>=SEG[i][0]+(SEG[i][1]-SEG[i][0])*.9;
+   set($('d'+i),{background:lit?'#e8f1fd':'#fff',boxShadow:`0 0 0 ${g*28}px rgba(42,120,214,.2),0 16px 40px rgba(20,33,61,.10)`});$('l'+i).style.color=lit?'#14213d':'#5b6478'});
+};
+render(0);
+</script></body></html>
