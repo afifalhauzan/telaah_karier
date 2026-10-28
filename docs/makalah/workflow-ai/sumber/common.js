@@ -35,22 +35,38 @@ const ICONS={
  camera:'<rect x="3" y="7" width="18" height="13" rx="2"/><circle cx="12" cy="13" r="3.5"/><path d="M8 7l1.5-3h5L16 7"/>',
  bank:'<path d="M3 10 12 4l9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 20h18"/>',
  megaphone:'<path d="M3 10v4h4l8 5V5L7 10zM18 9a4 4 0 0 1 0 6"/>',
+ shieldAlert:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M12 8v4M12 16h.01"/>',
+ shieldCheck:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/>',
+ shieldQ:'<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="M9.1 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3M12 17h.01"/>',
  router:'<circle cx="12" cy="12" r="3"/><path d="M12 9V4M12 15v5M9 12H4M15 12h5"/>',
 };
 function icon(name,size=28,color='currentColor',sw=2){return `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round">${ICONS[name]}</svg>`}
-function frame(step,label){
-  const s=$('stage');
-  s.insertAdjacentHTML('beforeend',`<div id="hdr" class="abs"><div class="n">${step}</div><div class="l">${label}</div></div><div id="prog" class="abs">${[1,2,3,4,5,6,7,8].map(i=>`<i class="${i<step?'done':i==step?'on':''}"></i>`).join('')}</div>`);
-}
-function frameRender(t,dur){
-  const k=eo(p(t,0,.5)); set($('hdr'),{opacity:k,transform:`translateY(${(1-k)*-16}px)`});
-  const f=p(t,dur-.35,dur); $('stage').style.opacity=1-f*0;
-}
+function frame(step,label){}
+function frameRender(t,dur){}
 // gauge: v in [0,1]
 function gaugeSVG(id,size=360){return `<svg id="${id}" width="${size}" height="${size*0.62}" viewBox="0 0 200 124">
- <path d="M20 110 A80 80 0 0 1 66 38" fill="none" stroke="#2e9e5b" stroke-width="18"/>
- <path d="M70 36 A80 80 0 0 1 130 36" fill="none" stroke="#e0a526" stroke-width="18"/>
- <path d="M134 38 A80 80 0 0 1 180 110" fill="none" stroke="#c9372c" stroke-width="18"/>
- <g id="${id}-n"><path d="M100 110 L100 42" stroke="#14213d" stroke-width="6" stroke-linecap="round"/></g>
- <circle cx="100" cy="110" r="10" fill="#14213d"/></svg>`}
+ <path d="M20 110 A80 80 0 0 1 66 38" fill="none" stroke="#059669" stroke-width="18"/>
+ <path d="M70 36 A80 80 0 0 1 130 36" fill="none" stroke="#f59e0b" stroke-width="18"/>
+ <path d="M134 38 A80 80 0 0 1 180 110" fill="none" stroke="#dc2626" stroke-width="18"/>
+ <g id="${id}-n"><path d="M100 110 L100 42" stroke="#08090c" stroke-width="6" stroke-linecap="round"/></g>
+ <circle cx="100" cy="110" r="10" fill="#08090c"/></svg>`}
 function setGauge(id,v){$(id+'-n').setAttribute('transform',`rotate(${-90+180*v} 100 110)`)}
+
+// ClaimCard (web/components/cards/ClaimCard.tsx) at 2x
+const LV={tinggi:{label:'Risiko Tinggi',advice:'Jangan transfer uang atau kirim data pribadi dulu.',icon:'shieldAlert',card:'#fecaca',header:'#fef2f2',badge:'#dc2626',title:'#b91c1c',seg:'#ef4444',i:2},
+ sedang:{label:'Risiko Sedang',advice:'Verifikasi ke kanal resmi perusahaan sebelum lanjut.',icon:'shieldQ',card:'#fde68a',header:'#fffbeb',badge:'#f59e0b',title:'#92400e',seg:'#fbbf24',i:1},
+ rendah:{label:'Risiko Rendah',advice:'Belum ada tanda bahaya utama, tetap cocokkan dengan kanal resmi.',icon:'shieldCheck',card:'#a7f3d0',header:'#ecfdf5',badge:'#059669',title:'#047857',seg:'#10b981',i:0}};
+function claimHTML(id,kicker='Tingkat risiko awal'){return `<div id="${id}" style="width:740px;border-radius:24px;border:4px solid #e1e2e4;background:#fff;overflow:hidden;box-shadow:0 2px 6px rgba(0,0,0,.05)">
+ <div class="hd" style="display:flex;align-items:center;gap:28px;padding:26px 32px">
+  <span class="bd" style="width:88px;height:88px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex:none"></span>
+  <div style="flex:1;min-width:0"><div class="kk" style="white-space:nowrap;font-size:20px;font-weight:500;letter-spacing:.16em;text-transform:uppercase;color:#60646c">${kicker}</div><div class="tt" style="white-space:nowrap;font-size:38px;font-weight:700;line-height:1.15"></div></div>
+  <div style="width:240px;flex:none;position:relative"><div class="mk" style="position:absolute;top:-46px;width:36px;height:36px;margin-left:-18px;border-radius:50%;background:#8b5cf6;display:none;align-items:center;justify-content:center;box-shadow:0 0 0 4px #fff">${icon('spark',22,'#fff',2.6)}</div>
+   <div style="display:flex;gap:8px">${[0,1,2].map(k=>`<span class="sg" style="height:16px;flex:1;border-radius:8px"></span>`).join('')}</div>
+   <div style="display:flex;justify-content:space-between;font-size:20px;color:#60646c;margin-top:6px"><span>Rendah</span><span>Sedang</span><span>Tinggi</span></div></div>
+ </div>
+ <div style="padding:22px 32px 26px"><div class="ad" style="font-size:28px;font-weight:600"></div><div style="font-size:23px;color:#60646c;margin-top:8px">Ini penilaian awal, bukan vonis.</div></div></div>`}
+function setClaim(id,lv,kicker){const e=$(id),L=LV[lv];e.style.borderColor=L.card;e.querySelector('.hd').style.background=L.header;
+ const b=e.querySelector('.bd');b.style.background=L.badge;if(b.dataset.lv!==lv){b.innerHTML=icon(L.icon,48,'#fff',2);b.dataset.lv=lv}
+ e.querySelector('.tt').textContent=L.label;e.querySelector('.tt').style.color=L.title;e.querySelector('.ad').textContent=L.advice;e.querySelector('.ad').style.color=L.title;
+ e.querySelectorAll('.sg').forEach((s,k)=>s.style.background=k<=L.i?L.seg:'rgba(0,0,0,.1)');if(kicker)e.querySelector('.kk').textContent=kicker}
+function setMarker(id,lv,show){const m=$(id).querySelector('.mk');m.style.display=show?'flex':'none';m.style.left=((LV[lv].i+.5)*(240-16)/3+LV[lv].i*8)+'px'}

@@ -1,18 +1,18 @@
 <!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css">
 <style>
-.node{position:absolute;display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 16px 40px rgba(20,33,61,.10);transform:translate(-50%,-50%)}
+.node{position:absolute;display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06);transform:translate(-50%,-50%)}
 #hub{width:200px;height:200px;border-radius:50%;background:var(--blue)}
 .dest{width:150px;height:150px;border-radius:36px}
 .dl{position:absolute;font-size:28px;font-weight:600;color:var(--muted);transform:translateY(-50%);white-space:nowrap}
 svg#paths{position:absolute;left:0;top:0}
 .inp{position:absolute;left:330px;top:560px;transform:translate(-50%,-50%);transform-origin:center}
-#poster{width:330px;height:430px;border-radius:18px;background:linear-gradient(160deg,#ffcc3d,#ff8a3d);padding:30px 28px;color:#2b1a00;box-shadow:0 16px 40px rgba(20,33,61,.18)}
+#poster{width:330px;height:430px;border-radius:18px;background:linear-gradient(160deg,#ffcc3d,#ff8a3d);padding:30px 28px;color:#2b1a00;box-shadow:0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06)}
 #poster .h{font-size:40px;font-weight:900;line-height:1.05;letter-spacing:-1px}
 #poster .co{font-size:22px;font-weight:700;margin-top:14px;background:#2b1a00;color:#ffcc3d;display:inline-block;padding:4px 10px;border-radius:6px}
 #poster .pos{font-size:28px;font-weight:800;margin-top:22px}
 #poster .gj{font-size:24px;font-weight:700;margin-top:6px}
 #poster .wa{position:absolute;left:28px;right:28px;bottom:28px;background:#fff;border-radius:12px;padding:10px 14px;font-size:22px;font-weight:700;display:flex;gap:10px;align-items:center}
-.bub{max-width:440px;background:var(--blue);color:#fff;border-radius:28px 28px 8px 28px;padding:26px 30px;font-size:28px;line-height:1.5;box-shadow:0 16px 40px rgba(20,33,61,.15)}
+.bub{max-width:440px;background:var(--blue);color:#fff;border-radius:28px 28px 8px 28px;padding:26px 30px;font-size:28px;line-height:1.5;box-shadow:0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06)}
 </style></head><body><div id="stage">
 <svg id="paths" width="1920" height="1080"></svg>
 <div id="i0" class="inp"><div id="poster"><div class="h">LOWONGAN<br>KERJA</div><div class="co">PT MAJU JAYA</div><div class="pos">Admin Gudang</div><div class="gj">Gaji Rp6 juta</div><div class="wa"></div></div></div>
@@ -25,13 +25,13 @@ svg#paths{position:absolute;left:0;top:0}
 <script src="common.js"></script>
 <script>
 frame(2,'Router');
-$('poster').querySelector('.wa').innerHTML=icon('phone',24,'#2e9e5b',2.4)+'0812 3456 7890';
+$('poster').querySelector('.wa').innerHTML=icon('phone',24,'#059669',2.4)+'0812 3456 7890';
 const HUB=[960,560],D=[[1430,320],[1430,560],[1430,800]];
 const place=(id,[x,y])=>set($(id),{left:x+'px',top:y+'px'});
 place('hub',HUB);D.forEach((d,i)=>{place('d'+i,d);set($('l'+i),{left:(d[0]+100)+'px',top:d[1]+'px'})});
 $('hub').innerHTML=icon('router',110,'#fff',1.8);
-['brief','flow','question'].forEach((n,i)=>$('d'+i).innerHTML=icon(n,76,'#184f95',1.8));
-$('paths').innerHTML=`<path d="M560 560 L${HUB[0]} ${HUB[1]}" stroke="#d6dbe6" stroke-width="6" fill="none"/>`+D.map((d,i)=>`<path d="M${HUB[0]} ${HUB[1]} C${HUB[0]+220} ${HUB[1]} ${d[0]-220} ${d[1]} ${d[0]} ${d[1]}" stroke="#d6dbe6" stroke-width="6" fill="none"/><path id="pp${i}" d="M${HUB[0]} ${HUB[1]} C${HUB[0]+220} ${HUB[1]} ${d[0]-220} ${d[1]} ${d[0]} ${d[1]}" stroke="#d6dbe6" stroke-width="6" fill="none"/>`).join('');
+['brief','flow','question'].forEach((n,i)=>$('d'+i).innerHTML=icon(n,76,'#0a7f80',1.8));
+$('paths').innerHTML=`<path d="M560 560 L${HUB[0]} ${HUB[1]}" stroke="#e1e2e4" stroke-width="6" fill="none"/>`+D.map((d,i)=>`<path d="M${HUB[0]} ${HUB[1]} C${HUB[0]+220} ${HUB[1]} ${d[0]-220} ${d[1]} ${d[0]} ${d[1]}" stroke="#e1e2e4" stroke-width="6" fill="none"/><path id="pp${i}" d="M${HUB[0]} ${HUB[1]} C${HUB[0]+220} ${HUB[1]} ${d[0]-220} ${d[1]} ${d[0]} ${d[1]}" stroke="#e1e2e4" stroke-width="6" fill="none"/>`).join('');
 const DUR=10.5; const SEG=[[0.6,3.8],[3.8,7.0],[7.0,10.2]];
 window.render=function(t){
  frameRender(t,DUR);
@@ -46,14 +46,14 @@ window.render=function(t){
    set(el,{left:x+'px',top:y+'px',opacity:p(t,a,a+.15)*(1-p(t,a+1.9,a+2.0)),transform:`translate(-50%,-50%) scale(${sc})`});
    // route
    const pp=$('pp'+i); const r=p(t,a+2.1,a+2.8);
-   const L2=pp.getTotalLength(); pp.style.strokeDasharray=L2; pp.style.strokeDashoffset=L2*(1-eio(r)); const old=t>=b; pp.setAttribute('stroke', old?'#b7d3f6':'#2a78d6'); pp.style.opacity=r>0?1:0;
+   const L2=pp.getTotalLength(); pp.style.strokeDasharray=L2; pp.style.strokeDashoffset=L2*(1-eio(r)); const old=t>=b; pp.setAttribute('stroke', old?'#b7e2e2':'#0e9e9e'); pp.style.opacity=r>0?1:0;
    const hit=t-(a+2.8); const lit=hit>0&&(t<b||i==2&&t>=b);
-   set($('d'+i),{background:lit?'#e8f1fd':'#fff',boxShadow:`0 0 0 ${lit?Math.exp(-hit*3)*28:0}px rgba(42,120,214,.2),0 16px 40px rgba(20,33,61,.10)`});
-   $('l'+i).style.color=lit?'#14213d':'#5b6478';$('l'+i).style.fontWeight=lit?700:600;});
+   set($('d'+i),{background:lit?'#e7f5f5':'#fff',boxShadow:`0 0 0 ${lit?Math.exp(-hit*3)*28:0}px rgba(14,158,158,.2),0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06)`});
+   $('l'+i).style.color=lit?'#08090c':'#60646c';$('l'+i).style.fontWeight=lit?700:600;});
  // base grey paths under the animated ones
  const cur=SEG.findIndex(([a,b])=>t>=a&&t<b);
  if(cur>=0){const [a]=SEG[cur];const q=t-a;const hp=Math.exp(-Math.abs(q-2.0)*5);
-   set($('hub'),{boxShadow:`0 0 0 ${hp*30}px rgba(42,120,214,.18),0 16px 40px rgba(20,33,61,.10)`});
+   set($('hub'),{boxShadow:`0 0 0 ${hp*30}px rgba(14,158,158,.18),0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06)`});
    $('hub').querySelector('svg').style.transform=`rotate(${q>1.9&&q<2.4?(q-1.9)*360:0}deg)`;}
 };
 render(0);

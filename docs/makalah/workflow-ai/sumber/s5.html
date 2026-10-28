@@ -1,7 +1,7 @@
 <!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css">
 <style>
-.fd{position:absolute;width:400px;height:100px;background:#fff;border-radius:20px;box-shadow:0 10px 30px rgba(20,33,61,.08);display:flex;align-items:center;gap:18px;padding:0 24px;font-size:28px;font-weight:600;border:3px solid transparent;white-space:nowrap}
-.law{position:absolute;width:700px;background:#fff;border-radius:24px;box-shadow:0 14px 36px rgba(20,33,61,.10);padding:26px 30px;border:3px solid transparent}
+.fd{position:absolute;width:400px;height:100px;background:#fff;border-radius:20px;box-shadow:0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06);display:flex;align-items:center;gap:18px;padding:0 24px;font-size:28px;font-weight:600;border:3px solid transparent;white-space:nowrap}
+.law{position:absolute;width:700px;background:#fff;border-radius:24px;box-shadow:0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06);padding:26px 30px;border:3px solid transparent}
 .law .hd{display:flex;align-items:center;gap:20px}
 .law .ib{width:76px;height:76px;border-radius:20px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
 .law .ttl{font-size:30px;font-weight:800}
@@ -20,13 +20,13 @@ svg#wires{position:absolute;left:0;top:0}
 <script>
 frame(5,'Cek aturan sinyal');
 const FD=[['money','Biaya Rp150.000'],['camera','Selfie pegang KTP'],['phone','Kontak WhatsApp']];
-FD.forEach((f,i)=>{const e=$('f'+i);e.innerHTML=icon(f[0],36,'#184f95')+`<span>${f[1]}</span><span class="fl">${icon('flag',34,'#c9372c',2.2)}</span>`;set(e,{left:'130px',top:(300+i*190)+'px'})});
+FD.forEach((f,i)=>{const e=$('f'+i);e.innerHTML=icon(f[0],36,'#0a7f80')+`<span>${f[1]}</span><span class="fl">${icon('flag',34,'#dc2626',2.2)}</span>`;set(e,{left:'130px',top:(300+i*190)+'px'})});
 const LY=[250,600];
 set($('L0'),{left:'1080px',top:LY[0]+'px'});set($('L1'),{left:'1080px',top:LY[1]+'px'});
-$('L0').querySelector('.ib').innerHTML=icon('scale',46,'#184f95',1.8);$('L1').querySelector('.ib').innerHTML=icon('lock',46,'#184f95',1.8);
+$('L0').querySelector('.ib').innerHTML=icon('scale',46,'#0a7f80',1.8);$('L1').querySelector('.ib').innerHTML=icon('lock',46,'#0a7f80',1.8);
 const W=[[0,0],[1,1]];
-$('wires').innerHTML=W.map(([f,l],i)=>`<path id="w${i}" d="M530 ${350+f*190} C800 ${350+f*190} 820 ${LY[l]+64} 1080 ${LY[l]+64}" stroke="#c9372c" stroke-width="5" fill="none" stroke-linecap="round"/>`).join('')+
- `<path id="w2" d="M530 730 L760 730" stroke="#d6dbe6" stroke-width="5" fill="none" stroke-dasharray="10 10"/>`;
+$('wires').innerHTML=W.map(([f,l],i)=>`<path id="w${i}" d="M530 ${350+f*190} C800 ${350+f*190} 820 ${LY[l]+64} 1080 ${LY[l]+64}" stroke="#dc2626" stroke-width="5" fill="none" stroke-linecap="round"/>`).join('')+
+ `<path id="w2" d="M530 730 L760 730" stroke="#e1e2e4" stroke-width="5" fill="none" stroke-dasharray="10 10"/>`;
 const QH=[...document.querySelectorAll('.law .q div')].map(d=>d.offsetHeight+20);
 const DUR=8;
 window.render=function(t){
@@ -36,11 +36,11 @@ window.render=function(t){
  const tm=[1.5,3.6];
  W.forEach(([f,l],i)=>{const w=$('w'+i);const L=w.getTotalLength();const k=eio(p(t,tm[i],tm[i]+.7));w.style.strokeDasharray=L;w.style.strokeDashoffset=L*(1-k);
    const hit=t>=tm[i]+.7; const g=hit?Math.exp(-(t-tm[i]-.7)*3):0;
-   $('f'+f).style.borderColor=hit?'#c9372c':'transparent';$('f'+f).style.background=hit?'#fdecea':'#fff';
+   $('f'+f).style.borderColor=hit?'#dc2626':'transparent';$('f'+f).style.background=hit?'#fef2f2':'#fff';
    set($('f'+f).querySelector('.fl'),{transform:`scale(${hit?back(p(t,tm[i]+.7,tm[i]+1.1)):0})`});
-   $('L'+l).style.borderColor=hit?'#c9372c':'transparent';
+   $('L'+l).style.borderColor=hit?'#dc2626':'transparent';
    $('L'+l).querySelector('.q').style.height=(QH[l]*eio(p(t,tm[i]+.8,tm[i]+1.4)))+'px';
-   set($('L'+l),{boxShadow:`0 0 0 ${g*24}px rgba(201,55,44,.15),0 14px 36px rgba(20,33,61,.10)`})});
+   set($('L'+l),{boxShadow:`0 0 0 ${g*24}px rgba(220,38,38,.15),0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06)`})});
  const k3=p(t,5.8,6.4); $('w2').style.opacity=k3>0?1:0; $('w2').setAttribute('d',`M530 730 L${lerp(530,760,eio(k3))} 730`);
  set($('f2').querySelector('.fl'),{transform:'scale(0)'}); if(t>6.4) $('f2').style.opacity=(+$('f2').style.opacity*.5).toString();
 };

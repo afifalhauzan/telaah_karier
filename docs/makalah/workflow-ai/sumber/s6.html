@@ -1,17 +1,17 @@
 <!doctype html><html><head><meta charset="utf-8"><link rel="stylesheet" href="common.css">
 <style>
 #ent{width:300px;height:170px;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;font-size:30px;font-weight:700}
-.tool{position:absolute;width:380px;height:170px;transform:translate(-50%,-50%);background:#fff;border-radius:24px;box-shadow:0 14px 36px rgba(20,33,61,.10);display:flex;align-items:center;gap:22px;padding:0 26px;border:3px solid transparent}
+.tool{position:absolute;width:430px;height:170px;transform:translate(-50%,-50%);background:#fff;border-radius:24px;box-shadow:0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06);display:flex;align-items:center;gap:22px;padding:0 26px;border:3px solid transparent}
 .tool .ib{width:88px;height:88px;border-radius:22px;background:var(--soft);display:flex;align-items:center;justify-content:center;flex:none}
 .tool .body{flex:1}
 .tool .nm{font-size:22px;font-weight:600;color:var(--muted)}
-.tool .pb{margin-top:12px;height:12px;border-radius:6px;background:#e6e9f0;overflow:hidden}
+.tool .pb{margin-top:12px;height:12px;border-radius:6px;background:#f2f3f5;overflow:hidden}
 .tool .pb i{display:block;height:100%;width:0;background:var(--blue);border-radius:6px}
-.tool .v{font-size:36px;font-weight:800;color:var(--red);margin-top:6px;display:inline-block;transform-origin:left center}
+.tool .v{white-space:nowrap;font-size:32px;font-weight:800;color:var(--red);margin-top:6px;display:inline-block;transform-origin:left center}
 .dot{position:absolute;width:14px;height:14px;border-radius:50%;background:var(--blue);transform:translate(-50%,-50%)}
 .ring{position:absolute;left:960px;top:560px;border:4px solid var(--blue);border-radius:50%;transform:translate(-50%,-50%)}
 svg#ln{position:absolute;left:0;top:0}
-#done{left:960px;top:670px;transform:translateX(-50%);font-size:26px;font-weight:700;color:#2e9e5b;display:flex;gap:10px;align-items:center}
+#done{left:960px;top:670px;transform:translateX(-50%);font-size:26px;font-weight:700;color:#059669;display:flex;gap:10px;align-items:center}
 </style></head><body><div id="stage">
 <svg id="ln" width="1920" height="1080"></svg>
 <div id="dots"></div>
@@ -23,15 +23,15 @@ svg#ln{position:absolute;left:0;top:0}
 <script src="common.js"></script>
 <script>
 frame(6,'Cek bukti & fakta paralel');
-$('ent').innerHTML=icon('building',56,'#184f95',1.8)+'<span>PT Maju Jaya</span>';
-const C=[960,560];const POS=[[450,320],[1470,320],[450,800],[1470,800]];
+$('ent').innerHTML=icon('building',56,'#0a7f80',1.8)+'<span>PT Maju Jaya</span>';
+const C=[960,560];const POS=[[420,320],[1500,320],[420,800],[1500,800]];
 // name, icon, result, finish time
 const T=[['Web search','search','0 hasil resmi',3.6],['Umur domain','globe','12 hari',2.8],['Knowledge base','db','87% mirip',4.2],['Pernyataan resmi','megaphone','Ada bantahan',3.3]];
 const START=1.5;
-T.forEach((x,i)=>{const e=$('T'+i);e.innerHTML=`<div class="ib">${icon(x[1],50,'#184f95',1.8)}</div><div class="body"><div class="nm">${x[0]}</div><div class="pb"><i></i></div><div class="v"></div></div>`;set(e,{left:POS[i][0]+'px',top:POS[i][1]+'px'})});
-$('ln').innerHTML=POS.map((q,i)=>`<path id="l${i}" d="M${C[0]} ${C[1]} L${q[0]} ${q[1]}" stroke="#d6dbe6" stroke-width="5" fill="none"/>`).join('');
+T.forEach((x,i)=>{const e=$('T'+i);e.innerHTML=`<div class="ib">${icon(x[1],50,'#0a7f80',1.8)}</div><div class="body"><div class="nm">${x[0]}</div><div class="pb"><i></i></div><div class="v"></div></div>`;set(e,{left:POS[i][0]+'px',top:POS[i][1]+'px'})});
+$('ln').innerHTML=POS.map((q,i)=>`<path id="l${i}" d="M${C[0]} ${C[1]} L${q[0]} ${q[1]}" stroke="#e1e2e4" stroke-width="5" fill="none"/>`).join('');
 const ND=6; let html='';for(let i=0;i<4;i++)for(let j=0;j<ND;j++)html+=`<div class="dot" id="d${i}_${j}"></div>`;$('dots').innerHTML=html;
-$('done').innerHTML=icon('check',30,'#2e9e5b',3)+'<span id="dn"></span>';
+$('done').innerHTML=icon('check',30,'#059669',3)+'<span id="dn"></span>';
 const DUR=7;
 window.render=function(t){
  frameRender(t,DUR);
@@ -43,19 +43,19 @@ window.render=function(t){
    e.querySelector('.pb i').style.width=(100*eio(p(t,START,fin)))+'%';
    e.querySelector('.pb').style.display=done?'none':'block';
    const v=e.querySelector('.v'); v.textContent=done?x[2]:''; v.style.transform=`scale(${done?back(p(t,fin,fin+.35)):0})`;
-   e.style.borderColor=run?'#2a78d6':(done?'#c9372c':'transparent');
+   e.style.borderColor=run?'#0e9e9e':(done?'#dc2626':'transparent');
    e.querySelector('.ib svg').style.transform=run?`rotate(${Math.sin(t*10)*10}deg)`:'none';
-   const g=done?Math.exp(-(t-fin)*3):0; e.style.boxShadow=`0 0 0 ${g*22}px rgba(201,55,44,.15),0 14px 36px rgba(20,33,61,.10)`;
-   $('l'+i).setAttribute('stroke',run?'#86b6ef':(done?'#c9372c':'#d6dbe6'));
+   const g=done?Math.exp(-(t-fin)*3):0; e.style.boxShadow=`0 0 0 ${g*22}px rgba(220,38,38,.15),0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06)`;
+   $('l'+i).setAttribute('stroke',run?'#87cfcf':(done?'#dc2626':'#e1e2e4'));
    for(let j=0;j<ND;j++){const d=$(`d${i}_${j}`);
      // while running: dots stream outward; after done: one burst back inward
      let q,on=false;
      if(run){q=((t-START)*0.9+j/ND)%1;on=true}
      else if(done&&t<fin+.7&&j<3){q=1-p(t,fin+j*.08,fin+.5+j*.08);on=q<1&&q>0}
-     if(on){set(d,{left:lerp(C[0],POS[i][0],q)+'px',top:lerp(C[1],POS[i][1],q)+'px',opacity:Math.sin(q*Math.PI),background:run?'#2a78d6':'#c9372c'})} else d.style.opacity=0;}
+     if(on){set(d,{left:lerp(C[0],POS[i][0],q)+'px',top:lerp(C[1],POS[i][1],q)+'px',opacity:Math.sin(q*Math.PI),background:run?'#0e9e9e':'#dc2626'})} else d.style.opacity=0;}
  });
  $('dn').textContent=`${nd}/4`; set($('done'),{opacity:t>START?1:0});
- if(nd==4){const g=Math.exp(-(t-4.2)*3);$('ent').style.boxShadow=`0 0 0 ${g*30}px rgba(46,158,91,.2),0 20px 50px rgba(20,33,61,.10)`}
+ if(nd==4){const g=Math.exp(-(t-4.2)*3);$('ent').style.boxShadow=`0 0 0 ${g*30}px rgba(5,150,105,.2),0 0 0 2px #e1e2e4,0 4px 20px rgba(23,35,44,.06)`}
 };
 render(0);
 </script></body></html>
