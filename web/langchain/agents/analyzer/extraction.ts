@@ -6,6 +6,7 @@ import {
   type LLMExtractionOutput,
 } from "./schema";
 import { buildExtractionUserPrompt, extractionSystemPrompt } from "./prompts";
+import { redactSensitive } from "./redaction";
 import type { AnalyzeImage } from "./analyze";
 import {
   ATTACHMENT_LIMITS_TEXT,
@@ -117,11 +118,14 @@ export async function extractAttachments(attachments: AnalyzeImage[]): Promise<E
         ? transcripts.map((text, index) => `[Lampiran ${index + 1}]\n${text}`).join("\n\n")
         : transcripts[0] ?? "";
 
+    // An image cannot be masked before the model reads it; what it read is masked before the
+    // transcript goes to the rules, the web search, the analysis, and back to the client.
+    const entities = parsed.entities && { ...parsed.entities, phones: (parsed.entities.phones ?? []).map((phone) => redactSensitive(phone)) };
     const material: ExtractedMaterial = {
-      transcript: transcript.trim(),
+      transcript: redactSensitive(transcript.trim()),
       attachments: read.map(({ kind, legibility }) => ({ kind, legibility })),
       legibility: read.length ? overallLegibility(read.map((attachment) => attachment.legibility)) : "tidak_terbaca",
-      entities: parsed.entities,
+      entities,
       visualCues: (parsed.visualCues ?? [])
         .map((cue) => cue.trim())
         .filter(Boolean)

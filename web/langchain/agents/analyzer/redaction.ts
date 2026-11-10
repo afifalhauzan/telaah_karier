@@ -1,6 +1,7 @@
-// Masks the applicant's own secrets before anything is published to TelaahBareng (design doc 6.3).
-// Posting data (contact numbers, accounts, domains, salaries) is deliberately left intact: shared
-// numbers are how other people recognise the same scam.
+// Masks the applicant's own secrets (NIK, one-time codes) before any text reaches a model in the
+// chat, and again before anything is published to TelaahBareng (design doc 6.3). Posting data
+// (contact numbers, accounts, domains, salaries) is deliberately left intact: the analysis needs
+// it, and shared numbers are how other people recognise the same scam.
 
 export const NIK_MASK = "[NIK disensor]";
 export const CODE_MASK = "[kode disensor]";
@@ -32,6 +33,27 @@ export function redactSensitive(text: string): string {
   return text
     .replace(NIK_CANDIDATE, (match) => (isNik(match) ? NIK_MASK : match))
     .replace(ONE_TIME_CODE, (_match, keyword: string, gap: string) => `${keyword}${gap}${CODE_MASK}`);
+}
+
+/**
+ * Masks the text the user typed in every user message of a chat request, in place, so the
+ * latest message, the history sent for follow-ups and actions, and the posting context all reach
+ * the models already masked. Attachments are left as they are: their transcript is masked once
+ * the model has read it (extraction.ts).
+ */
+export function redactUserMessages(messages: unknown): void {
+  if (!Array.isArray(messages)) return;
+  for (const message of messages) {
+    if (!message || typeof message !== "object" || (message as { role?: unknown }).role !== "user") continue;
+    const typed = message as { content?: unknown; parts?: unknown };
+    if (typeof typed.content === "string") typed.content = redactSensitive(typed.content);
+    if (!Array.isArray(typed.parts)) continue;
+    for (const part of typed.parts) {
+      if (part && typeof part === "object" && part.type === "text" && typeof part.text === "string") {
+        part.text = redactSensitive(part.text);
+      }
+    }
+  }
 }
 
 /** True when the text still holds something redactSensitive would mask. */

@@ -53,6 +53,7 @@ sequenceDiagram
 3. Mode tanya-jawab memakai lowongan terakhir yang punya verdict sebagai konteks (`conversation-context.ts`). Dengan begitu, pertanyaan seperti "Kenapa ini berisiko?" atau "Saya sudah terlanjur transfer, harus bagaimana?" dijawab tentang lowongan tersebut, bukan dianalisis sebagai lowongan baru.
 
 ### Tahap 1: Preprocessing (`preprocessor.ts`)
+0. **Penyensoran data sensitif** (`redaction.ts`): NIK (16 digit dengan kode provinsi) dan kode sekali pakai (OTP, PIN, kode verifikasi) diganti `[NIK disensor]` / `[kode disensor]` sebelum teks sampai ke model mana pun. Di chat, `redactUserMessages()` menyensor semua pesan pengguna di awal request (termasuk riwayat untuk tanya-jawab dan aksi); `preprocessJobInput()` menyensor lagi sehingga evaluasi melewati langkah yang sama. Data lowongan (nomor WA, rekening, domain, gaji) sengaja tidak disensor karena dibutuhkan analisis dan graph identitas. Gambar tidak bisa disensor sebelum dibaca model; transkrip hasil bacanya disensor sebelum dipakai tahap berikutnya.
 1. Membersihkan teks, mengekstrak URL dan domain.
 2. Memutuskan apakah input berisi materi lowongan (`hasSubstantiveContent`). Jika tidak dan tanpa lampiran, sistem langsung meminta detail lowongan.
 

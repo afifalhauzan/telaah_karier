@@ -20,6 +20,7 @@ import {
   type ExtractionRun,
 } from "@/langchain/agents/analyzer/extraction";
 import { preprocessJobInput } from "@/langchain/agents/analyzer/preprocessor";
+import { redactSensitive, redactUserMessages } from "@/langchain/agents/analyzer/redaction";
 import { linkRequest, type LinkRequest } from "@/langchain/agents/analyzer/checks";
 import { decodeQrLinks } from "@/langchain/agents/analyzer/tools/qr";
 import { findLinks } from "@/langchain/agents/telaah-bersama/identifiers";
@@ -100,7 +101,14 @@ function extractUIActionPayload(body: any): UIActionPayload | null {
   }
 
   const parsed = UIActionPayloadSchema.safeParse(rawPayload);
-  return parsed.success ? parsed.data : null;
+  if (!parsed.success) return null;
+  // Older clients send the posting along with the action; it is masked like the messages are
+  const { claim, context } = parsed.data;
+  return {
+    ...parsed.data,
+    ...(claim !== undefined && { claim: redactSensitive(claim) }),
+    ...(context !== undefined && { context: redactSensitive(context) }),
+  };
 }
 
 function buildStreamText(analysis: { conversationText?: string }): string {
@@ -239,6 +247,9 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     // A reloaded session sends its attachments as links to the stored files
     await loadStoredAttachments(body?.messages, getAccessToken(req));
+    // First step of the pipeline: the user's NIK and one-time codes are masked before any of the
+    // text reaches a model (routing, analysis, follow-up, actions, session title).
+    redactUserMessages(body?.messages);
     const actionPayload = extractUIActionPayload(body);
     const input = extractLatestUserText(body);
     const { attachments, unsupportedCount } = extractLatestFileParts(body);
