@@ -38,6 +38,7 @@ import { loadStoredAttachments } from "@/lib/stored-attachments";
 import { chargeSession, GUEST_COOKIE, guestCookieOptions, openSession, type QuotaBlock } from "@/lib/quota";
 import type { TokenUsage } from "@/langchain/agents/analyzer/llm";
 import { detectAlurIntent } from "@/lib/telaah-alur/trigger";
+import { redactUserMessages } from "@/langchain/agents/analyzer/redaction";
 
 const STREAM_CHUNK_DELAY_MS = 28;
 const SECTION_STEP_DELAY_MS = 220;
@@ -239,6 +240,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     // A reloaded session sends its attachments as links to the stored files
     await loadStoredAttachments(body?.messages, getAccessToken(req));
+    // Before any model call: the applicant's NIK and one-time codes never leave the server
+    redactUserMessages(body?.messages);
     const actionPayload = extractUIActionPayload(body);
     const input = extractLatestUserText(body);
     const { attachments, unsupportedCount } = extractLatestFileParts(body);
