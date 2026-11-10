@@ -1,4 +1,5 @@
-// Masks the applicant's own secrets before anything is published to TelaahBareng (design doc 6.3).
+// Masks the applicant's own secrets before chat text reaches a model, and before anything is
+// published to TelaahBareng (design doc 6.3).
 // Posting data (contact numbers, accounts, domains, salaries) is deliberately left intact: shared
 // numbers are how other people recognise the same scam.
 
@@ -32,6 +33,21 @@ export function redactSensitive(text: string): string {
   return text
     .replace(NIK_CANDIDATE, (match) => (isNik(match) ? NIK_MASK : match))
     .replace(ONE_TIME_CODE, (_match, keyword: string, gap: string) => `${keyword}${gap}${CODE_MASK}`);
+}
+
+/**
+ * Redacts, in place, the text the user wrote in a chat request (every user turn, since earlier turns
+ * are sent to the model again as context). Attachments are not touched: images go to the model as is.
+ */
+export function redactUserMessages(messages: unknown): void {
+  if (!Array.isArray(messages)) return;
+  for (const message of messages) {
+    if (message?.role !== "user") continue;
+    if (typeof message.content === "string") message.content = redactSensitive(message.content);
+    for (const part of Array.isArray(message.parts) ? message.parts : []) {
+      if (part?.type === "text" && typeof part.text === "string") part.text = redactSensitive(part.text);
+    }
+  }
 }
 
 /** True when the text still holds something redactSensitive would mask. */
